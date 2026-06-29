@@ -1,156 +1,370 @@
 # 🌌 SkyGuide AI
 
-> **A Real-Time Personalized Celestial Matchmaking & Telescope Alignment Platform**
+# Development Journal
 
-SkyGuide AI solves the common amateur astronomer's dilemma:
-
-> **"I have a telescope, but what should I look at right now?"**
-
-The platform acts as a highly responsive cosmic recommendation engine, combining real-time astronomical calculations, environmental conditions, and personalized telescope profiles to recommend the best celestial targets visible at any given moment.
+## Day 1 & Day 2 Documentation
 
 ---
 
-# 🏗️ System Architecture
+# 📖 Project Overview
 
-SkyGuide AI follows a distributed microservices architecture consisting of three major layers.
+## What is SkyGuide AI?
 
-## 1. 💻 Laptop Command Center (Next.js SPA)
+SkyGuide AI is a **Real-Time Personalized Celestial Matchmaking and Telescope Alignment Platform** designed to solve one of the biggest problems faced by amateur astronomers:
 
-A rich data-visualization dashboard that provides:
+> **"I have a telescope, but what should I observe right now?"**
 
-* Interactive sky maps
-* Visible target recommendations
-* Airmass and altitude curves
-* Field-of-view overlays
-* Observation planning tools
-* Real-time telescope telemetry visualization
+The platform acts as an intelligent astronomical copilot that combines:
 
----
+* Real-time astronomical calculations
+* Telescope specifications
+* Environmental conditions
+* Geolocation data
+* Machine Learning predictions
 
-## 2. 📱 Lightweight Mobile Client (PWA / React Native)
-
-A mobile companion application mounted directly onto the telescope tube.
-
-Features:
-
-* Streams real-time 3-axis IMU orientation data
-* Communicates via WebSockets
-* Acts as a telescope alignment assistant
-* Provides sensory tracking and positioning feedback
+to generate personalized observing recommendations and telescope alignment assistance.
 
 ---
 
-## 3. ⚙️ Double Backend Architecture
+# 🎯 Vision Statement
 
-### Node.js / Express Gateway
+SkyGuide AI aims to become an intelligent astronomical assistant capable of answering:
 
-Acts as the I/O-efficient traffic controller responsible for:
-
-* Authentication and authorization
-* User profile management
-* Session handling
-* Database interactions
-* Caching layers
-* High-frequency WebSocket communication
-* Secure state management
+> **"What celestial objects are visible right now, and how do I accurately point my telescope toward them?"**
 
 ---
 
-### FastAPI (Python Calculation Engine)
+# 🏗️ Overall System Architecture
 
-Responsible for computationally intensive tasks:
-
-* Astronomical calculations using `astropy`
-* Observation planning using `astroplan`
-* Sky visibility predictions
-* Atmospheric transparency calculations
-* Machine learning regression models using `scikit-learn`
-
-The service computes a continuous:
+The platform follows a **distributed microservices architecture**.
 
 ```text
-Sky Transparency Score ∈ [0.0, 1.0]
+┌──────────────────────────┐
+│     Frontend Clients     │
+└────────────┬─────────────┘
+             │
+      ┌──────▼───────┐
+      │ Node Gateway │
+      │ (Express.js) │
+      └──────┬────────┘
+             │
+             ▼
+      ┌──────────────┐
+      │ MongoDB Atlas│
+      └──────────────┘
+             ▲
+             │
+      ┌──────┴────────┐
+      │ FastAPI Engine│
+      │ (Python)      │
+      └───────────────┘
 ```
 
-for each celestial target.
+---
+
+# 🖥️ Frontend Layer
+
+## 1. Laptop Command Center (Next.js SPA)
+
+The primary dashboard used by astronomers.
+
+### Features
+
+* Interactive Sky Maps
+* Celestial Recommendations
+* Altitude and Airmass Curves
+* Field of View Simulations
+* Observation Planning
+* Telescope Telemetry Dashboard
+* Real-Time Visibility Analytics
 
 ---
 
-# 🛠️ What We Built Today
+## 2. Mobile Telescope Companion (PWA / React Native)
 
-Today we completed the foundational security and storage architecture of the Node.js Gateway.
+A lightweight mobile application physically mounted on the telescope.
 
----
+### Features
 
-# 1. 🚀 Robust Server Bootstrapping (`app.js`)
-
-Implemented a production-grade Express server with:
-
-* `helmet` for HTTP security headers
-* `cors` with strict origin configuration and credential support
-* `compression` for payload optimization
-* `morgan` for request logging
-* `cookie-parser` for secure cookie parsing and signing
+* Streams 3-axis IMU orientation data
+* WebSocket communication
+* Telescope alignment assistant
+* Sensory tracking
+* Real-time positioning feedback
 
 ---
 
-# 2. 🌍 High-Fidelity Geolocation & Equipment Schema (`src/models/User.js`)
+# ⚙️ Backend Architecture
 
-Designed a production-ready MongoDB schema supporting:
+SkyGuide AI uses a **Double Backend Architecture**.
 
-## Multi-Telescope Profiles
+---
 
-* Aperture sizes
-* Focal lengths
-* Mount types
-* Camera attachments
+# 🟢 Node.js Gateway (Express.js)
 
-## Geospatial Processing
+Responsible for:
 
-Implemented MongoDB's native:
+### Authentication
+
+* Registration
+* Login
+* Logout
+* Session Management
+
+### User Management
+
+* Profiles
+* Telescope Storage
+* Preferences
+
+### WebSockets
+
+* Real-time communication
+* Telescope telemetry
+
+### Database Layer
+
+* MongoDB interactions
+* Caching
+* State management
+
+### Security
+
+* JWT Authentication
+* Cookies
+* Rate Limiting
+
+---
+
+# 🔵 FastAPI Astronomy Engine
+
+Responsible for:
+
+### Astronomy
+
+* Coordinate calculations
+* Observation planning
+* Celestial catalog management
+
+### Machine Learning
+
+* Transparency prediction
+* Recommendation scoring
+
+### Scientific Computation
+
+* Visibility calculations
+* Atmospheric analysis
+* Telescope calculations
+
+---
+
+# ====================================
+
+# DAY 1
+
+# Authentication & Database Foundation
+
+# ====================================
+
+---
+
+# 🎯 Day 1 Objectives
+
+Build the foundational backend infrastructure:
+
+* Secure authentication
+* MongoDB integration
+* Production-grade schemas
+* Cookie-based sessions
+* Email workflows
+
+---
+
+# 🚀 Express Server Bootstrapping
+
+Implemented production-grade middleware.
+
+## Installed Packages
 
 ```javascript
-2dsphere
+helmet
+cors
+compression
+morgan
+cookie-parser
+dotenv
 ```
 
-index for:
+---
 
-* Location-aware calculations
-* Observer positioning
-* Future nearby-observer features
-* Local astronomical computations
+# Purpose of Each Package
 
-## Security Hooks
+## helmet
 
-Integrated:
+Protects against:
 
-* Password hashing using `bcryptjs`
-* Pre-save document middleware
-* Sensitive field sanitization
+* Clickjacking
+* XSS attacks
+* MIME sniffing
 
 ---
 
-# 3. 🔐 Secure HTTP-Only Cookie Authentication System
+## cors
 
-Implemented a stateless authentication architecture designed to mitigate:
+Allows:
 
-* Cross-Site Scripting (XSS)
-* Cross-Site Request Forgery (CSRF)
+* Cross-origin communication
+* Credential sharing
+* Frontend-backend interaction
 
 ---
 
-## `authController.js`
+## compression
+
+Compresses:
+
+* JSON responses
+* Payload sizes
+
+Improves performance.
+
+---
+
+## morgan
+
+Provides:
+
+* Request logging
+* API debugging
+
+---
+
+## cookie-parser
+
+Parses:
+
+* JWT cookies
+* Signed cookies
+
+---
+
+# 🌍 MongoDB Atlas Integration
 
 Implemented:
 
-* User registration
-* User login
-* Logout flow
-* Last login tracking
-* JWT generation
-* HTTP-only cookie creation
+```javascript
+config/db.js
+```
 
-Authentication cookies are configured using:
+Responsibilities:
+
+* Connect to Atlas
+* Handle connection failures
+* Export reusable database instance
+
+---
+
+# 👤 Production User Schema
+
+Implemented:
+
+## User Information
+
+```javascript
+username
+email
+password
+avatar
+role
+isVerified
+isActive
+lastLogin
+```
+
+---
+
+# 🌎 Geospatial Location System
+
+```javascript
+location: {
+    type: "Point",
+    coordinates: [longitude, latitude],
+    elevation_m,
+    timezone
+}
+```
+
+Created:
+
+```javascript
+UserSchema.index({
+  location: "2dsphere"
+});
+```
+
+Benefits:
+
+* Location-aware recommendations
+* Future nearby observer features
+* Fast geospatial queries
+
+---
+
+# 🔭 Telescope Schema
+
+Supports multiple telescope profiles.
+
+```javascript
+telescopeProfile: [TelescopeSchema]
+```
+
+Each profile stores:
+
+* Name
+* Aperture
+* Focal Length
+* Mount Type
+* Camera Attachment
+* Bortle Scale
+
+---
+
+# 🔐 Password Security
+
+Implemented:
+
+```javascript
+UserSchema.pre("save")
+```
+
+Responsibilities:
+
+* Generate salt
+* Hash password
+* Prevent plain-text storage
+
+---
+
+# Password Comparison
+
+Implemented:
+
+```javascript
+comparePassword()
+```
+
+using:
+
+```javascript
+bcrypt.compare()
+```
+
+---
+
+# 🍪 JWT Cookie Authentication
+
+Implemented secure authentication cookies.
 
 ```javascript
 httpOnly: true
@@ -158,71 +372,483 @@ secure: true
 sameSite: "strict"
 ```
 
----
+Benefits:
 
-## `authMiddleware.js`
+### Prevents:
 
-Built a custom protection middleware that:
-
-* Validates JWT tokens
-* Extracts user identity from cookies
-* Checks account activity state
-* Attaches authenticated user data to requests
-* Blocks unauthorized access
+* Cross Site Scripting
+* Cookie theft
+* CSRF attacks
 
 ---
 
-# ✅ Current Authentication Features
+# 🔐 Authentication Controllers
 
-* User Registration
-* User Login
-* User Logout
-* Protected Routes
-* JWT Authentication
-* HTTP-Only Cookies
-* Password Hashing
-* MongoDB Atlas Integration
-* Account Activity Tracking
-* Last Login Tracking
+Implemented:
+
+## Register
+
+```http
+POST /api/v1/auth/register
+```
 
 ---
 
-# 🗺️ Where We Stand
+## Login
 
-The entry gate of SkyGuide AI is now:
-
-* Securely authenticated
-* Connected to MongoDB Atlas
-* Production-ready for feature development
-* Prepared for telescope and observation services
+```http
+POST /api/v1/auth/login
+```
 
 ---
 
-# 🚀 Next Milestones
+## Logout
 
-## Authentication
-
-* Email Verification
-* Forgot Password
-* Password Reset
-* Role-Based Authorization
-* Rate Limiting
-* Refresh Tokens
-
-## Astronomy Engine
-
-* Telescope Management APIs
-* Observation History
-* Celestial Recommendation Engine
-* Visibility Prediction Service
-* Telescope Alignment Assistant
-* Real-Time WebSocket Telemetry
-* Machine Learning Transparency Scoring
+```http
+POST /api/v1/auth/logout
+```
 
 ---
 
-# 🌌 Vision
+## Current User
 
-SkyGuide AI aims to become an intelligent astronomical copilot that helps observers answer one simple question:
+```http
+GET /api/v1/auth/me
+```
 
-> **"What should I observe right now, and how do I point my telescope to it?"**
+---
+
+# ✉️ Email Verification System
+
+Implemented:
+
+```http
+GET /verify-email/:token
+POST /resend-verification
+```
+
+Features:
+
+* Secure token generation
+* SHA256 hashing
+* Expiration handling
+
+---
+
+# 🔑 Forgot Password System
+
+Implemented:
+
+```http
+POST /forgot-password
+PATCH /reset-password/:token
+```
+
+Features:
+
+* Password reset emails
+* Secure tokens
+* Automatic login after reset
+
+---
+
+# 🚦 Rate Limiting
+
+Implemented:
+
+```javascript
+express-rate-limit
+```
+
+Protects:
+
+* Login endpoints
+* Registration
+* Password reset
+
+---
+
+# 🧪 Authentication Testing
+
+Tested:
+
+✅ Register
+
+✅ Verify Email
+
+✅ Login
+
+✅ Logout
+
+✅ JWT Cookies
+
+✅ Protected Routes
+
+✅ Forgot Password
+
+✅ Reset Password
+
+✅ Rate Limiting
+
+---
+
+# 📈 Day 1 Result
+
+Authentication module became:
+
+```text
+Production Ready (MVP)
+```
+
+---
+
+# ====================================
+
+# DAY 2
+
+# Astronomy Engine Foundation
+
+# ====================================
+
+---
+
+# 🎯 Day 2 Objectives
+
+Build:
+
+* FastAPI service
+* Python environment
+* Astronomy stack
+* Microservice architecture
+
+---
+
+# 🐍 Created Python Service
+
+```text
+astro-engine/
+```
+
+---
+
+# Created Virtual Environment
+
+```bash
+python -m venv venv
+```
+
+---
+
+# Installed Dependencies
+
+---
+
+# API Framework
+
+```bash
+fastapi
+uvicorn
+```
+
+---
+
+# Astronomy Libraries
+
+```bash
+astropy
+astroplan
+astroquery
+skyfield
+```
+
+---
+
+# Database
+
+```bash
+motor
+pymongo
+```
+
+---
+
+# Machine Learning
+
+```bash
+numpy
+pandas
+scikit-learn
+```
+
+---
+
+# Configuration
+
+```bash
+python-dotenv
+pydantic-settings
+```
+
+---
+
+# 🏗️ Production Folder Structure
+
+```text
+astro-engine/
+│
+├── app/
+│   ├── main.py
+│   ├── api/
+│   │   └── v1/
+│   │       └── health.py
+│   ├── core/
+│   │   ├── config.py
+│   │   └── database.py
+│   ├── models/
+│   └── services/
+│
+├── scripts/
+├── requirements.txt
+├── .env
+└── venv/
+```
+
+---
+
+# Environment Variables
+
+```env
+APP_NAME=SkyGuide Astro Engine
+APP_ENV=development
+APP_PORT=8000
+
+MONGO_URI=...
+DATABASE_NAME=skyguide_ai
+```
+
+---
+
+# 🌐 FastAPI Bootstrap
+
+Implemented:
+
+```python
+FastAPI(
+    title="SkyGuide Astro Engine",
+    version="1.0.0"
+)
+```
+
+---
+
+# ❤️ Health Endpoint
+
+Implemented:
+
+```http
+GET /api/v1/health
+```
+
+Response:
+
+```json
+{
+  "status": "healthy",
+  "service": "astro-engine"
+}
+```
+
+---
+
+# 📚 Swagger Documentation
+
+Available at:
+
+```text
+http://localhost:8000/docs
+```
+
+---
+
+# 🧠 Major Architectural Decision
+
+Astronomical logic will live entirely inside FastAPI.
+
+---
+
+# FastAPI Owns
+
+* SIMBAD integration
+* VizieR integration
+* Catalog ingestion
+* Coordinate calculations
+* ML models
+* Recommendation engine
+
+---
+
+# Node.js Owns
+
+* Authentication
+* Users
+* Telescope data
+* WebSockets
+* Business logic
+
+---
+
+# 🌌 Celestial Catalog Strategy
+
+Instead of manually typing celestial objects:
+
+SkyGuide AI will use:
+
+### astroquery
+
+*
+
+### SIMBAD
+
+*
+
+### VizieR
+
+to automatically build the catalog.
+
+---
+
+# Planned Pipeline
+
+```text
+astroquery
+      ↓
+SIMBAD / VizieR
+      ↓
+Messier Catalog
+      ↓
+MongoDB Atlas
+```
+
+---
+
+# Planned Seed Script
+
+```text
+scripts/
+└── seed_messier.py
+```
+
+---
+
+# Future Catalog Expansion
+
+### Phase 1
+
+Messier Catalog
+
+```text
+110 Objects
+```
+
+---
+
+### Phase 2
+
+NGC Catalog
+
+```text
+7840 Objects
+```
+
+---
+
+### Phase 3
+
+IC Catalog
+
+```text
+5386 Objects
+```
+
+---
+
+# 🚀 Immediate Next Milestones
+
+## Step 1
+
+Create:
+
+```text
+CelestialTarget Schema
+```
+
+---
+
+## Step 2
+
+Build:
+
+```text
+seed_messier.py
+```
+
+---
+
+## Step 3
+
+Implement:
+
+```text
+Coordinate Engine
+```
+
+using:
+
+```python
+astropy
+astroplan
+```
+
+---
+
+## Step 4
+
+Create:
+
+```text
+Visibility Recommendation Engine
+```
+
+---
+
+## Step 5
+
+Train:
+
+```text
+Sky Transparency ML Model
+```
+
+---
+
+# 📊 Current Project Status
+
+```text
+Authentication System          ✅
+MongoDB Integration            ✅
+FastAPI Scaffold               ✅
+Astronomy Engine               🔄
+Celestial Catalog Seeder       ⏳
+Coordinate Engine              ⏳
+Recommendation Engine          ⏳
+ML Transparency Model          ⏳
+WebSocket Alignment            ⏳
+```
+
+---
+
+# 🌌 Final Vision
+
+SkyGuide AI is evolving into an intelligent astronomical copilot capable of answering:
+
+> **"What should I observe tonight, and how do I accurately point my telescope toward it?"**
