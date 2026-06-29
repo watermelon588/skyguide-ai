@@ -154,13 +154,9 @@ Responsible for:
 
 ---
 
-# ====================================
-
 # DAY 1
 
 # Authentication & Database Foundation
-
-# ====================================
 
 ---
 
@@ -497,13 +493,9 @@ Production Ready (MVP)
 
 ---
 
-# ====================================
-
 # DAY 2
 
 # Astronomy Engine Foundation
-
-# ====================================
 
 ---
 
