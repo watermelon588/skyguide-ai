@@ -1,5 +1,7 @@
 const User = require("../models/Users");
 const jwt = require("jsonwebtoken");
+const sendEmail = require("../utils/email");
+const crypto = require("crypto");
 
 // Helper function to bundle JWT token creation and browser cookie options configuration
 const sendTokenCookie = (user, statusCode, res) => {
@@ -42,7 +44,36 @@ exports.register = async (req, res, next) => {
             location,
         });
 
-        sendTokenCookie(user, 201, res);
+        const verificationToken =
+            user.createVerificationToken();
+
+        await user.save({
+            validateBeforeSave: false,
+        });
+
+        const verificationURL =
+            `${req.protocol}://${req.get(
+                "host"
+            )}/api/v1/auth/verify-email/${verificationToken}`;
+
+        await sendEmail({
+            email: user.email,
+            subject: "Verify Your Email",
+            message: `Welcome to SkyGuide AI!
+
+                        Please verify your email by clicking:
+
+                        ${verificationURL}
+
+                        This link expires in 10 minutes.
+                        `,
+        });
+
+        res.status(201).json({
+            success: true,
+            message:
+                "Registration successful. Please verify your email.",
+        });
     } catch (error) {
         next(error);
     }
@@ -100,6 +131,208 @@ exports.login = async (req, res, next) => {
     }
 };
 
+exports.verifyEmail =
+    async (req, res, next) => {
+        try {
+            const hashedToken =
+                crypto
+                    .createHash("sha256")
+                    .update(req.params.token)
+                    .digest("hex");
+
+            const user =
+                await User.findOne({
+                    verificationToken:
+                        hashedToken,
+                    verificationTokenExpires: {
+                        $gt: Date.now(),
+                    },
+                });
+
+            if (!user) {
+                return res.status(400).json({
+                    success: false,
+                    message:
+                        "Invalid or expired verification token.",
+                });
+            }
+
+            user.isVerified = true;
+            user.verificationToken =
+                undefined;
+            user.verificationTokenExpires =
+                undefined;
+
+            await user.save({
+                validateBeforeSave: false,
+            });
+
+            res.status(200).json({
+                success: true,
+                message:
+                    "Email verified successfully.",
+            });
+        } catch (error) {
+            next(error);
+        }
+    };
+
+exports.forgotPassword =
+    async (req, res, next) => {
+        try {
+            const user =
+                await User.findOne({
+                    email: req.body.email,
+                });
+
+            if (!user) {
+                return res.status(404).json({
+                    success: false,
+                    message:
+                        "No user found with that email.",
+                });
+            }
+
+            const resetToken =
+                user.createPasswordResetToken();
+
+            await user.save({
+                validateBeforeSave: false,
+            });
+
+            const resetURL =
+                `${req.protocol}://${req.get(
+                    "host"
+                )}/api/v1/auth/reset-password/${resetToken}`;
+
+            await sendEmail({
+                email: user.email,
+                subject:
+                    "Password Reset Request",
+                message:
+                    `Forgot your password?
+
+Reset it here:
+
+${resetURL}
+
+This link expires in 10 minutes.`,
+            });
+
+            res.status(200).json({
+                success: true,
+                message:
+                    "Password reset email sent.",
+            });
+        } catch (error) {
+            next(error);
+        }
+    };
+
+exports.resetPassword =
+    async (req, res, next) => {
+        try {
+            const hashedToken =
+                crypto
+                    .createHash("sha256")
+                    .update(req.params.token)
+                    .digest("hex");
+
+            const user =
+                await User.findOne({
+                    passwordResetToken:
+                        hashedToken,
+                    passwordResetExpires: {
+                        $gt: Date.now(),
+                    },
+                }).select("+password");
+
+            if (!user) {
+                return res.status(400).json({
+                    success: false,
+                    message:
+                        "Invalid or expired reset token.",
+                });
+            }
+
+            user.password =
+                req.body.password;
+
+            user.passwordResetToken =
+                undefined;
+
+            user.passwordResetExpires =
+                undefined;
+
+            await user.save();
+
+            sendTokenCookie(
+                user,
+                200,
+                res
+            );
+        } catch (error) {
+            next(error);
+        }
+    };
+
+exports.resendVerification =
+    async (req, res, next) => {
+        try {
+            const { email } = req.body;
+
+            const user = await User.findOne({
+                email,
+            });
+
+            if (!user) {
+                return res.status(404).json({
+                    success: false,
+                    message: "User not found.",
+                });
+            }
+
+            if (user.isVerified) {
+                return res.status(400).json({
+                    success: false,
+                    message:
+                        "Email is already verified.",
+                });
+            }
+
+            const verificationToken =
+                user.createVerificationToken();
+
+            await user.save({
+                validateBeforeSave: false,
+            });
+
+            const verificationURL =
+                `${req.protocol}://${req.get(
+                    "host"
+                )}/api/v1/auth/verify-email/${verificationToken}`;
+
+            await sendEmail({
+                email: user.email,
+                subject:
+                    "Verify your SkyGuide AI account",
+                message:
+                    `Please verify your email by clicking:
+
+${verificationURL}
+
+This link expires in 10 minutes.`,
+            });
+
+            res.status(200).json({
+                success: true,
+                message:
+                    "Verification email sent successfully.",
+            });
+        } catch (error) {
+            next(error);
+        }
+    };
 exports.logout = (req, res) => {
     // Overwrite the cookie token instantly with an expired setting
     res.cookie("jwt", "loggedout", {

@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
+const crypto = require("crypto");
 
 const TelescopeSchema = new mongoose.Schema(
   {
@@ -97,6 +98,22 @@ const UserSchema = new mongoose.Schema(
       default: false,
     },
 
+    verificationToken: {
+      type: String,
+    },
+
+    verificationTokenExpires: {
+      type: Date,
+    },
+
+    passwordResetToken: {
+      type: String,
+    },
+
+    passwordResetExpires: {
+      type: Date,
+    },
+
     isActive: {
       type: Boolean,
       default: true,
@@ -145,14 +162,18 @@ const UserSchema = new mongoose.Schema(
 
 UserSchema.index({ location: "2dsphere" });
 
+// presave hashed password with bcrypt js
+
 UserSchema.pre("save", async function () {
   if (!this.isModified("password")) {
-    return ;
+    return;
   }
 
   const salt = await bcrypt.genSalt(12);
   this.password = await bcrypt.hash(this.password, salt);
 });
+
+// check password user method
 
 UserSchema.methods.comparePassword = async function (
   candidatePassword
@@ -162,7 +183,46 @@ UserSchema.methods.comparePassword = async function (
     this.password
   );
 };
+// verification token user method
 
+UserSchema.methods.createVerificationToken =
+  function () {
+    const token =
+      crypto.randomBytes(32).toString("hex");
+
+    this.verificationToken =
+      crypto
+        .createHash("sha256")
+        .update(token)
+        .digest("hex");
+
+    this.verificationTokenExpires =
+      Date.now() + 10 * 60 * 1000;
+
+    return token;
+  };
+
+// password reset token 
+UserSchema.methods.createPasswordResetToken =
+  function () {
+    const resetToken =
+      crypto.randomBytes(32).toString(
+        "hex"
+      );
+
+    this.passwordResetToken =
+      crypto
+        .createHash("sha256")
+        .update(resetToken)
+        .digest("hex");
+
+    this.passwordResetExpires =
+      Date.now() + 10 * 60 * 1000;
+
+    return resetToken;
+  };
+
+// hide password and v from response
 UserSchema.methods.toJSON = function () {
   const user = this.toObject();
 
