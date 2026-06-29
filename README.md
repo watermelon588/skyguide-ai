@@ -1,9 +1,4 @@
 # 🌌 SkyGuide AI
-
-# Development Journal
-
-## Day 1 & Day 2 Documentation
-
 ---
 
 # 📖 Project Overview
