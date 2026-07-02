@@ -1,0 +1,375 @@
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { assets } from "../assets/assets";
+import { useEffect } from "react";
+import "../styles/animations.css";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faArrowLeft } from "@fortawesome/free-solid-svg-icons";
+import { useAuth } from "../context/AuthContext";
+
+export default function LoginPage() {
+  const navigate = useNavigate();
+  const { loginUser, registerUser } = useAuth();
+  const [currentState, setCurrentState] = useState("Login");
+
+  const [formData, setFormData] = useState({
+    username: "",
+    email: "",
+    password: "",
+  });
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [showError, setShowError] = useState(false);
+
+  const handleChange = (e) => {
+    setFormData((prev) => ({
+      ...prev,
+      [e.target.name]: e.target.value,
+    }));
+  };
+
+  const onSubmitHandler = async (e) => {
+    e.preventDefault();
+
+    setLoading(true);
+    setError("");
+
+    try {
+      if (currentState === "Sign up") {
+        await registerUser({
+          username: formData.username,
+          email: formData.email,
+          password: formData.password,
+        });
+      } else {
+        await loginUser({
+          email: formData.email,
+          password: formData.password,
+        });
+      }
+      // Redirect
+      navigate("/dashboard");
+    } catch (err) {
+      setError(err.response?.data?.message || "Something went wrong.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!error) return;
+
+    setShowError(true);
+
+    const hideTimer = setTimeout(() => {
+      setShowError(false);
+    }, 3000);
+
+    const removeTimer = setTimeout(() => {
+      setError("");
+    }, 3500);
+
+    return () => {
+      clearTimeout(hideTimer);
+      clearTimeout(removeTimer);
+    };
+  }, [error]);
+
+  return (
+    <div className="relative min-h-screen flex items-center gap-50 justify-end px-40">
+      {/* Left Section */}
+      <div className="flex items-center gap-16">
+        <div className="relative">
+          <img
+            src={assets[17]}
+            alt="Astronaut"
+            className="w-[120px] object-contain animate-lost-space "
+          />
+          <div className="speech-bubble bubble-right bubble-right-1">
+            Tell them to log in already
+          </div>
+
+          <div className="speech-bubble bubble-right bubble-right-2">
+            I'm losing my mind
+          </div>
+        </div>
+        <div className="relative">
+          <img
+            src={assets[16]}
+            alt="Astronaut"
+            className="w-[250px] object-contain animate-space"
+          />
+          <div className="speech-bubble bubble-left">
+            Hey... you okay, my guy?
+          </div>
+        </div>
+      </div>
+      {/* right Section */}
+      <div
+        className="
+    w-[420px]
+    max-w-md
+    rounded-xl
+    border
+    border-white/30
+    bg-black/20
+    backdrop-blur-xl
+    p-8
+    shadow-xl
+    min-h-[500px]
+    transition-all duration-300
+  "
+      >
+        {/* back button */}
+        <button
+          onClick={() => navigate("/")}
+          className="
+    absolute
+    top-8
+    left-8
+    flex
+    items-center
+    gap-2
+    text-white
+    transition-all
+    duration-300
+    hover:-translate-x-1
+  "
+        >
+          <FontAwesomeIcon icon={faArrowLeft} />
+        </button>
+        {/* Logo */}
+        <div
+          className={`text-center ${
+            currentState === "Sign up" ? "mb-1" : "mb-2"
+          }`}
+        >
+          <h1 className="text-3xl font-bold tracking-wide">SkyGuide AI</h1>
+
+          <p
+            className={`text-gray-300 ${
+              currentState === "Sign up" ? "mt-1" : "mt-2"
+            }`}
+          >
+            Your intelligent astronomy companion
+          </p>
+        </div>
+
+        {/* Heading */}
+
+        <div
+          className={`text-center ${
+            currentState === "Sign up" ? "mb-4" : "mb-6"
+          }`}
+        >
+          <h2 className="text-2xl font-semibold">{currentState}</h2>
+
+          <p
+            className={`text-sm text-gray-400 ${
+              currentState === "Sign up" ? "mt-0.5" : "mt-1"
+            }`}
+          >
+            {currentState === "Login" ? "Welcome back!" : "Create your account"}
+          </p>
+        </div>
+
+        <div
+          className={`
+    absolute
+    ${currentState === "Sign up" ? "bottom-14" : "bottom-18"}
+    right-28
+    z-50
+    rounded-lg
+    border
+    border-red-400/20
+    bg-red-900/70
+    backdrop-blur-md
+    px-4
+    py-2
+    text-sm
+    text-red-100
+    shadow-xl
+    transition-all
+duration-700
+ease-[cubic-bezier(0.22,1,0.36,1)]
+
+
+    ${
+      showError
+        ? "opacity-100 translate-y-0 scale-100"
+        : "opacity-0 translate-y-4 scale-95 pointer-events-none"
+    }
+  `}
+        >
+          {error}
+        </div>
+
+        {/* Form */}
+
+        <form
+          onSubmit={onSubmitHandler}
+          className={`transition-all duration-300 ${
+            currentState === "Sign up" ? "space-y-3" : "space-y-5"
+          }`}
+        >
+          {/* Username */}
+
+          {currentState === "Sign up" && (
+            <input
+              type="text"
+              name="username"
+              placeholder="Username"
+              value={formData.username}
+              onChange={handleChange}
+              required
+              className="
+              w-full
+              rounded-md
+              border
+              border-white/20
+              bg-white/20
+              px-4
+              py-3
+              outline-none
+              backdrop-blur-lg
+              placeholder:text-gray-400
+              focus:border-white/40
+              transition
+            "
+            />
+          )}
+
+          {/* Email */}
+
+          <input
+            type="email"
+            name="email"
+            placeholder="Email Address"
+            value={formData.email}
+            onChange={handleChange}
+            required
+            className="
+            w-full
+            rounded-md
+            border
+            border-white/20
+            bg-white/10
+            px-4
+            py-3
+            outline-none
+            backdrop-blur-lg
+            placeholder:text-gray-400
+            focus:border-white/40
+            transition
+          "
+          />
+
+          {/* Password */}
+
+          <input
+            type="password"
+            name="password"
+            placeholder="Password"
+            value={formData.password}
+            onChange={handleChange}
+            required
+            className="
+            w-full
+            rounded-md
+            border
+            border-white/20
+            bg-white/10
+            px-4
+            py-3
+            outline-none
+            backdrop-blur-lg
+            placeholder:text-gray-400
+            focus:border-white/40
+            transition
+          "
+          />
+
+          {/* Submit Button */}
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="
+            w-full
+            rounded-md
+            border
+            border-white/20
+            bg-white/10
+            py-3
+            font-semibold
+            backdrop-blur-md
+            transition
+            hover:bg-white/20
+            disabled:cursor-not-allowed
+            disabled:opacity-60
+          "
+          >
+            {loading
+              ? "Please wait..."
+              : currentState === "Login"
+                ? "Login"
+                : "Create Account"}
+          </button>
+
+          {/* Divider */}
+
+          <div
+            className={`flex items-center gap-4 transition-all duration-300 ${
+              currentState === "Sign up" ? "py-1" : "py-2"
+            }`}
+          >
+            <div className="h-px flex-1 bg-white/10"></div>
+
+            <span className="text-xs text-gray-400">OR</span>
+
+            <div className="h-px flex-1 bg-white/10"></div>
+          </div>
+
+          {/* Toggle */}
+
+          <div
+            className={`text-center transition-all duration-300 ${
+              currentState === "Sign up" ? "mt-1" : "mt-4"
+            }`}
+          >
+            {currentState === "Login" ? (
+              <p className="text-sm text-gray-400">
+                Don't have an account?{" "}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCurrentState("Sign up");
+                    setError("");
+                  }}
+                  className="font-semibold text-white hover:underline"
+                >
+                  Sign Up
+                </button>
+              </p>
+            ) : (
+              <p className="text-sm text-gray-400">
+                Already have an account?{" "}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCurrentState("Login");
+                    setError("");
+                  }}
+                  className="font-semibold text-white hover:underline"
+                >
+                  Login
+                </button>
+              </p>
+            )}
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}

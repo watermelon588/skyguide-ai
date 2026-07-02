@@ -13,6 +13,7 @@ const connectDB = require("./config/db");
 const authRoutes = require("./routes/auth.routes");
 const alignmentRoutes = require("./routes/alignment.routes");
 const initializeSockets = require("./sockets");
+const chatRoutes = require("./routes/chat.routes");
 
 const app = express();
 
@@ -48,6 +49,7 @@ app.use(cookieParser(process.env.JWT_SECRET)); // 4. Initialize cookie parser wi
 // Routes
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/alignment", alignmentRoutes);
+app.use("/api/chat", chatRoutes);
 
 
 app.get("/health", (req, res) => {

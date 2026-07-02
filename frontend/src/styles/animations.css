@@ -1,0 +1,243 @@
+@keyframes spaceFloat {
+  0% {
+    transform: translateY(0px) rotate(-3deg) scale(1);
+  }
+
+  20% {
+    transform: translateY(-8px) rotate(-1deg) scale(1.01);
+  }
+
+  40% {
+    transform: translateY(-18px) rotate(2deg) scale(1.03);
+  }
+
+  60% {
+    transform: translateY(-10px) rotate(3deg) scale(1.02);
+  }
+
+  80% {
+    transform: translateY(-5px) rotate(1deg) scale(1.01);
+  }
+
+  100% {
+    transform: translateY(0px) rotate(-3deg) scale(1);
+  }
+}
+
+.animate-space {
+  animation: spaceFloat 10s ease-in-out infinite;
+  transform-origin: center;
+}
+
+@keyframes spaceFloat2 {
+  0% {
+    transform: translateY(0px) translateX(0px) rotate(4deg) scale(1);
+  }
+
+  20% {
+    transform: translateY(12px) translateX(-8px) rotate(2deg) scale(0.99);
+  }
+
+  40% {
+    transform: translateY(22px) translateX(-16px) rotate(-2deg) scale(0.98);
+  }
+
+  60% {
+    transform: translateY(10px) translateX(-10px) rotate(-4deg) scale(1);
+  }
+
+  80% {
+    transform: translateY(5px) translateX(-4px) rotate(1deg) scale(1.01);
+  }
+
+  100% {
+    transform: translateY(0px) translateX(0px) rotate(4deg) scale(1);
+  }
+}
+
+.animate-space-2 {
+  animation: spaceFloat2 13s cubic-bezier(0.42, 0, 0.58, 1) infinite;
+  transform-origin: center;
+}
+
+@keyframes lostInSpace {
+  0% {
+    transform: translate(0, 0) rotate(0deg) scale(1);
+  }
+
+  10% {
+    transform: translate(-12px, 8px) rotate(60deg) scale(1.01);
+  }
+
+  20% {
+    transform: translate(18px, -6px) rotate(140deg) scale(0.99);
+  }
+
+  30% {
+    transform: translate(-20px, 18px) rotate(240deg) scale(1.02);
+  }
+
+  40% {
+    transform: translate(25px, 10px) rotate(340deg) scale(1);
+  }
+
+  50% {
+    transform: translate(-15px, -18px) rotate(460deg) scale(1.03);
+  }
+
+  60% {
+    transform: translate(20px, 20px) rotate(600deg) scale(0.98);
+  }
+
+  70% {
+    transform: translate(-25px, 8px) rotate(760deg) scale(1.02);
+  }
+
+  80% {
+    transform: translate(12px, -16px) rotate(930deg) scale(1);
+  }
+
+  90% {
+    transform: translate(-10px, 12px) rotate(1100deg) scale(1.01);
+  }
+
+  100% {
+    transform: translate(0, 0) rotate(1260deg) scale(1);
+  }
+}
+
+.animate-lost-space {
+  animation: lostInSpace 18s linear infinite;
+  transform-origin: center center;
+}
+
+.speech-bubble{
+    position:absolute;
+
+    max-width:320px;
+
+    padding:12px 18px;
+
+    border-radius:18px;
+
+    color:#F8FAFC;
+
+    font-size:16px;
+    font-weight:500;
+    line-height:1.5;
+
+    font-family:Inter,sans-serif;
+
+    background:rgba(10,15,30,.45);
+
+    backdrop-filter:blur(18px);
+
+    border:1px solid rgba(255,255,255,.18);
+
+    box-shadow:
+        0 8px 24px rgba(0,0,0,.25);
+
+    transition:.3s;
+}
+
+.speech-bubble::after{
+    content:"";
+    position:absolute;
+
+    bottom:-10px;
+    left:36px;
+
+    width:0;
+    height:0;
+
+    border-left:10px solid transparent;
+    border-right:10px solid transparent;
+    border-top:10px solid rgba(10,15,30,.45);
+}
+
+.bubble-right::after{
+    left:auto;
+    right:36px;
+}
+
+.bubble-right::after{
+    left:auto;
+    right:36px;
+}
+
+@keyframes leftTalk{
+
+0%,8%{
+opacity:0;
+transform:translateY(10px);
+}
+
+10%,38%{
+opacity:1;
+transform:translateY(0);
+}
+
+40%,100%{
+opacity:0;
+transform:translateY(-10px);
+}
+
+}
+
+@keyframes rightTalk1{
+
+    0%,45%{
+        opacity:0;
+        transform:translateY(10px) scale(.9);
+    }
+
+    50%,62%{
+        opacity:1;
+        transform:translateY(0) scale(1);
+    }
+
+    65%,100%{
+        opacity:0;
+        transform:translateY(-10px) scale(.95);
+    }
+}
+
+@keyframes rightTalk2{
+
+    0%,62%{
+        opacity:0;
+        transform:translateY(10px) scale(.9);
+    }
+
+    66%,82%{
+        opacity:1;
+        transform:translateY(0) scale(1);
+    }
+
+    85%,100%{
+        opacity:0;
+        transform:translateY(-10px) scale(.95);
+    }
+}
+
+.bubble-left{
+
+    top:-30px;
+    right:-70px;
+    animation: leftTalk 12s ease-in-out infinite;
+}
+
+.bubble-right-1{
+
+    top:-80px;
+    left:-30px;
+    animation: rightTalk1 12s ease-in-out infinite;
+}
+
+.bubble-right-2{
+
+    top:-80px;
+    left:-50px;
+    width: 180px;
+    animation: rightTalk2 12s ease-in-out infinite;
+}
