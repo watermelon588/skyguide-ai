@@ -2,9 +2,18 @@ import { useEffect, useRef, useState } from "react";
 import { useChat } from "../../context/ChatContext";
 import { sendMessage } from "../../services/chat.service";
 import { assets } from "../../assets/assets.js";
+import Button from "../ui/Button";
 import "../../styles/chatwindow.css";
 
-export default function ChatWindow() {
+/**
+ * Astro chat panel.
+ *
+ * variant "overlay" (default): legacy floating panel — used on the Landing
+ * page, unchanged. variant "docked": fills its parent (the AiSidebar) so the
+ * layout owns positioning and animation.
+ */
+export default function ChatWindow({ variant = "overlay" }) {
+  const isDocked = variant === "docked";
   const {
     isOpen,
     closeChat,
@@ -48,45 +57,26 @@ export default function ChatWindow() {
       const reply = await sendMessage(conversation);
 
       addAssistantMessage(reply);
-    } catch (err) {
+    } catch {
       addAssistantMessage("⚠️ Sorry, I couldn't reach mission control.");
     } finally {
       setLoading(false);
     }
   };
 
+  const wrapperClass = isDocked
+    ? "flex h-full w-full flex-col"
+    : `fixed top-0 right-0 h-screen w-[420px] bg-black/40 backdrop-blur-2xl border-l border-white/10 z-[999] flex flex-col transition-all duration-500 ${
+        isOpen ? "translate-x-0" : "translate-x-full"
+      }`;
+
   return (
-    <div
-      className={`
-      fixed
-      top-0
-      right-0
-
-      h-screen
-      w-[420px]
-
-      bg-black/40
-      backdrop-blur-2xl
-
-      border-l
-      border-white/10
-
-      z-[999]
-
-      flex
-      flex-col
-
-      transition-all
-      duration-500
-
-      ${isOpen ? "translate-x-0" : "translate-x-full"}
-    `}
-    >
+    <div className={wrapperClass}>
       {/* Header */}
 
       <div className="flex items-center justify-between p-5 border-b border-white/10">
         <div
-          className={`flex items-center gap-8 ${isOpen ? "animate-dock" : ""}`}
+          className={`flex items-center gap-3 ${isOpen ? "animate-dock" : ""}`}
         >
           <img
             src={assets[16]}
@@ -124,7 +114,7 @@ export default function ChatWindow() {
             <div
               className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
                 message.role === "user"
-                  ? "bg-blue-600 text-white"
+                  ? "bg-orange-500 text-white"
                   : "bg-white/10 text-white border border-white/10"
               }`}
             >
@@ -199,20 +189,16 @@ export default function ChatWindow() {
         "
         />
 
-        <button
+        <Button
+          variant="primary"
+          size="md"
           onClick={() => handleSend()}
-          className="
-          px-5
-          rounded-xl
-          bg-white/10
-          border
-          border-white/10
-          hover:bg-white/20
-          text-white
-        "
+          disabled={loading}
+          className="px-5"
+          aria-label="Send message"
         >
           ➜
-        </button>
+        </Button>
       </div>
     </div>
   );

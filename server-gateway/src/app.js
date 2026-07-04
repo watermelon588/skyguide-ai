@@ -14,13 +14,31 @@ const authRoutes = require("./routes/auth.routes");
 const alignmentRoutes = require("./routes/alignment.routes");
 const initializeSockets = require("./sockets");
 const chatRoutes = require("./routes/chat.routes");
+const userRoutes = require("./routes/user.routes");
 
 const app = express();
 
-const CLIENT_URL = process.env.CLIENT_URL || "http://localhost:5173";
+// Allowed browser origins. Configurable via env so switching between localhost,
+// a LAN IP, ngrok or a Cloudflare Tunnel is a pure env change (no code edits).
+// Accepts a comma-separated list, e.g.
+//   CLIENT_URL="http://localhost:5173,http://192.168.1.20:5173,https://x.ngrok.app"
+const ALLOWED_ORIGINS = (process.env.CLIENT_URL || "http://localhost:5173")
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+
+// Reflect the request origin when it is allow-listed. Credentials require a
+// specific origin (never "*"), and requests without an Origin (curl, native
+// mobile) are permitted.
+const corsOrigin = (origin, callback) => {
+    if (!origin || ALLOWED_ORIGINS.includes(origin)) {
+        return callback(null, true);
+    }
+    return callback(new Error(`Origin not allowed by CORS: ${origin}`));
+};
 
 app.use(cors({
-    origin: process.env.CLIENT_URL,
+    origin: corsOrigin,
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
@@ -29,7 +47,7 @@ app.use(cors({
 const server = http.createServer(app);
 const io = new Server(server, {
     cors: {
-        origin: CLIENT_URL,
+        origin: ALLOWED_ORIGINS,
         credentials: true,
     },
 });
@@ -50,6 +68,7 @@ app.use(cookieParser(process.env.JWT_SECRET)); // 4. Initialize cookie parser wi
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/alignment", alignmentRoutes);
 app.use("/api/chat", chatRoutes);
+app.use("/api/v1/users", userRoutes);
 
 
 app.get("/health", (req, res) => {

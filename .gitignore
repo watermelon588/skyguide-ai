@@ -51,3 +51,17 @@ coverage/
 *.pid
 *.seed
 *.pid.lock
+
+# ======================================
+# Project Documentation (Local Only)
+# ======================================
+
+.claude/
+CLAUDE.md
+PROJECT_ROADMAP.md
+ARCHITECTURE.md
+DESIGN_SYSTEM.md
+API_SPEC.md
+DATABASE.md
+WEBSOCKET_PROTOCOL.md
+ASTRO_ENGINE.md
