@@ -1,6 +1,8 @@
 import axios from "axios";
 
-const API = import.meta.env.VITE_API_URL;
+import { getApiBaseUrl } from "../config/network";
+
+const API = getApiBaseUrl();
 
 /**
  * Update the authenticated observer's location.

@@ -2,9 +2,11 @@ import { useMemo, useState } from "react";
 import LocationPermissionModal from "../components/dashboard/LocationPermissionModal";
 import ManualLocationModal from "../components/dashboard/ManualLocationModal";
 import ObserverCard from "../components/dashboard/ObserverCard";
+import TelescopeCard from "../components/dashboard/TelescopeCard";
 import SyncTelescopeCard from "../components/dashboard/SyncTelescopeCard";
 import { useLocation } from "../hooks/useLocation";
 import { getObserverLocation } from "../utils/location";
+import { PairingProvider } from "../context/PairingContext";
 
 export default function Dashboard() {
   const { user, hasLocation } = useLocation();
@@ -25,9 +27,10 @@ export default function Dashboard() {
   );
 
   return (
-    <>
+    <PairingProvider>
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-6 py-8">
         {hasLocation && <ObserverCard onEdit={() => setManualOpen(true)} />}
+        <TelescopeCard />
         <SyncTelescopeCard />
       </div>
 
@@ -43,6 +46,6 @@ export default function Dashboard() {
         onClose={() => setManualOpen(false)}
         initial={manualInitial}
       />
-    </>
+    </PairingProvider>
   );
 }

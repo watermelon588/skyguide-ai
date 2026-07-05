@@ -1,8 +1,24 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-import tailwindcss from '@tailwindcss/vite'
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+import tailwindcss from "@tailwindcss/vite";
+import path from "path";
+import { fileURLToPath, URL } from "node:url";
 
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), tailwindcss()],
-})
+  resolve: {
+    alias: {
+      "@": fileURLToPath(new URL("./src", import.meta.url)),
+    },
+  },
+  server: {
+    // Bind on all interfaces (0.0.0.0) so phones on the same Wi-Fi (LAN mode)
+    // and Cloudflare tunnels can reach the dev server.
+    host: true,
+    port: 5173,
+    // Allow requests proxied through a Cloudflare tunnel (dynamic *.trycloudflare.com
+    // hostnames). Disables Vite's host check — acceptable for dev/demo only.
+    allowedHosts: true,
+  },
+});

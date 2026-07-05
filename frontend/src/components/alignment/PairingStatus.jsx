@@ -10,10 +10,11 @@ import ConnectionIndicator from "./ConnectionIndicator";
 /**
  * Phone-side pairing status view.
  *
- * Maps the usePairingSocket status machine to a friendly, animated state:
- * Connecting → Authenticating → Connected, plus failure / reconnecting states.
+ * Presentational — maps a pairing.status value (from PairingContext, passed
+ * down by the Align page) to a friendly, animated state: Connecting →
+ * Authenticating → Connected, plus failure / reconnecting states.
  *
- * @param {string} status  from usePairingSocket
+ * @param {string} status  pairing.status from usePairing()
  * @param {string} [error] message for the error state
  */
 export default function PairingStatus({ status, error }) {
@@ -95,6 +96,15 @@ const STATUS_VIEW = {
     indicator: "Pairing failed",
     subtitle:
       "This pairing session is invalid or has expired. Please rescan the QR code from your dashboard.",
+  },
+  terminated: {
+    icon: <FiAlertTriangle className="text-2xl text-[#EF4444]" />,
+    iconSpin: false,
+    ring: "border-[#EF4444]/30 bg-[#EF4444]/10",
+    title: "Session Ended",
+    tone: "error",
+    indicator: "Disconnected",
+    subtitle: "The dashboard disconnected this device.",
   },
   idle: {
     icon: <FiSmartphone className="text-2xl text-orange-400" />,

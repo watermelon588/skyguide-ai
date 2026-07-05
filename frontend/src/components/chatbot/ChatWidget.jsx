@@ -14,8 +14,8 @@ export default function ChatWidget() {
       <div
         className={`
         fixed
-        bottom-62
-        right-52
+        bottom-45
+        right-30
         z-40
 
         rounded-xl
@@ -55,8 +55,8 @@ export default function ChatWidget() {
         onMouseEnter={() => setHover(true)}
         onMouseLeave={() => setHover(false)}
         className={` fixed
-          bottom-5
-          right-30
+          bottom-0
+          right-10
 
           z-50
 
@@ -68,7 +68,7 @@ export default function ChatWidget() {
           ${
             isOpen
               ? "opacity-0 scale-75 pointer-events-none"
-              : "opacity-100 scale-100"
+              : "opacity-100 scale-80"
           }`}
       >
         <img

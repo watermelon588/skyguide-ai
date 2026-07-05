@@ -1,7 +1,9 @@
 import { io } from "socket.io-client";
 
+import { getSocketBaseUrl } from "../config/network";
+
 export const createSocket = (token) => {
-    return io(import.meta.env.VITE_API_URL, {
+    return io(getSocketBaseUrl(), {
         autoConnect: false,
         withCredentials: true,
         auth: { token },

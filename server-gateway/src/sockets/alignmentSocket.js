@@ -6,9 +6,11 @@
  * phone regardless of which connected first (and after any reconnect).
  *
  * Events (see WEBSOCKET_PROTOCOL.md):
- *   in : join_room { roomId, role }, phone_connected { device }
+ *   in : join_room { roomId, role }, phone_connected { device },
+ *        terminate_session
  *   out: room_joined { success, roomId }, phone_connected { device, at },
- *        phone_disconnected { at }, pairing_error { message }
+ *        phone_disconnected { at }, session_terminated { at },
+ *        pairing_error { message }
  *
  * Auth is handled upstream by socketMiddleware (pairing JWT). Because the JWT
  * is only checked at handshake, an expired token blocks NEW connections while
@@ -73,17 +75,34 @@ module.exports = (io) => {
             socket.data.role = "phone";
             socket.data.device = device || "Mobile device";
 
-            socket.to(roomId).emit("phone_connected", {
+            // Emit to the room (not sender-relative) so the dashboard is
+            // notified regardless of socket timing or reconnections.
+            io.to(roomId).emit("phone_connected", {
                 device: socket.data.device,
                 at: Date.now(),
             });
             console.log(`phone_connected in ${roomId}`);
         });
 
+        socket.on("terminate_session", (ack) => {
+            const roomId = socket.data.roomId;
+            if (roomId) {
+                // A participant (the dashboard) ended the session on purpose ->
+                // notify everyone still in the room (the phone) so it can leave.
+                io.to(roomId).emit("session_terminated", { at: Date.now() });
+                console.log(`session_terminated in ${roomId}`);
+            }
+            // Acknowledge so the dashboard only tears its socket down after the
+            // notification has actually been delivered to the room.
+            if (typeof ack === "function") ack();
+        });
+
         socket.on("disconnect", () => {
             const { roomId, role } = socket.data;
             if (role === "phone" && roomId) {
-                socket.to(roomId).emit("phone_disconnected", { at: Date.now() });
+                // Emit to the room so the dashboard is notified when the
+                // phone disconnects, regardless of socket timing.
+                io.to(roomId).emit("phone_disconnected", { at: Date.now() });
                 console.log(`phone_disconnected in ${roomId}`);
             }
             console.log("Socket disconnected:", socket.id);

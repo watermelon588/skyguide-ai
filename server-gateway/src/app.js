@@ -10,6 +10,7 @@ const http = require("http");
 const { Server } = require("socket.io");
 
 const connectDB = require("./config/db");
+const network = require("./config/network");
 const authRoutes = require("./routes/auth.routes");
 const alignmentRoutes = require("./routes/alignment.routes");
 const initializeSockets = require("./sockets");
@@ -18,14 +19,10 @@ const userRoutes = require("./routes/user.routes");
 
 const app = express();
 
-// Allowed browser origins. Configurable via env so switching between localhost,
-// a LAN IP, ngrok or a Cloudflare Tunnel is a pure env change (no code edits).
-// Accepts a comma-separated list, e.g.
-//   CLIENT_URL="http://localhost:5173,http://192.168.1.20:5173,https://x.ngrok.app"
-const ALLOWED_ORIGINS = (process.env.CLIENT_URL || "http://localhost:5173")
-    .split(",")
-    .map((origin) => origin.trim())
-    .filter(Boolean);
+// Allowed browser origins come from the network config layer (config/network.js),
+// which resolves them from NETWORK_MODE + the per-mode *_CLIENT_URL vars. Switching
+// between localhost, a LAN IP, or a Cloudflare Tunnel is a pure env change.
+const ALLOWED_ORIGINS = network.getAllowedOrigins();
 
 // Reflect the request origin when it is allow-listed. Credentials require a
 // specific origin (never "*"), and requests without an Origin (curl, native
@@ -94,10 +91,13 @@ const startServer = async () => {
     try {
         await connectDB();
 
-        server.listen(PORT, () => {
+        // Bind on 0.0.0.0 (network.getHost) so phones on the LAN and Cloudflare
+        // tunnels can reach the gateway — never bind to localhost only.
+        server.listen(PORT, network.getHost(), () => {
             console.log(
                 `🚀 Gateway listening on port ${PORT} in ${process.env.NODE_ENV} mode`
             );
+            network.logNetworkConfig(PORT);
         });
     } catch (err) {
         console.error("Server startup failed:", err);

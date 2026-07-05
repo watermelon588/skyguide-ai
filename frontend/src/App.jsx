@@ -11,6 +11,7 @@ import ChatWidget from "./components/chatbot/ChatWidget";
 import ChatWindow from "./components/chatbot/ChatWindow";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AppLayout from "./layouts/AppLayout";
+import NetworkStatus from "./components/dev/NetworkStatus";
 
 // Authenticated app pages render inside AppLayout (which provides its own
 // integrated AI sidebar + launcher). Every other page keeps the legacy
@@ -57,6 +58,7 @@ function App() {
           <ChatWindow />
         </>
       )}
+      <NetworkStatus />
     </>
   );
 }

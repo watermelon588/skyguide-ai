@@ -6,65 +6,88 @@ import {
   FiClock,
   FiRefreshCw,
   FiCheckCircle,
+  FiAlertTriangle,
 } from "react-icons/fi";
+import { usePairing } from "../../context/PairingContext";
+import { getQrBaseUrl } from "../../config/network";
 import CountdownTimer from "./CountdownTimer";
 import ConnectionIndicator from "../alignment/ConnectionIndicator";
 import Button from "../ui/Button";
-import { useCountdown } from "../../hooks/useCountdown";
 
 /**
  * Builds the pairing URL encoded into the QR. Only room + token are exposed.
+ * The base URL comes from the network config so the QR points at the LAN IP
+ * or Cloudflare tunnel (never localhost) depending on NETWORK_MODE.
  */
-function buildPairingUrl({ roomId, token }) {
-  const params = new URLSearchParams({ room: roomId, token });
-  return `${window.location.origin}/align?${params.toString()}`;
+function buildPairingUrl({ roomId, pairingToken }) {
+  const params = new URLSearchParams({ room: roomId, token: pairingToken });
+  return `${getQrBaseUrl()}/align?${params.toString()}`;
+}
+
+function formatTime(ts) {
+  if (!ts) return "—";
+  return new Date(ts).toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+/** Small label/value row shared by the connected info panel. */
+function InfoRow({ label, value }) {
+  return (
+    <div className="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 px-3 py-2">
+      <span className="text-xs uppercase tracking-wide text-[#6B7280]">
+        {label}
+      </span>
+      <span className="max-w-[190px] truncate text-sm font-medium text-white">
+        {value}
+      </span>
+    </div>
+  );
 }
 
 /**
- * Pairing session panel: QR, room id, live countdown, connection status, and
- * lifecycle controls.
+ * Pairing modal.
  *
- * Priority of states: connected > expired > active. Once a phone is paired the
- * connection is authoritative — the countdown keeps ticking but only governs
- * whether NEW devices may join; the paired device stays connected and the
- * modal never auto-closes.
+ * Visibility is owned by PairingContext (modalOpen) — this component never
+ * controls the session, only displays it. Two content modes:
  *
- * @param {boolean} open
- * @param {{ roomId:string, token:string, expiresAt:string }|null} session
- * @param {boolean} loading         true while (re)generating a session
- * @param {boolean} phoneConnected  a phone has joined this room
- * @param {() => void} onCancel
- * @param {() => void} onRegenerate
+ *  - Pairing:   QR + countdown + "Waiting for Phone" (status not connected).
+ *  - Connected: read-only info panel (Room, Connected Since, Session Active)
+ *               with Disconnect + Close — NO QR. This is the same panel that
+ *               plays the success beat right before the modal auto-closes.
+ *
+ * Close (X / backdrop / Close button) only hides the modal; the session keeps
+ * running. Only Disconnect ends it.
  */
-export default function QRCodeModal({
-  open,
-  session,
-  loading,
-  phoneConnected,
-  onCancel,
-  onRegenerate,
-}) {
-  const { minutes, seconds, totalSeconds, isExpired } = useCountdown(
-    session?.expiresAt,
-  );
+export default function QRCodeModal() {
+  const {
+    pairing,
+    createPairingSession,
+    disconnectPairing,
+    closeSessionModal,
+  } = usePairing();
+  const { status, roomId, pairingToken, phone, remaining, error, modalOpen } =
+    pairing;
 
-  // Connection wins over the countdown.
-  const connected = !!phoneConnected;
-  const expired = !connected && !!session && isExpired;
-  const urgent = !connected && (expired || (totalSeconds > 0 && totalSeconds < 60));
+  const connected = status === "connected";
+  const expired = status === "expired";
+  const creating = status === "creating";
+  const midSessionError = status === "error" && !!roomId;
 
-  const pairingUrl = session ? buildPairingUrl(session) : "";
+  const pairingUrl =
+    roomId && pairingToken ? buildPairingUrl({ roomId, pairingToken }) : "";
 
   return (
     <AnimatePresence>
-      {open && session && (
+      {modalOpen && (
         <>
           <motion.div
             className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={onCancel}
+            onClick={closeSessionModal}
           />
 
           <motion.div
@@ -88,37 +111,47 @@ export default function QRCodeModal({
                     className={`flex h-11 w-11 items-center justify-center rounded-xl border ${
                       connected
                         ? "border-[#22C55E]/30 bg-[#22C55E]/15"
-                        : "border-orange-400/20 bg-orange-500/15"
+                        : midSessionError
+                          ? "border-[#EF4444]/30 bg-[#EF4444]/10"
+                          : "border-orange-400/20 bg-orange-500/15"
                     }`}
                   >
                     {connected ? (
                       <FiCheckCircle className="text-xl text-[#22C55E]" />
+                    ) : midSessionError ? (
+                      <FiAlertTriangle className="text-xl text-[#EF4444]" />
                     ) : (
                       <FiSmartphone className="text-xl text-orange-400" />
                     )}
                   </div>
                   <div>
                     <h2 className="text-lg font-bold text-white">
-                      {connected ? "Phone Connected" : "Pair Your Phone"}
+                      {connected
+                        ? "Telescope Connected"
+                        : midSessionError
+                          ? "Pairing Error"
+                          : "Pair Your Phone"}
                     </h2>
                     <p className="text-xs text-[#6B7280]">
                       {connected
-                        ? "Ready for Alignment"
-                        : "Scan to connect your device"}
+                        ? "Session active"
+                        : midSessionError
+                          ? error
+                          : "Scan to connect your device"}
                     </p>
                   </div>
                 </div>
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={onCancel}
-                  aria-label={connected ? "Close" : "Cancel session"}
+                  onClick={closeSessionModal}
+                  aria-label="Close"
                 >
                   <FiX className="text-lg" />
                 </Button>
               </div>
 
-              {/* Body: connected panel vs QR (smoothly swapped) */}
+              {/* Body */}
               <AnimatePresence mode="wait">
                 {connected ? (
                   <motion.div
@@ -127,7 +160,7 @@ export default function QRCodeModal({
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -8 }}
                     transition={{ duration: 0.3 }}
-                    className="mt-6 flex flex-col items-center gap-3 py-4"
+                    className="mt-6 flex flex-col items-center gap-3"
                   >
                     <motion.div
                       initial={{ scale: 0.6, opacity: 0 }}
@@ -142,7 +175,18 @@ export default function QRCodeModal({
                     </h3>
                     <p className="text-sm text-[#AAB4C5]">Ready to Align</p>
                   </motion.div>
-                ) : (
+                ) : creating ? (
+                  <motion.div
+                    key="creating"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="mt-6 flex flex-col items-center gap-3 py-8"
+                  >
+                    <FiRefreshCw className="animate-spin text-3xl text-orange-400" />
+                    <p className="text-sm text-[#AAB4C5]">Creating session...</p>
+                  </motion.div>
+                ) : !midSessionError ? (
                   <motion.div
                     key="qr"
                     initial={{ opacity: 0 }}
@@ -165,58 +209,47 @@ export default function QRCodeModal({
                             : "transition"
                         }
                       />
-
                       <AnimatePresence>
-                        {(expired || loading) && (
+                        {expired && (
                           <motion.div
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                             className="absolute inset-0 flex items-center justify-center rounded-2xl bg-white/40"
                           >
-                            {loading ? (
-                              <FiRefreshCw className="animate-spin text-2xl text-[#0b0e14]" />
-                            ) : (
-                              <span className="rounded-lg bg-[#0b0e14] px-3 py-1.5 text-xs font-semibold text-white">
-                                Session Expired
-                              </span>
-                            )}
+                            <span className="rounded-lg bg-[#0b0e14] px-3 py-1.5 text-xs font-semibold text-white">
+                              Session Expired
+                            </span>
                           </motion.div>
                         )}
                       </AnimatePresence>
                     </div>
                   </motion.div>
-                )}
+                ) : null}
               </AnimatePresence>
 
               {/* Meta */}
               <div className="mt-6 space-y-3">
-                <div className="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 px-3 py-2">
-                  <span className="text-xs uppercase tracking-wide text-[#6B7280]">
-                    Room ID
-                  </span>
-                  <span className="max-w-[190px] truncate font-mono text-xs text-[#AAB4C5]">
-                    {session.roomId}
-                  </span>
-                </div>
+                <InfoRow label="Room ID" value={<span className="font-mono">{roomId ?? "—"}</span>} />
 
-                <div className="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 px-3 py-2">
-                  <span className="flex items-center gap-1.5 text-xs uppercase tracking-wide text-[#6B7280]">
-                    <FiClock className="text-sm" />
-                    {connected ? "Session" : "Expires In"}
-                  </span>
-                  {connected ? (
-                    <span className="text-sm font-semibold text-[#22C55E]">
-                      Active
+                {connected ? (
+                  <InfoRow
+                    label="Connected"
+                    value={formatTime(phone.connectedAt)}
+                  />
+                ) : (
+                  <div className="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 px-3 py-2">
+                    <span className="flex items-center gap-1.5 text-xs uppercase tracking-wide text-[#6B7280]">
+                      <FiClock className="text-sm" />
+                      Expires In
                     </span>
-                  ) : (
                     <CountdownTimer
-                      minutes={minutes}
-                      seconds={seconds}
-                      urgent={urgent}
+                      minutes={remaining.minutes}
+                      seconds={remaining.seconds}
+                      urgent={remaining.urgent}
                     />
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
 
               {/* Connection status */}
@@ -227,7 +260,7 @@ export default function QRCodeModal({
                   <span className="text-[#6B7280]">
                     Generate a new session to continue.
                   </span>
-                ) : (
+                ) : midSessionError ? null : creating ? null : (
                   <ConnectionIndicator tone="waiting" label="Waiting for Phone..." />
                 )}
               </div>
@@ -235,31 +268,60 @@ export default function QRCodeModal({
               {/* Actions */}
               <div className="mt-6 flex gap-3">
                 {connected ? (
-                  <Button variant="secondary" onClick={onCancel} className="flex-1">
-                    Close
-                  </Button>
+                  <>
+                    <Button
+                      variant="secondary"
+                      onClick={closeSessionModal}
+                      className="flex-1"
+                    >
+                      Close
+                    </Button>
+                    <Button
+                      variant="danger"
+                      onClick={disconnectPairing}
+                      className="flex-1"
+                    >
+                      Disconnect
+                    </Button>
+                  </>
                 ) : expired ? (
                   <Button
                     variant="primary"
-                    onClick={onRegenerate}
-                    loading={loading}
+                    onClick={createPairingSession}
                     className="flex-1"
                   >
                     Generate New Session
                   </Button>
-                ) : (
+                ) : midSessionError ? (
                   <>
                     <Button
                       variant="secondary"
-                      onClick={onCancel}
+                      onClick={disconnectPairing}
                       className="flex-1"
                     >
                       Cancel
                     </Button>
                     <Button
                       variant="primary"
-                      onClick={onRegenerate}
-                      loading={loading}
+                      onClick={createPairingSession}
+                      className="flex-1"
+                    >
+                      Try Again
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Button
+                      variant="secondary"
+                      onClick={disconnectPairing}
+                      className="flex-1"
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      variant="primary"
+                      onClick={createPairingSession}
+                      disabled={creating}
                       className="flex-1"
                     >
                       Generate New QR

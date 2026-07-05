@@ -1,16 +1,18 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FaLocationDot } from "react-icons/fa6";
 import {
   FiEdit3,
   FiRefreshCw,
-  FiCloud,
   FiAlertTriangle,
   FiCheck,
 } from "react-icons/fi";
 import { useLocation } from "../../hooks/useLocation";
+import { useWeather } from "../../hooks/useWeather";
 import { getObserverLocation, formatPlaceName } from "../../utils/location";
 import Button from "../ui/Button";
+import WeatherButton from "../weather/WeatherButton";
+import WeatherPopover from "../weather/WeatherPopover";
 
 const SPRING = { type: "spring", stiffness: 400, damping: 32 };
 
@@ -85,6 +87,40 @@ export default function ObserverCard({ onEdit }) {
 
   const placeName = formatPlaceName({ city, state, country });
 
+  // --- Weather accordion state (lifted so the panel can expand inline) ---
+  const [weatherOpen, setWeatherOpen] = useState(false);
+  // Latches on first open so the query stays enabled (cached) afterwards.
+  const [weatherActivated, setWeatherActivated] = useState(false);
+  const hasCoords =
+    typeof latitude === "number" && typeof longitude === "number";
+
+  const {
+    data: weatherData,
+    isLoading: weatherLoading,
+    isError: weatherError,
+    isFetching: weatherFetching,
+    refetch: refetchWeather,
+  } = useWeather({ latitude, longitude, enabled: weatherActivated });
+
+  const toggleWeather = () => {
+    if (!hasCoords) return;
+    if (!weatherActivated) setWeatherActivated(true);
+    setWeatherOpen((prev) => !prev);
+  };
+
+  // Escape collapses the panel.
+  useEffect(() => {
+    if (!weatherOpen) return;
+    const onKey = (e) => e.key === "Escape" && setWeatherOpen(false);
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [weatherOpen]);
+
+  const weather = weatherData?.weather;
+  const weatherQuality = weatherData?.observing_conditions?.observing_quality;
+  // Spinner in the capsule only during the very first fetch (no cached data).
+  const weatherLoadingFirst = weatherFetching && !weatherData;
+
   // Auto-return the Refresh action to its idle label after showing feedback.
   useEffect(() => {
     if (status !== "success" && status !== "denied" && status !== "error") {
@@ -109,11 +145,13 @@ export default function ObserverCard({ onEdit }) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
       className="
-        flex w-full flex-wrap items-center gap-x-6 gap-y-4
-        rounded-2xl border border-white/10 bg-white/5 px-5 py-3
+        flex w-full flex-col overflow-hidden
+        rounded-2xl border border-white/10 bg-white/5
         shadow-2xl backdrop-blur-3xl transition-all
       "
     >
+      {/* Summary row — the collapsed Observer bar (unchanged height). */}
+      <div className="flex w-full flex-wrap items-center gap-x-6 gap-y-4 px-5 py-3">
       {/* Left: identity */}
       <div className="flex min-w-0 items-center gap-3">
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-orange-400/20 bg-orange-500/15">
@@ -152,11 +190,15 @@ export default function ObserverCard({ onEdit }) {
         </motion.div>
       </AnimatePresence>
 
-      {/* Weather placeholder — Phase 17. Sits inline, adds no height. */}
-      <div className="flex items-center gap-1.5 rounded-lg border border-dashed border-white/10 bg-white/5 px-2.5 py-1.5 text-[11px] text-[#6B7280]">
-        <FiCloud className="text-sm" />
-        Weather soon
-      </div>
+      {/* Live weather — controlled capsule; expands the accordion below. */}
+      <WeatherButton
+        open={weatherOpen}
+        onToggle={toggleWeather}
+        weather={weather}
+        quality={weatherQuality}
+        loading={weatherLoadingFirst}
+        disabled={!hasCoords}
+      />
 
       {/* Right: actions. The Refresh slot expands horizontally (width only) to
           reveal state inline; height stays constant, no wrapping inside. */}
@@ -187,6 +229,38 @@ export default function ObserverCard({ onEdit }) {
           </motion.span>
         </motion.button>
       </div>
+      </div>
+      {/* End summary row */}
+
+      {/* Weather accordion — expands inline (height + opacity), full card width.
+          Normal flow, so the Sync Telescope card is simply pushed down. */}
+      <AnimatePresence initial={false}>
+        {weatherOpen && (
+          <motion.div
+            key="weather-panel"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ type: "spring", bounce: 0, duration: 0.25 }}
+            className="w-full overflow-hidden"
+          >
+            <div
+              className="border-t border-white/[0.08] px-5 py-4"
+              style={{
+                background: "rgba(20,22,30,0.95)",
+                backdropFilter: "blur(20px)",
+              }}
+            >
+              <WeatherPopover
+                data={weatherData}
+                isLoading={weatherLoading}
+                isError={weatherError}
+                onRetry={refetchWeather}
+              />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.section>
   );
 }
