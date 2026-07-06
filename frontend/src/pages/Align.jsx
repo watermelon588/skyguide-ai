@@ -4,17 +4,20 @@ import { motion } from "framer-motion";
 import { FiAlertTriangle } from "react-icons/fi";
 import { AlignPairingProvider, usePairing } from "../context/PairingContext";
 import PairingStatus from "../components/alignment/PairingStatus";
+import SensorPermissionPanel from "../components/alignment/SensorPermissionPanel";
 import Button from "../components/ui/Button";
 
 // A pairing token is a JWT: three base64url segments separated by dots.
 const JWT_SHAPE = /^[\w-]+\.[\w-]+\.[\w-]+$/;
 
 /**
- * Mobile Telescope Companion — pairing page.
+ * Mobile Telescope Companion — pairing + sensor streaming page.
  *
- * Phase 1 scope: read room + token, validate their format, then open the
- * pairing socket (Connecting → Authenticating → Connected). No sensors,
- * orientation, or alignment yet — those are Session 5.
+ * Reads room + token from the QR, validates their format, opens the pairing
+ * socket (Connecting → Authenticating → Connected), then hands off to
+ * SensorPermissionPanel which turns the phone into a realtime orientation
+ * sensor streaming to the paired dashboard. No alignment math here — that is
+ * the future Orientation Engine's job.
  */
 export default function Align() {
   const [params] = useSearchParams();
@@ -78,9 +81,10 @@ function AlignPairingView({ room }) {
           Return to Home
         </Button>
       ) : (
-        <p className="mt-6 text-center text-xs text-[#4B5563]">
-          Realtime orientation streaming coming soon.
-        </p>
+        // Mounted for the whole session (not just while "connected") so
+        // sensor permission state survives reconnects; it renders nothing
+        // until the phone is paired.
+        <SensorPermissionPanel />
       )}
     </>
   );

@@ -66,7 +66,7 @@ export default function TelescopeSearch({ onSelect, selectedId }) {
       </div>
 
       {/* Results */}
-      <div className="mt-3 max-h-64 min-h-0 space-y-1.5 overflow-y-auto pr-1">
+      <div className="no-scrollbar mt-3 max-h-64 min-h-0 space-y-1.5 overflow-y-auto pr-1">
         {results.length === 0 ? (
           <p className="py-6 text-center text-sm text-[#6B7280]">
             No telescopes match “{query}”. Add a custom one below.

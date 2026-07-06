@@ -5,6 +5,11 @@ import Button from "../ui/Button";
 import ConnectionIndicator from "../alignment/ConnectionIndicator";
 import ConnectedDeviceCard from "./ConnectedDeviceCard";
 import QRCodeModal from "./QRCodeModal";
+import {
+  DASHBOARD_CARD_SHELL,
+  DASHBOARD_CARD_ROW,
+  CardIdentity,
+} from "./DashboardCard";
 
 const PENDING_INDICATOR = {
   creating: { tone: "connecting", label: "Starting session..." },
@@ -22,19 +27,20 @@ function PairingPendingCard({ status, onViewQr, onCancel }) {
   const busy = status === "creating";
 
   return (
-    <div className="flex flex-wrap items-center gap-4">
-      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-orange-400/20 bg-orange-500/15">
-        <FiSmartphone className="text-xl text-orange-400" />
-      </div>
-      <div className="min-w-0 flex-1">
-        <h3 className="text-base font-bold text-white">Pairing In Progress</h3>
-        <ConnectionIndicator tone={indicator.tone} label={indicator.label} />
-      </div>
-      <div className="flex shrink-0 gap-2">
-        <Button variant="secondary" onClick={onCancel} disabled={busy}>
+    <div className={DASHBOARD_CARD_ROW}>
+      <CardIdentity
+        className="flex-1"
+        icon={<FiSmartphone className="text-lg text-orange-400" />}
+        title="Pairing In Progress"
+        subtitle={
+          <ConnectionIndicator tone={indicator.tone} label={indicator.label} />
+        }
+      />
+      <div className="ml-auto flex shrink-0 gap-2">
+        <Button variant="secondary" size="sm" onClick={onCancel} disabled={busy}>
           Cancel
         </Button>
-        <Button variant="primary" onClick={onViewQr} disabled={busy}>
+        <Button variant="primary" size="sm" onClick={onViewQr} disabled={busy}>
           View QR
         </Button>
       </div>
@@ -46,17 +52,19 @@ function PairingPendingCard({ status, onViewQr, onCancel }) {
 function SyncPromptCard({ error, onSync }) {
   return (
     <>
-      <div className="flex flex-wrap items-center gap-4">
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-orange-400/20 bg-orange-500/15">
-          <FiSmartphone className="text-xl text-orange-400" />
-        </div>
-        <div className="min-w-0 flex-1">
-          <h3 className="text-base font-bold text-white">Sync Telescope</h3>
-          <p className="mt-0.5 text-sm text-[#AAB4C5]">
-            Connect your mobile device to begin telescope alignment.
-          </p>
-        </div>
-        <Button variant="primary" onClick={onSync} className="shrink-0">
+      <div className={DASHBOARD_CARD_ROW}>
+        <CardIdentity
+          className="flex-1"
+          icon={<FiSmartphone className="text-lg text-orange-400" />}
+          title="Sync Telescope"
+          subtitle="Connect your mobile device to begin telescope alignment."
+        />
+        <Button
+          variant="primary"
+          size="sm"
+          onClick={onSync}
+          className="ml-auto shrink-0"
+        >
           <FiSmartphone className="text-base" />
           Sync Telescope
         </Button>
@@ -128,10 +136,7 @@ export default function SyncTelescopeCard() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.3 }}
-            className="
-              w-full rounded-2xl border border-white/10 bg-white/5 p-6
-              shadow-2xl backdrop-blur-3xl transition-all
-            "
+            className={DASHBOARD_CARD_SHELL}
           >
             {cardKind === "pending" ? (
               <PairingPendingCard

@@ -78,7 +78,7 @@ export default function Dropdown({
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -6, scale: 0.98 }}
               transition={{ duration: 0.16 }}
-              className="absolute z-50 mt-1.5 max-h-56 w-full overflow-y-auto rounded-lg border border-white/10 bg-[#12141C]/95 p-1 shadow-2xl backdrop-blur-xl"
+              className="no-scrollbar absolute z-50 mt-1.5 max-h-56 w-full overflow-y-auto rounded-lg border border-white/10 bg-[#12141C]/95 p-1 shadow-2xl backdrop-blur-xl"
             >
               {options.map((option) => {
                 const active = option === value;

@@ -152,7 +152,7 @@ export default function TelescopeModal({ open, initial, onClose, onSave, onDelet
               </div>
 
               {/* Body */}
-              <div className="grid min-h-0 flex-1 grid-cols-1 gap-6 overflow-y-auto p-6 lg:grid-cols-[1fr_320px]">
+              <div className="no-scrollbar grid min-h-0 flex-1 grid-cols-1 gap-6 overflow-y-auto p-6 lg:grid-cols-[1fr_320px]">
                 {/* Left: search + form */}
                 <div className="min-w-0 space-y-5">
                   <section>

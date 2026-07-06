@@ -16,6 +16,7 @@ const alignmentRoutes = require("./routes/alignment.routes");
 const initializeSockets = require("./sockets");
 const chatRoutes = require("./routes/chat.routes");
 const userRoutes = require("./routes/user.routes");
+const telescopeRoutes = require("./routes/telescope.routes");
 
 const app = express();
 
@@ -66,6 +67,7 @@ app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/alignment", alignmentRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/v1/users", userRoutes);
+app.use("/api/v1/telescope", telescopeRoutes);
 
 
 app.get("/health", (req, res) => {

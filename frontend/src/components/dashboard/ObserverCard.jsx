@@ -13,6 +13,7 @@ import { getObserverLocation, formatPlaceName } from "../../utils/location";
 import Button from "../ui/Button";
 import WeatherButton from "../weather/WeatherButton";
 import WeatherPopover from "../weather/WeatherPopover";
+import { DASHBOARD_CARD_ROW, CardIdentity } from "./DashboardCard";
 
 const SPRING = { type: "spring", stiffness: 400, damping: 32 };
 
@@ -151,24 +152,19 @@ export default function ObserverCard({ onEdit }) {
       "
     >
       {/* Summary row — the collapsed Observer bar (unchanged height). */}
-      <div className="flex w-full flex-wrap items-center gap-x-6 gap-y-4 px-5 py-3">
+      <div className={`${DASHBOARD_CARD_ROW} px-5 py-3`}>
       {/* Left: identity */}
-      <div className="flex min-w-0 items-center gap-3">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-orange-400/20 bg-orange-500/15">
-          <FaLocationDot className="text-lg text-orange-400" />
-        </div>
-        <div className="min-w-0 leading-tight">
-          <p className="text-sm font-bold text-white">Observer Location</p>
-          <p className="truncate text-xs text-[#AAB4C5]">
-            {placeName ?? "Location name unavailable"}
-          </p>
-        </div>
-
-        <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] font-medium text-[#22C55E]">
-          <span className="h-1.5 w-1.5 rounded-full bg-[#22C55E]" />
-          Active
-        </span>
-      </div>
+      <CardIdentity
+        icon={<FaLocationDot className="text-lg text-orange-400" />}
+        title="Observer Location"
+        subtitle={placeName ?? "Location name unavailable"}
+        trailing={
+          <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] font-medium text-[#22C55E]">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#22C55E]" />
+            Active
+          </span>
+        }
+      />
 
       {/* Middle: inline stats (animate on change for a smooth success cue) */}
       <AnimatePresence mode="wait">

@@ -7,6 +7,11 @@ import { formatFocalRatio } from "../../utils/telescopeCalculations";
 import TelescopeTypeBadge from "../telescope/TelescopeTypeBadge";
 import TelescopeModal from "../telescope/TelescopeModal";
 import Button from "../ui/Button";
+import {
+  DASHBOARD_CARD_CLASS,
+  DASHBOARD_CARD_MOTION,
+  CardIdentity,
+} from "./DashboardCard";
 
 /** Inline stat (label + value) for the compact status bar. */
 function Stat({ label, value }) {
@@ -36,16 +41,13 @@ function Chip({ label, on }) {
   );
 }
 
-const CARD_CLASS =
-  "flex w-full flex-wrap items-center gap-x-6 gap-y-4 rounded-2xl border border-white/10 bg-white/5 px-5 py-3 shadow-2xl backdrop-blur-3xl transition-all";
-
 /**
  * Telescope configuration dashboard slot.
  *
  * Compact horizontal card (like Observer Location) when a telescope is saved;
  * an inviting empty state otherwise. Owns the configuration modal. All
- * persistence goes through useTelescope → telescope.storage (LocalStorage for
- * now), so Session 11 can swap in the REST service with no change here.
+ * persistence goes through useTelescope → telescope.service (REST + React
+ * Query); this card never touches storage directly.
  */
 export default function TelescopeCard() {
   const { telescope, hasTelescope, saveTelescope, deleteTelescope } =
@@ -68,29 +70,22 @@ export default function TelescopeCard() {
 
   return (
     <>
-      <motion.section
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-        className={CARD_CLASS}
-      >
+      <motion.section {...DASHBOARD_CARD_MOTION} className={DASHBOARD_CARD_CLASS}>
         {hasTelescope ? (
           <>
             {/* Identity */}
-            <div className="flex min-w-0 items-center gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-orange-400/20 bg-orange-500/15">
-                <TbTelescope className="text-lg text-orange-400" />
-              </div>
-              <div className="min-w-0 leading-tight">
-                <p className="truncate text-sm font-bold text-white">{title}</p>
-                <p className="truncate text-xs text-[#AAB4C5]">
-                  {telescope.nickname?.trim()
-                    ? [telescope.brand, telescope.model].filter(Boolean).join(" ")
-                    : "Telescope configured"}
-                </p>
-              </div>
-              <TelescopeTypeBadge type={telescope.type} className="shrink-0" />
-            </div>
+            <CardIdentity
+              icon={<TbTelescope className="text-lg text-orange-400" />}
+              title={title}
+              subtitle={
+                telescope.nickname?.trim()
+                  ? [telescope.brand, telescope.model].filter(Boolean).join(" ")
+                  : "Telescope configured"
+              }
+              trailing={
+                <TelescopeTypeBadge type={telescope.type} className="shrink-0" />
+              }
+            />
 
             {/* Optics */}
             <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
@@ -121,18 +116,13 @@ export default function TelescopeCard() {
           </>
         ) : (
           <>
-            <div className="flex min-w-0 flex-1 items-center gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/5">
-                <TbTelescope className="text-lg text-[#6B7280]" />
-              </div>
-              <div className="min-w-0">
-                <p className="text-sm font-bold text-white">No telescope configured</p>
-                <p className="truncate text-xs text-[#AAB4C5]">
-                  Configure your telescope to receive personalized observation
-                  recommendations.
-                </p>
-              </div>
-            </div>
+            <CardIdentity
+              className="flex-1"
+              icon={<TbTelescope className="text-lg text-[#6B7280]" />}
+              iconClassName="border-white/10 bg-white/5"
+              title="No telescope configured"
+              subtitle="Configure your telescope to receive personalized observation recommendations."
+            />
             <Button
               variant="primary"
               size="sm"

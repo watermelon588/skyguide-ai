@@ -226,6 +226,10 @@ export function PairingProvider({ children }) {
           urgent: totalSeconds > 0 && totalSeconds < 60,
         },
       },
+      // Stable ref to the live pairing socket. Consumers (sensor feed) attach
+      // their own listeners keyed off pairing.status transitions — the socket
+      // itself stays owned by usePairingChannel.
+      socketRef,
       createPairingSession,
       disconnectPairing,
       openSessionModal,
@@ -267,11 +271,16 @@ export function AlignPairingProvider({ roomId, pairingToken, children }) {
     }),
   );
 
+  // Live handle to the phone socket so the sensor stream (useSensorStream)
+  // can emit on the same connection instead of opening a second one.
+  const socketRef = useRef(null);
+
   usePairingChannel({
     role: "phone",
     roomId: state.roomId,
     pairingToken: state.pairingToken,
     dispatch,
+    socketRef,
   });
 
   const value = useMemo(
@@ -282,6 +291,7 @@ export function AlignPairingProvider({ roomId, pairingToken, children }) {
         pairingToken: state.pairingToken,
         error: state.error,
       },
+      socketRef,
     }),
     [state],
   );

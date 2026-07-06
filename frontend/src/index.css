@@ -35,3 +35,30 @@ body {
   min-height: 100vh;
   width: 100%;
 }
+
+/* Reusable utility: hide the scrollbar while keeping scroll behaviour intact.
+   Applied to specific scroll containers (telescope modal, search results,
+   dropdowns). Scrollbars stay visible everywhere else. */
+.no-scrollbar {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* legacy Edge / IE */
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, other WebKit/Blink */
+  width: 0;
+  height: 0;
+}
+
+/* Remove the native up/down spinners from number inputs app-wide, keeping
+   keyboard + wheel input intact. Matches the premium dark aesthetic. */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield; /* Firefox */
+  appearance: textfield;
+}
