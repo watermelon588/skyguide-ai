@@ -1,0 +1,11 @@
+{
+  "name": "skyguide-ai",
+  "private": true,
+  "version": "1.0.0",
+  "description": "SkyGuide AI — root development orchestrator (local / LAN / tunnel network modes)",
+  "scripts": {
+    "dev": "node scripts/dev.js local",
+    "dev:lan": "node scripts/dev.js lan",
+    "dev:tunnel": "node scripts/dev.js tunnel"
+  }
+}

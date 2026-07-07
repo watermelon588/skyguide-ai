@@ -4,6 +4,8 @@ import ManualLocationModal from "../components/dashboard/ManualLocationModal";
 import ObserverCard from "../components/dashboard/ObserverCard";
 import TelescopeCard from "../components/dashboard/TelescopeCard";
 import SyncTelescopeCard from "../components/dashboard/SyncTelescopeCard";
+import OrientationPanelCard from "../components/dashboard/OrientationPanelCard";
+import AlignmentPanelCard from "../components/dashboard/AlignmentPanelCard";
 import { useLocation } from "../hooks/useLocation";
 import { getObserverLocation } from "../utils/location";
 import { PairingProvider } from "../context/PairingContext";
@@ -32,6 +34,10 @@ export default function Dashboard() {
         {hasLocation && <ObserverCard onEdit={() => setManualOpen(true)} />}
         <TelescopeCard />
         <SyncTelescopeCard />
+        {/* Temporary Session 13 panel — renders only while a phone is paired. */}
+        <OrientationPanelCard />
+        {/* Session 14: backend alignment engine readout (paired only). */}
+        <AlignmentPanelCard />
       </div>
 
       <LocationPermissionModal

@@ -9,11 +9,16 @@ const sendTokenCookie = (user, statusCode, res) => {
         expiresIn: "7d",
     });
 
+    const isSecure =
+    process.env.NODE_ENV === "production" ||
+    process.env.NETWORK_MODE === "tunnel";
+
+
     const cookieOptions = {
         expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // Expires in 7 days matching token
         httpOnly: true, // Prevents XSS scripts reading cookie token
-        secure: process.env.NODE_ENV === "production", // Only transmits cookie over HTTPS in production
-        sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", // Protects against CSRF leaks
+        secure: isSecure ,
+        sameSite: isSecure ? "none" : "lax",
     };
 
     res.status(statusCode).cookie("jwt", token, cookieOptions).json({

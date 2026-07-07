@@ -50,6 +50,16 @@ module.exports = (io) => {
             socket.to(roomId).volatile.emit("sensor_frame", packet);
         });
 
+        // Session 13: the phone streams the normalized orientation MODEL
+        // (computed on-device) instead of raw frames. Same guards, same
+        // volatile relay — a superseded pose is worthless once late.
+        socket.on("orientation_update", (packet) => {
+            const roomId = streamRoomFor(socket);
+            if (!roomId || !isRelayable(packet)) return;
+
+            socket.to(roomId).volatile.emit("orientation_update", packet);
+        });
+
         socket.on("sensor_status", (status) => {
             const roomId = streamRoomFor(socket);
             if (!roomId || !isRelayable(status)) return;

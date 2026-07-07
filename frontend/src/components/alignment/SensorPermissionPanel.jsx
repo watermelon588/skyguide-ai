@@ -3,11 +3,11 @@ import { FiCompass, FiLock, FiSlash, FiAlertTriangle } from "react-icons/fi";
 import Button from "../ui/Button";
 import SensorStreamIndicator from "./SensorStreamIndicator";
 import { usePairing } from "../../context/PairingContext";
-import { useSensorStream } from "../../hooks/useSensorStream";
+import { useOrientationStream } from "../../hooks/useOrientationStream";
 
 /**
- * Phone-side sensor section for /align — owns the useSensorStream lifecycle
- * and maps its permission state machine to UI:
+ * Phone-side sensor section for /align — owns the useOrientationStream
+ * lifecycle and maps its permission state machine to UI:
  *
  *   needs_permission -> "Enable Motion Sensors" button (iOS gesture gate)
  *   denied           -> recovery guidance + retry
@@ -20,7 +20,7 @@ import { useSensorStream } from "../../hooks/useSensorStream";
  */
 export default function SensorPermissionPanel() {
   const { pairing } = usePairing();
-  const stream = useSensorStream();
+  const stream = useOrientationStream();
 
   if (pairing.status !== "connected") return null;
   if (stream.permission === "checking") return null;
@@ -52,6 +52,7 @@ function PanelBody({ stream }) {
         paused={stream.paused}
         sensors={stream.sensors}
         targetHz={stream.targetHz}
+        display={stream.display}
       />
     );
   }

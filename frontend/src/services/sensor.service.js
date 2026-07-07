@@ -47,13 +47,15 @@ function needsExplicitPermission() {
 export function getSensorCapability() {
   if (typeof window === "undefined") return "unsupported";
 
+  // Checked FIRST: on insecure origins (e.g. LAN http) Chrome removes the
+  // DeviceOrientation/DeviceMotion interfaces from window entirely, so an
+  // API-presence check alone would misreport this as "unsupported" and hide
+  // the actionable fix (use HTTPS).
+  if (!window.isSecureContext) return "insecure_context";
+
   const hasOrientation = "DeviceOrientationEvent" in window;
   const hasMotion = "DeviceMotionEvent" in window;
   if (!hasOrientation && !hasMotion) return "unsupported";
-
-  // Chrome and Safari withhold motion events on insecure origins (e.g. LAN
-  // http). Surface an explicit state instead of a silently empty stream.
-  if (!window.isSecureContext) return "insecure_context";
 
   return needsExplicitPermission() ? "needs_permission" : "auto";
 }
@@ -108,6 +110,8 @@ export function createSensorEngine() {
   let motionSeen = false;
   let probeTimer = null;
   let running = false;
+  let orientationCb = null;
+  let motionCb = null;
 
   // Compass-referenced alpha when the browser offers it.
   const orientationEventName =
@@ -126,6 +130,7 @@ export function createSensorEngine() {
       compassHeading: round(event.webkitCompassHeading),
       compassAccuracy: round(event.webkitCompassAccuracy),
     };
+    if (orientationCb) orientationCb(latestOrientation);
   }
 
   function handleMotion(event) {
@@ -142,20 +147,29 @@ export function createSensorEngine() {
         : null,
       interval: round(event.interval, 1),
     };
+    if (motionCb) motionCb(latestMotion);
   }
 
   return {
     /**
      * Attach listeners and start the first-event probe.
-     * @param {{ onAvailability?: (a: {orientation: boolean, motion: boolean}) => void }} opts
+     * @param {{
+     *   onAvailability?: (a: {orientation: boolean, motion: boolean}) => void,
+     *   onOrientation?: (sample: object) => void,
+     *   onMotion?: (sample: object) => void,
+     * }} opts
      *   onAvailability fires once, after PROBE_TIMEOUT_MS, reporting which
      *   sensor groups actually delivered events (catches silent blocking).
+     *   onOrientation/onMotion fire per event at native rate — for consumers
+     *   (the orientation engine) that need every sample, not a poll.
      */
-    start({ onAvailability } = {}) {
+    start({ onAvailability, onOrientation, onMotion } = {}) {
       if (running || typeof window === "undefined") return;
       running = true;
       orientationSeen = false;
       motionSeen = false;
+      orientationCb = onOrientation ?? null;
+      motionCb = onMotion ?? null;
 
       window.addEventListener(orientationEventName, handleOrientation);
       window.addEventListener("devicemotion", handleMotion);
@@ -179,6 +193,8 @@ export function createSensorEngine() {
       }
       latestOrientation = null;
       latestMotion = null;
+      orientationCb = null;
+      motionCb = null;
     },
 
     /** Latest values per group — null until that sensor has fired. */

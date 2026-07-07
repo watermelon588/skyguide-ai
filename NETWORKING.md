@@ -120,7 +120,45 @@ TUNNEL_CLIENT_URL=https://your-subdomain.trycloudflare.com
 
 ---
 
-## Cloudflare Tunnel setup
+## Cloudflare Tunnel setup — automated (recommended)
+
+Tunnel Mode is fully automated. From the repo root:
+
+```
+npm run dev:tunnel
+```
+
+The orchestrator (`scripts/dev.js`) then:
+
+1. Verifies `cloudflared` is installed and ports 5173/5000/8000 are free.
+2. Starts three Cloudflare Quick Tunnels concurrently (frontend, gateway, astro)
+   and captures the generated `*.trycloudflare.com` URLs.
+3. Writes a visibility artifact to `.runtime/tunnel.json` (gitignored, deleted
+   on shutdown — never read by app code).
+4. Starts the Astro Engine, Gateway, and Frontend with the URLs injected as
+   **process environment variables**: `VITE_TUNNEL_FRONTEND_URL`,
+   `VITE_API_TUNNEL`, `VITE_ASTRO_TUNNEL`, `TUNNEL_CLIENT_URL`, and an extended
+   `CORS_ORIGINS` for the Astro Engine.
+
+Because all three config layers give real env vars top priority (Vite env >
+`.env` files; `dotenv` never overrides existing env; pydantic-settings prefers
+env over `.env`), the existing `network.js` layers resolve the fresh URLs with
+**zero code changes and zero `.env` edits**. Tunnels are created *before* the
+services boot, so Vite compiles the final URLs on first start — nothing ever
+restarts or regenerates mid-session. `Ctrl+C` tears down all services and
+tunnels.
+
+Root convenience commands (per-service `npm run dev` commands are unchanged):
+
+```
+npm run dev          # all services, local mode
+npm run dev:lan      # all services, LAN mode (URLs from your .env files)
+npm run dev:tunnel   # all services + automated Quick Tunnels
+```
+
+---
+
+## Cloudflare Tunnel setup — manual (fallback)
 
 Quick, no-account "try" tunnels (temporary `*.trycloudflare.com` URLs):
 

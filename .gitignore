@@ -46,6 +46,10 @@ tmp/
 temp/
 *.tmp
 
+# Generated runtime config (dev tunnel pipeline)
+
+.runtime/
+
 # Coverage
 
 coverage/
