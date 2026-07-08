@@ -15,6 +15,10 @@ import { usePairing } from "../context/PairingContext";
  *
  * All math lives on the backend; this hook only moves messages into state
  * and lets the dashboard request a target.
+ *
+ * packetRef exposes the raw { update, receivedAt } buffer for consumers that
+ * render outside React (the Alignment Mode canvas reads it per animation
+ * frame at 60fps — packets arrive at ≤10Hz and the scene interpolates).
  */
 
 const UI_COMMIT_MS = 250;
@@ -124,5 +128,6 @@ export function useAlignmentFeed() {
     pending,
     setTarget,
     clearTarget,
+    packetRef: bufferRef,
   };
 }

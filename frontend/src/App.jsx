@@ -1,4 +1,5 @@
 import "./App.css";
+import { lazy, Suspense } from "react";
 import { Route, Routes } from "react-router-dom";
 import SocketTest from "./pages/SocketTest";
 import AuthTest from "./pages/AuthTest";
@@ -17,7 +18,13 @@ import NetworkStatus from "./components/dev/NetworkStatus";
 // integrated AI sidebar + launcher). Every other page keeps the legacy
 // floating overlay chat so the Landing page is unchanged.
 const APP_PATHS = ["/dashboard"];
-const HIDE_CHAT_ON = ["/login", "/signup", "/align"];
+const HIDE_CHAT_ON = ["/login", "/signup", "/align", "/align-lab"];
+
+// Dev-only Alignment Mode simulator. The dead branch is eliminated from
+// production builds, so the lab never ships.
+const AlignLab = import.meta.env.DEV
+  ? lazy(() => import("./pages/AlignLab"))
+  : null;
 
 function App() {
   const location = useLocation();
@@ -49,6 +56,16 @@ function App() {
           }
         />
         <Route path="/align" element={<Align />} />
+        {AlignLab && (
+          <Route
+            path="/align-lab"
+            element={
+              <Suspense fallback={null}>
+                <AlignLab />
+              </Suspense>
+            }
+          />
+        )}
         <Route path="/socket-test" element={<SocketTest />} />
         <Route path="/auth-test" element={<AuthTest />} />
       </Routes>
