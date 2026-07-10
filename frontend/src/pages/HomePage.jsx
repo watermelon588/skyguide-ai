@@ -1,73 +1,38 @@
-import React from "react";
-import { useNavigate } from "react-router-dom";
-import { Navbar } from "../components/Navbar";
+import { useRef } from "react";
 
+import Starfield from "../components/tonight/Starfield";
+import HomeNav from "../components/home/HomeNav";
+import HomeHero from "../components/home/HomeHero";
+import FeatureGrid from "../components/home/FeatureGrid";
+import HowItWorks from "../components/home/HowItWorks";
+import CtaFooter from "../components/home/CtaFooter";
+import Footer from "../components/Footer";
+import { useReveal } from "../components/tonight/fx/useReveal";
+
+/**
+ * Landing page — same night-sky material as /tonight (starfield canvas,
+ * glass, orange accent) so the marketing surface and the instrument feel
+ * like one product. GSAP owns the hero entrance and scroll reveals; Framer
+ * Motion owns button/nav micro-interactions. Static content is always ready,
+ * so reveal choreography registers immediately.
+ */
 export default function HomePage() {
-  const navigate = useNavigate();
+  const scope = useRef(null);
+  useReveal(scope, true);
+
   return (
-    <div className="min-h-screen bg-transparent text-white">
-      {/* Navbar */}
-      <Navbar />
-
-      {/* Hero Section */}
-      <section className="max-w-7xl mx-auto h-[85vh] grid grid-cols-2 items-center px-12">
-        {/* Left Side */}
-        <div className="space-y-8">
-          <h1 className="text-5xl font-extrabold leading-tight">
-            Discover the
-            <br />
-            Universe
-            <br />
-            One Night at
-            <br />a Time.
-          </h1>
-
-          <p className="max-w-lg text-gray-300 text-lg leading-relaxed">
-            Your intelligent astronomy companion that recommends the best
-            celestial objects to observe based on your location, telescope,
-            weather conditions, and the current night sky.
-          </p>
-          <div className="flex gap-5">
-            <button
-              className="
-              px-7
-              py-2
-              rounded-xl
-              border
-              border-white/50
-              bg-white/10
-              backdrop-blur-md
-              hover:bg-white/20
-              transition
-              font-semibold
-            "
-              onClick={() => navigate("/login")}
-            >
-              Get Started
-            </button>
-            <button
-              className="
-              px-7
-              py-2
-              rounded-xl
-              border
-              border-white/50
-              bg-white/10
-              backdrop-blur-md
-              hover:bg-white/20
-              transition
-              font-semibold
-            "
-              onClick={() => navigate("/about")}
-            >
-              Learn More
-            </button>
-          </div>
-        </div>
-
-        {/* Right Side */}
-        <div></div>
-      </section>
+    <div ref={scope} className="relative min-h-screen bg-[#05070A] text-white">
+      <Starfield />
+      <HomeNav />
+      <HomeHero />
+      <main className="relative z-10 flex flex-col gap-28 pt-8">
+        <FeatureGrid />
+        <HowItWorks />
+        <CtaFooter />
+      </main>
+      <div className="mt-24">
+        <Footer />
+      </div>
     </div>
   );
 }

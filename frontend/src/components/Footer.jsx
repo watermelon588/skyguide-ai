@@ -1,167 +1,141 @@
+import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
+import { ArrowUp } from "lucide-react";
 import {
   FaDiscord,
   FaGithub,
   FaInstagram,
   FaLinkedin,
   FaXTwitter,
-  FaArrowUp,
-  FaRocket,
 } from "react-icons/fa6";
 
+/**
+ * Site footer — the quiet last act of the landing page.
+ *
+ * Design-system notes: glass only on the quote card, hairlines do the
+ * structuring, orange appears exactly where something is interactive.
+ * Brand glyphs stay on react-icons (Lucide ships no brand set); every other
+ * icon is Lucide.
+ */
+
+const PLATFORM_LINKS = [
+  { label: "Tonight's sky", to: "/tonight" },
+  { label: "Dashboard", to: "/dashboard" },
+  { label: "Telescope alignment", to: "/align" },
+  { label: "Sign in", to: "/login" },
+];
+
+const OVERVIEW_LINKS = [
+  { label: "Features", href: "#features" },
+  { label: "How it works", href: "#how-it-works" },
+];
+
+// Profile URLs pending — icons render as placeholders until then.
+const SOCIALS = [
+  { label: "GitHub", Icon: FaGithub },
+  { label: "LinkedIn", Icon: FaLinkedin },
+  { label: "Instagram", Icon: FaInstagram },
+  { label: "Discord", Icon: FaDiscord },
+  { label: "X", Icon: FaXTwitter },
+];
+
 export default function Footer() {
+  const scrollToTop = () =>
+    window.scrollTo({ top: 0, behavior: "smooth" });
+
   return (
-    <footer className="relative mt-32 overflow-hidden border-t border-white/10 bg-[#050816] text-white">
-      {/* Background Glow */}
-      <div className="absolute left-1/2 top-0 h-[500px] w-[500px] -translate-x-1/2 rounded-full bg-violet-700/20 blur-[180px]" />
-
-      <div className="relative mx-auto max-w-7xl px-8 py-24">
-        {/* CTA */}
-
-        <div className="mb-24 rounded-3xl border border-violet-500/20 bg-white/5 p-12 backdrop-blur-xl">
-          <h2 className="text-5xl font-bold">Ready for Tonight's Sky?</h2>
-
-          <p className="mt-4 max-w-2xl text-lg text-gray-400">
-            Connect your telescope, receive AI recommendations, and never miss
-            another celestial event.
-          </p>
-
-          <div className="mt-10 flex gap-5">
-            <button className="rounded-xl bg-violet-600 px-8 py-4 font-semibold transition hover:bg-violet-500">
-              Sync Telescope
-            </button>
-
-            <button className="rounded-xl border border-violet-500 px-8 py-4 transition hover:bg-violet-500/10">
-              Explore Sky
-            </button>
-          </div>
-        </div>
-
-        {/* Main */}
-
-        <div className="grid gap-16 lg:grid-cols-5">
+    <footer
+      data-reveal
+      className="relative z-10 mx-auto w-full max-w-6xl px-6 pb-10 sm:px-12"
+    >
+      <div className="border-t border-white/10 pt-14">
+        <div className="grid gap-12 lg:grid-cols-[1.4fr_1fr_1fr_1.4fr]">
           {/* Brand */}
-
           <div>
-            <h1 className="text-4xl font-bold">
-              SkyGuide
-              <span className="text-violet-500"> AI</span>
-            </h1>
-
-            <p className="mt-6 leading-8 text-gray-400">
-              Your AI-powered celestial companion helping amateur astronomers
-              discover the universe one night at a time.
+            <p className="text-2xl font-bold text-white">
+              SkyGuide <span className="text-[#FF8C1A]">AI</span>
             </p>
-
-            <div className="mt-8 flex gap-4 text-2xl">
-              <FaGithub />
-
-              <FaLinkedin />
-
-              <FaInstagram />
-
-              <FaDiscord />
-
-              <FaXTwitter />
+            <p className="mt-4 max-w-xs text-sm leading-relaxed text-[#AAB4C5]">
+              A real-time celestial recommendation and telescope alignment
+              platform — your location, your telescope, tonight's sky.
+            </p>
+            <div className="mt-6 flex gap-2">
+              {SOCIALS.map(({ label, Icon }) => (
+                <span
+                  key={label}
+                  aria-label={label}
+                  title={label}
+                  className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-white/10 bg-white/5 text-base text-[#AAB4C5] transition-colors duration-300 hover:border-[#FF8C1A]/40 hover:text-[#FF8C1A]"
+                >
+                  <Icon />
+                </span>
+              ))}
             </div>
           </div>
 
-          {/* Explore */}
-
-          <div>
-            <h3 className="mb-5 font-semibold text-violet-400">Explore</h3>
-
-            <ul className="space-y-3 text-gray-400">
-              <li>Live Sky</li>
-              <li>Sky Map</li>
-              <li>ISS Tracker</li>
-              <li>Planet Finder</li>
-              <li>Meteor Showers</li>
+          {/* Platform */}
+          <nav aria-label="Platform">
+            <h3 className="text-[11px] font-medium uppercase tracking-[0.25em] text-[#6B7280]">
+              Platform
+            </h3>
+            <ul className="mt-5 space-y-3 text-sm">
+              {PLATFORM_LINKS.map(({ label, to }) => (
+                <li key={to}>
+                  <Link
+                    to={to}
+                    className="text-[#AAB4C5] transition-colors duration-300 hover:text-[#FF8C1A]"
+                  >
+                    {label}
+                  </Link>
+                </li>
+              ))}
             </ul>
-          </div>
+          </nav>
 
-          {/* Resources */}
-
-          <div>
-            <h3 className="mb-5 font-semibold text-violet-400">Resources</h3>
-
-            <ul className="space-y-3 text-gray-400">
-              <li>Documentation</li>
-              <li>API</li>
-              <li>Observing Guide</li>
-              <li>Blog</li>
-              <li>Community</li>
+          {/* Overview */}
+          <nav aria-label="Overview">
+            <h3 className="text-[11px] font-medium uppercase tracking-[0.25em] text-[#6B7280]">
+              Overview
+            </h3>
+            <ul className="mt-5 space-y-3 text-sm">
+              {OVERVIEW_LINKS.map(({ label, href }) => (
+                <li key={href}>
+                  <a
+                    href={href}
+                    className="text-[#AAB4C5] transition-colors duration-300 hover:text-[#FF8C1A]"
+                  >
+                    {label}
+                  </a>
+                </li>
+              ))}
             </ul>
-          </div>
-
-          {/* Company */}
-
-          <div>
-            <h3 className="mb-5 font-semibold text-violet-400">Company</h3>
-
-            <ul className="space-y-3 text-gray-400">
-              <li>About</li>
-              <li>Contact</li>
-              <li>Privacy</li>
-              <li>Terms</li>
-            </ul>
-          </div>
+          </nav>
 
           {/* Quote */}
-
-          <div className="rounded-3xl border border-white/10 bg-white/5 p-8">
-            <FaRocket className="mb-5 text-4xl text-violet-500" />
-
-            <p className="italic leading-8 text-gray-300">
+          <blockquote className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-2xl backdrop-blur-3xl">
+            <p className="text-sm italic leading-relaxed text-[#AAB4C5]">
               "Somewhere, something incredible is waiting to be known."
             </p>
-
-            <p className="mt-4 text-violet-400">— Carl Sagan</p>
-          </div>
+            <footer className="mt-3 text-xs text-[#FF8C1A]">
+              — Carl Sagan
+            </footer>
+          </blockquote>
         </div>
 
-        {/* Newsletter */}
-
-        <div className="mt-24 rounded-3xl border border-violet-500/20 bg-white/5 p-10">
-          <div className="flex flex-col items-center justify-between gap-8 lg:flex-row">
-            <div>
-              <h2 className="text-3xl font-bold">Join our Space Newsletter</h2>
-
-              <p className="mt-3 text-gray-400">
-                Astronomy events, launches and AI updates every week.
-              </p>
-            </div>
-
-            <div className="flex w-full max-w-xl">
-              <input
-                placeholder="Enter your email"
-                className="flex-1 rounded-l-xl border border-white/10 bg-transparent px-6 outline-none"
-              />
-
-              <button className="rounded-r-xl bg-violet-600 px-8 font-semibold hover:bg-violet-500">
-                Subscribe
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Bottom */}
-
-        <div className="mt-20 flex flex-col items-center justify-between gap-6 border-t border-white/10 pt-8 lg:flex-row">
-          <p className="text-gray-500">
-            © 2026 SkyGuide AI. All rights reserved.
-          </p>
-
-          <div className="flex gap-8 text-gray-400">
-            <span>Powered by NASA APIs</span>
-
-            <span>ESA</span>
-
-            <span>Astrometry.net</span>
-          </div>
-
-          <button className="rounded-full border border-violet-500 p-3 hover:bg-violet-600">
-            <FaArrowUp />
-          </button>
+        {/* Bottom bar */}
+        <div className="mt-14 flex flex-col items-center justify-between gap-4 border-t border-white/10 pt-6 text-xs text-[#6B7280] sm:flex-row">
+          <p>© {new Date().getFullYear()} SkyGuide AI. All rights reserved.</p>
+          <p>Geometry by Astropy · Skyfield · Astroquery</p>
+          <motion.button
+            type="button"
+            onClick={scrollToTop}
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
+            aria-label="Back to top"
+            className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-[#AAB4C5] backdrop-blur-3xl transition-colors duration-300 hover:border-[#FF8C1A]/40 hover:text-[#FF8C1A]"
+          >
+            <ArrowUp size={18} />
+          </motion.button>
         </div>
       </div>
     </footer>

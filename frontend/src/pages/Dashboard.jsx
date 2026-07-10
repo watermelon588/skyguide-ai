@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import LocationPermissionModal from "../components/dashboard/LocationPermissionModal";
+import TonightBanner from "../components/dashboard/TonightBanner";
 import ManualLocationModal from "../components/dashboard/ManualLocationModal";
 import ObserverCard from "../components/dashboard/ObserverCard";
 import TelescopeCard from "../components/dashboard/TelescopeCard";
@@ -31,6 +32,7 @@ export default function Dashboard() {
   return (
     <PairingProvider>
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-6 py-8">
+        <TonightBanner />
         {hasLocation && <ObserverCard onEdit={() => setManualOpen(true)} />}
         <TelescopeCard />
         <SyncTelescopeCard />

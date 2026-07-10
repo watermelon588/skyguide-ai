@@ -3,7 +3,6 @@ import { lazy, Suspense } from "react";
 import { Route, Routes } from "react-router-dom";
 import SocketTest from "./pages/SocketTest";
 import AuthTest from "./pages/AuthTest";
-import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
 import Dashboard from "./pages/Dashboard";
 import Align from "./pages/Align";
@@ -18,13 +17,18 @@ import NetworkStatus from "./components/dev/NetworkStatus";
 // integrated AI sidebar + launcher). Every other page keeps the legacy
 // floating overlay chat so the Landing page is unchanged.
 const APP_PATHS = ["/dashboard"];
-const HIDE_CHAT_ON = ["/login", "/signup", "/align", "/align-lab"];
+const HIDE_CHAT_ON = ["/login", "/signup", "/align", "/align-lab", "/tonight"];
 
 // Dev-only Alignment Mode simulator. The dead branch is eliminated from
 // production builds, so the lab never ships.
 const AlignLab = import.meta.env.DEV
   ? lazy(() => import("./pages/AlignLab"))
   : null;
+
+// /tonight and the landing page carry three.js + GSAP — lazy-loaded so the
+// app-shell bundle stays lean and the sky stack downloads only where used.
+const Tonight = lazy(() => import("./pages/Tonight"));
+const HomePage = lazy(() => import("./pages/HomePage"));
 
 function App() {
   const location = useLocation();
@@ -43,7 +47,14 @@ function App() {
         />
       </div>
       <Routes>
-        <Route path="/" element={<HomePage />} />
+        <Route
+          path="/"
+          element={
+            <Suspense fallback={null}>
+              <HomePage />
+            </Suspense>
+          }
+        />
         <Route path="/login" element={<LoginPage />} />
         <Route
           path="/dashboard"
@@ -52,6 +63,17 @@ function App() {
               <AppLayout>
                 <Dashboard />
               </AppLayout>
+            </ProtectedRoute>
+          }
+        />
+        {/* Immersive full-screen experience — outside AppLayout on purpose. */}
+        <Route
+          path="/tonight"
+          element={
+            <ProtectedRoute>
+              <Suspense fallback={null}>
+                <Tonight />
+              </Suspense>
             </ProtectedRoute>
           }
         />

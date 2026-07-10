@@ -1,6 +1,8 @@
-import React from "react";
+import { useNavigate } from "react-router-dom";
 
 export const Navbar = () => {
+  const navigate = useNavigate();
+
   return (
     <div>
       <nav className="w-full flex items-center justify-between px-12 py-6">
@@ -15,15 +17,15 @@ export const Navbar = () => {
           </li>
           <li
             className="cursor-pointer hover:text-gray-300 transition"
-            onClick={() => navigate("/features")}
+            onClick={() => navigate("/tonight")}
           >
-            Features
+            Tonight
           </li>
           <li
             className="cursor-pointer hover:text-gray-300 transition"
-            onClick={() => navigate("/about")}
+            onClick={() => navigate("/dashboard")}
           >
-            About
+            Dashboard
           </li>
         </ul>
       </nav>
