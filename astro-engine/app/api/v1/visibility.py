@@ -43,6 +43,7 @@ async def observable(payload: VisibilityRequest) -> VisibilityResponse:
         data={
             "observer": result["observer"],
             "utc_time": result["utc_time"],
+            "moon": result["moon"],
             "count": len(objects),
             "objects": objects,
         },
@@ -58,6 +59,7 @@ async def recommended(payload: VisibilityRequest) -> VisibilityResponse:
         data={
             "observer": result["observer"],
             "utc_time": result["utc_time"],
+            "moon": result["moon"],
             "count": len(objects),
             "objects": objects,
         },

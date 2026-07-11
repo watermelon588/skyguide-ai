@@ -24,8 +24,6 @@ Scientific conventions
 """
 
 import time as _time
-from datetime import timezone as _tz
-from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 import astropy.units as u
 import numpy as np
@@ -34,6 +32,7 @@ from astropy.time import Time
 
 from app.core.logging import get_logger
 from app.services import coordinate_service
+from app.utils.time_utils import iso_utc, local_hhmm, resolve_timezone
 
 logger = get_logger(__name__)
 
@@ -43,6 +42,16 @@ SYNODIC_MONTH_DAYS = 29.530588853  # mean New Moon → New Moon interval
 # Altitude of the Moon's centre at rise/set — atmospheric refraction (~34') plus
 # the mean semi-diameter (~16'), the same convention used for the Sun.
 RISE_SET_HORIZON_DEG = -0.8333
+
+# --- Sky-quality heuristics (documented approximations, not ephemeris truth) ---
+# A full Moon at or above this altitude exerts its maximum penalty.
+_PENALTY_FULL_EFFECT_ALT_DEG = 45.0
+# Approximate zenith sky brightness (V mag/arcsec²): pristine dark sky, and how
+# many magnitudes a high full Moon costs (Krisciunas & Schaefer-order effect).
+_DARK_SKY_MAG_ARCSEC2 = 21.9
+_FULL_MOON_BRIGHTENING_MAG = 4.5
+# Espenak's working definition: a full Moon within 90% of its closest perigee.
+_SUPERMOON_DISTANCE_KM = 361_524.0
 
 # Rise/set search: sample the Moon's altitude across a window slightly longer
 # than one lunar day (~24h50m) so a rise AND a set are always bracketed. The
@@ -130,29 +139,71 @@ def _find_rise_set(times: Time, altitudes: np.ndarray, horizon_deg: float):
     return rise, moonset
 
 
-def _local_hhmm(t: Time | None, tzinfo) -> str | None:
-    """Format an Astropy ``Time`` as 'HH:MM' in ``tzinfo`` (UTC on fallback)."""
-    if t is None:
-        return None
-    dt = t.to_datetime(timezone=_tz.utc).astimezone(tzinfo)
-    return dt.strftime("%H:%M")
+# ------------------------------------------------------------------ #
+# Sky-quality heuristics. Deliberately simple, documented models — the
+# honest tier between "null" and a full Krisciunas & Schaefer implementation.
+# ------------------------------------------------------------------ #
+def compute_sky_penalty(altitude_deg: float, illumination_fraction: float) -> float:
+    """How much the Moon degrades the whole sky right now, 0–1.
+
+    Scales with illuminated fraction and altitude (full effect from
+    ``_PENALTY_FULL_EFFECT_ALT_DEG`` up); a Moon below the horizon costs
+    nothing. This is the *global* nightly penalty — the per-target,
+    separation-aware penalty lives in the visibility engine.
+    """
+    if altitude_deg <= 0.0:
+        return 0.0
+    alt_factor = min(1.0, altitude_deg / _PENALTY_FULL_EFFECT_ALT_DEG)
+    return round(illumination_fraction * alt_factor, 3)
 
 
-def _iso_utc(t: Time | None) -> str | None:
-    if t is None:
-        return None
-    return t.utc.isot + "Z"
+def estimate_sky_brightness(penalty: float) -> float:
+    """Approximate zenith sky brightness (V mag/arcsec²) under lunar light.
+
+    Linear interpolation from a pristine dark sky toward a high-full-Moon sky.
+    Ignores light pollution — this is the Moon's contribution only.
+    """
+    return round(_DARK_SKY_MAG_ARCSEC2 - _FULL_MOON_BRIGHTENING_MAG * penalty, 1)
 
 
-def _resolve_tz(timezone: str | None):
-    """Return a tzinfo for ``timezone``, falling back to UTC when unknown."""
-    if not timezone:
-        return _tz.utc
-    try:
-        return ZoneInfo(timezone)
-    except (ZoneInfoNotFoundError, ValueError):
-        logger.warning("Unknown timezone '%s' — rise/set reported in UTC", timezone)
-        return _tz.utc
+def compute_lunar_target_score(altitude_deg: float, elongation_deg: float) -> int:
+    """How rewarding the Moon itself is as a target right now, 0–100.
+
+    Terminator relief peaks at the quarters (|sin elongation| = 1) and vanishes
+    at New (nothing lit) and Full (no shadows); altitude improves steadiness.
+    Below the horizon the Moon scores zero.
+    """
+    if altitude_deg <= 0.0:
+        return 0
+    terminator = abs(np.sin(np.radians(elongation_deg)))
+    alt_factor = min(1.0, altitude_deg / 60.0)
+    return int(round(100.0 * (0.55 * alt_factor + 0.45 * terminator)))
+
+
+def light_state(
+    latitude: float,
+    longitude: float,
+    elevation: float = 0.0,
+    time: Time | None = None,
+) -> dict:
+    """Just the Moon's sky-light impact — the cheap subset of ``compute_moon``
+    (one topocentric transform, no rise/set sweep) for consumers like the
+    observing-conditions engine that only need the penalty.
+    """
+    t = time if time is not None else Time.now()
+    location = coordinate_service.create_observer(latitude, longitude, elevation)
+    altaz = get_body("moon", t, location).transform_to(
+        AltAz(obstime=t, location=location)
+    )
+    altitude_deg = float(altaz.alt.deg)
+    illumination = _illuminated_fraction(get_body("sun", t), get_body("moon", t))
+    penalty = compute_sky_penalty(altitude_deg, illumination)
+    return {
+        "altitude_deg": round(altitude_deg, 2),
+        "illumination": round(illumination * 100.0, 1),
+        "above_horizon": altitude_deg > 0.0,
+        "moon_penalty": penalty,
+    }
 
 
 def compute_moon(
@@ -185,7 +236,7 @@ def compute_moon(
     azimuth_deg = float(sweep_altaz.az.deg[0])
 
     rise_t, set_t = _find_rise_set(sweep_times, sweep_alt, RISE_SET_HORIZON_DEG)
-    tzinfo = _resolve_tz(timezone)
+    tzinfo = resolve_timezone(timezone)
 
     # Geocentric bodies — used for RA/DEC, distance, phase and illumination.
     moon_geo = get_body("moon", t)
@@ -204,10 +255,17 @@ def compute_moon(
         np.degrees(2.0 * np.arcsin(MOON_RADIUS_KM / distance_km)) * 60.0
     )
 
-    illumination_pct = round(_illuminated_fraction(sun_geo, moon_geo) * 100.0, 1)
+    illumination_fraction = _illuminated_fraction(sun_geo, moon_geo)
+    illumination_pct = round(illumination_fraction * 100.0, 1)
     elongation = _elongation_longitude(sun_geo, moon_geo, t)
     phase = _phase_name(elongation)
     age_days = round(elongation / 360.0 * SYNODIC_MONTH_DAYS, 2)
+
+    # Sky-quality heuristics (see the helper docstrings for the models).
+    penalty = compute_sky_penalty(altitude_deg, illumination_fraction)
+    sky_brightness = estimate_sky_brightness(penalty)
+    lunar_target_score = compute_lunar_target_score(altitude_deg, elongation)
+    supermoon = phase == "Full Moon" and distance_km <= _SUPERMOON_DISTANCE_KM
 
     elapsed_ms = (_time.perf_counter() - started) * 1000.0
     logger.info(
@@ -216,7 +274,7 @@ def compute_moon(
     )
 
     return {
-        "utc_time": t.utc.isot + "Z",
+        "utc_time": iso_utc(t),
         "observer": {
             "latitude": latitude,
             "longitude": longitude,
@@ -233,19 +291,20 @@ def compute_moon(
             "distance_km": round(distance_km, 1),
             "angular_diameter_arcmin": round(angular_diameter_arcmin, 2),
             "above_horizon": altitude_deg > 0.0,
-            "moonrise": _local_hhmm(rise_t, tzinfo),
-            "moonset": _local_hhmm(set_t, tzinfo),
-            "moonrise_utc": _iso_utc(rise_t),
-            "moonset_utc": _iso_utc(set_t),
+            "moonrise": local_hhmm(rise_t, tzinfo),
+            "moonset": local_hhmm(set_t, tzinfo),
+            "moonrise_utc": iso_utc(rise_t),
+            "moonset_utc": iso_utc(set_t),
             "ra_deg": round(ra_deg, 2),
             "dec_deg": round(dec_deg, 2),
             "reserved": {
-                "moon_penalty": None,
-                "sky_brightness": None,
-                "lunar_target_score": None,
+                "moon_penalty": penalty,
+                "sky_brightness": sky_brightness,
+                "lunar_target_score": lunar_target_score,
+                # Still genuinely reserved: need dedicated models/ephemerides.
                 "earthshine": None,
                 "eclipse": None,
-                "supermoon": None,
+                "supermoon": supermoon,
             },
         },
     }

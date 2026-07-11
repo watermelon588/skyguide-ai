@@ -6,23 +6,36 @@ are geometrically visible right now, scores them, and ranks them.
 Separation of concerns (this service orchestrates, it does not reimplement):
     - observer_service   -> builds the EarthLocation
     - catalog_service    -> loads objects from MongoDB
-    - coordinate_service -> RA/DEC -> Alt/Az and hour angle (vectorised)
+    - coordinate_service -> RA/DEC -> Alt/Az, hour angle, airmass,
+                            separations, rise/transit/set (all vectorised)
 
 This service owns ONLY: visibility filtering, scoring and ranking.
 
-Scope (Session 7): pure geometric visibility. No moon, weather, light
-pollution, telescope suitability, rise/set, or ML — those come later.
+Scoring model
+-------------
+Base score (0–100) is the original geometric blend:
+    0.70 · altitude  +  0.20 · brightness  +  0.10 · apparent size
+
+A lunar penalty then scales it down. The Moon washes out targets in
+proportion to how lit it is and how close it stands: penalty is the product
+of illuminated fraction and angular proximity (linear from full effect at 0°
+separation to none at 90°), capped at ``MOON_MAX_PENALTY``. Below the horizon
+the Moon costs nothing. Heuristic by design — modular so ML can replace it.
+
+Still out of scope: weather, light pollution, telescope suitability, ML.
 """
 
 import numpy as np
+from astropy.coordinates import AltAz, get_body
 from astropy.time import Time
 
 from app.core.logging import get_logger
 from app.services import catalog_service, coordinate_service, observer_service
+from app.utils.time_utils import iso_utc, local_hhmm, resolve_timezone
 
 logger = get_logger(__name__)
 
-# --- Scoring weights (must sum to 1.0) ---
+# --- Base scoring weights (must sum to 1.0) ---
 ALT_WEIGHT = 0.70
 MAG_WEIGHT = 0.20
 SIZE_WEIGHT = 0.10
@@ -32,6 +45,10 @@ MAG_BRIGHT = 1.0    # <= this magnitude scores full marks (very bright)
 MAG_FAINT = 11.0    # >= this magnitude scores zero (near naked-eye limit)
 SIZE_REF_ARCMIN = 60.0  # >= this apparent size scores full marks
 NEUTRAL = 0.5       # score for a missing magnitude/size (no data either way)
+
+# --- Lunar interference ---
+MOON_MAX_PENALTY = 0.35        # a full Moon at 0° can cost at most 35% of score
+MOON_REACH_DEG = 90.0          # beyond this separation the Moon costs nothing
 
 
 def _clamp01(value: float) -> float:
@@ -57,18 +74,68 @@ def _size_score(size_arcmin: float | None) -> float:
     return _clamp01(size_arcmin / SIZE_REF_ARCMIN)
 
 
+def compute_base_score(
+    altitude_deg: float,
+    magnitude: float | None,
+    size_arcmin: float | None,
+) -> float:
+    """Weighted 0–1 geometric score. Modular so ML can replace it later."""
+    return (
+        ALT_WEIGHT * _altitude_score(altitude_deg)
+        + MAG_WEIGHT * _magnitude_score(magnitude)
+        + SIZE_WEIGHT * _size_score(size_arcmin)
+    )
+
+
+def compute_moon_penalty(
+    separation_deg: float,
+    moon_illumination_fraction: float,
+    moon_altitude_deg: float,
+) -> float:
+    """Fraction of the base score the Moon costs this target (0–1).
+
+    penalty = illuminated_fraction · proximity · MOON_MAX_PENALTY, where
+    proximity falls linearly from 1 at 0° separation to 0 at MOON_REACH_DEG.
+    A Moon below the horizon interferes with nothing.
+    """
+    if moon_altitude_deg <= 0.0:
+        return 0.0
+    proximity = _clamp01(1.0 - separation_deg / MOON_REACH_DEG)
+    return moon_illumination_fraction * proximity * MOON_MAX_PENALTY
+
+
+# Kept for backwards compatibility with earlier callers/tests: the pure
+# geometric 0–100 score, before lunar adjustment.
 def compute_visibility_score(
     altitude_deg: float,
     magnitude: float | None,
     size_arcmin: float | None,
 ) -> int:
-    """Weighted 0–100 visibility score. Modular so ML can replace it later."""
-    score = (
-        ALT_WEIGHT * _altitude_score(altitude_deg)
-        + MAG_WEIGHT * _magnitude_score(magnitude)
-        + SIZE_WEIGHT * _size_score(size_arcmin)
+    return int(round(compute_base_score(altitude_deg, magnitude, size_arcmin) * 100))
+
+
+def _moon_state(location, t: Time) -> dict:
+    """Topocentric Moon position + illuminated fraction, computed once per call."""
+    altaz_frame = AltAz(obstime=t, location=location)
+    moon_topo = get_body("moon", t, location).transform_to(altaz_frame)
+
+    # Illuminated fraction from geocentric geometry (Meeus ch. 48) — the same
+    # phase-angle formula the Moon Engine uses.
+    moon_geo = get_body("moon", t)
+    sun_geo = get_body("sun", t)
+    elongation = sun_geo.separation(moon_geo)
+    phase_angle = np.arctan2(
+        sun_geo.distance * np.sin(elongation),
+        moon_geo.distance - sun_geo.distance * np.cos(elongation),
     )
-    return int(round(score * 100))
+    illumination = float((1.0 + np.cos(phase_angle)) / 2.0)
+
+    return {
+        "altitude_deg": float(moon_topo.alt.deg),
+        "azimuth_deg": float(moon_topo.az.deg),
+        "illumination_fraction": illumination,
+        "above_horizon": float(moon_topo.alt.deg) > 0.0,
+    }
 
 
 def _rank_key(obj: dict) -> tuple:
@@ -97,7 +164,9 @@ async def compute_observable(
     catalog: str | None = None,
     constellation: str | None = None,
 ) -> dict:
-    """Return observer metadata plus the ranked list of visible objects.
+    """Return observer metadata, a Moon summary, and the ranked list of visible
+    objects — each carrying live geometry (alt/az/HA), airmass, lunar
+    interference, and its next rise/transit/set times.
 
     An object is 'visible' when its altitude is above the horizon (> 0 deg) and
     at or above ``minimum_altitude``/``minimum_score``. Objects below the horizon
@@ -131,7 +200,9 @@ async def compute_observable(
         "timezone": timezone,
     }
     if not docs:
-        return {"observer": observer, "utc_time": t.isot, "objects": []}
+        return {"observer": observer, "utc_time": t.isot, "moon": None, "objects": []}
+
+    moon = _moon_state(location, t)
 
     # One vectorised transform for the whole catalog.
     ra = np.array([d["coordinates"]["ra_deg"] for d in docs], dtype=float)
@@ -142,6 +213,13 @@ async def compute_observable(
     altitudes = np.asarray(altaz.alt.deg, dtype=float)
     azimuths = np.asarray(altaz.az.deg, dtype=float)
     ha_hours = np.asarray(hour_angles.hourangle, dtype=float)
+
+    airmasses = coordinate_service.airmass_batch(altitudes)
+    moon_separations = coordinate_service.angular_separation_altaz_batch(
+        altitudes, azimuths, moon["altitude_deg"], moon["azimuth_deg"]
+    )
+    events = coordinate_service.rise_transit_set_batch(ra, dec, location, t)
+    tzinfo = resolve_timezone(timezone)
     logger.info("Visibility Calculated -> %d objects", len(docs))
 
     visible: list[dict] = []
@@ -153,10 +231,16 @@ async def compute_observable(
         physical = doc.get("physical", {})
         magnitude = physical.get("magnitude")
         size = physical.get("angular_size_arcmin")
-        score = compute_visibility_score(alt, magnitude, size)
+
+        separation = float(moon_separations[i])
+        penalty = compute_moon_penalty(
+            separation, moon["illumination_fraction"], moon["altitude_deg"]
+        )
+        score = int(round(compute_base_score(alt, magnitude, size) * (1.0 - penalty) * 100))
         if score < minimum_score:
             continue
 
+        circumpolar = bool(events["circumpolar"][i])
         visible.append({
             "catalog_id": doc["catalog_id"],
             "name": doc.get("name"),
@@ -165,8 +249,20 @@ async def compute_observable(
             "altitude_deg": round(alt, 2),
             "azimuth_deg": round(float(azimuths[i]), 2),
             "hour_angle_hours": round(float(ha_hours[i]), 2),
+            "airmass": round(float(airmasses[i]), 2),
+            "moon_separation_deg": round(separation, 1),
+            "moon_penalty": round(penalty, 3),
             "visibility_score": score,
             "is_visible": True,
+            # Next events (local HH:MM in the observer's timezone). A visible
+            # object's "rise" is tomorrow's — "set"/"transit" are the useful ones.
+            "circumpolar": circumpolar,
+            "transit": local_hhmm(events["transit"][i], tzinfo),
+            "set": None if circumpolar else local_hhmm(events["set"][i], tzinfo),
+            "rise": None if circumpolar else local_hhmm(events["rise"][i], tzinfo),
+            "hours_until_set": (
+                None if circumpolar else round(float(events["hours_to_set"][i]), 1)
+            ),
             # private sort helpers, stripped before returning
             "_magnitude": magnitude,
             "_size": size,
@@ -177,13 +273,28 @@ async def compute_observable(
         obj.pop("_magnitude", None)
         obj.pop("_size", None)
 
-    logger.info("Visible Objects -> %d", len(visible))
+    moon_summary = {
+        "altitude_deg": round(moon["altitude_deg"], 2),
+        "azimuth_deg": round(moon["azimuth_deg"], 2),
+        "illumination": round(moon["illumination_fraction"] * 100.0, 1),
+        "above_horizon": moon["above_horizon"],
+    }
+
+    logger.info(
+        "Visible Objects -> %d (moon alt=%.1f illum=%.0f%%)",
+        len(visible), moon["altitude_deg"], moon["illumination_fraction"] * 100,
+    )
     if visible:
         top = visible[0]
         logger.info(
-            "Top Recommendation -> %s (%s) score=%d alt=%.1f",
+            "Top Recommendation -> %s (%s) score=%d alt=%.1f moon_sep=%.0f",
             top["catalog_id"], top["name"] or top["object_type"],
-            top["visibility_score"], top["altitude_deg"],
+            top["visibility_score"], top["altitude_deg"], top["moon_separation_deg"],
         )
 
-    return {"observer": observer, "utc_time": t.isot, "objects": visible}
+    return {
+        "observer": observer,
+        "utc_time": iso_utc(t),
+        "moon": moon_summary,
+        "objects": visible,
+    }

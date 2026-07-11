@@ -2,7 +2,17 @@
 
 from fastapi import APIRouter
 
-from app.api.v1 import alignment, catalog, coordinates, health, moon, observer, visibility, weather
+from app.api.v1 import (
+    alignment,
+    catalog,
+    coordinates,
+    health,
+    moon,
+    observer,
+    satellites,
+    visibility,
+    weather,
+)
 
 api_router = APIRouter()
 
@@ -14,3 +24,4 @@ api_router.include_router(visibility.router, prefix="/visibility", tags=["Visibi
 api_router.include_router(moon.router, prefix="/moon", tags=["Moon"])
 api_router.include_router(weather.router, prefix="/weather", tags=["Weather"])
 api_router.include_router(alignment.router, prefix="/alignment", tags=["Alignment"])
+api_router.include_router(satellites.router, prefix="/satellites", tags=["Satellites"])

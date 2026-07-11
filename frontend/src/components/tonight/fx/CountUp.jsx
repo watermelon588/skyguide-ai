@@ -1,13 +1,14 @@
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { useGSAP } from "@gsap/react";
 
-gsap.registerPlugin(ScrollTrigger);
+import { useEnteredView } from "./useEnteredView";
 
 /**
- * Number that counts up from 0 when it scrolls into view (reactbits-inspired,
- * GSAP-powered). Renders tabular figures so the layout never jitters.
+ * Number that counts up from 0 when it enters the viewport (reactbits-
+ * inspired, GSAP-tweened). Visibility comes from useEnteredView so it fires
+ * inside any scroll container — window on /tonight, the inner MainContent
+ * scroller on the dashboard. Renders tabular figures so the layout never
+ * jitters.
  */
 export default function CountUp({
   value,
@@ -17,32 +18,29 @@ export default function CountUp({
   className = "",
 }) {
   const ref = useRef(null);
+  const inView = useEnteredView(ref);
 
-  useGSAP(
-    () => {
-      const el = ref.current;
-      if (el == null || value == null) return;
-      const state = { n: 0 };
-      gsap.to(state, {
-        n: value,
-        duration,
-        ease: "power2.out",
-        scrollTrigger: { trigger: el, start: "top 90%", once: true },
-        onUpdate: () => {
-          el.textContent = `${state.n.toFixed(decimals)}${suffix}`;
-        },
-      });
-    },
-    { dependencies: [value], scope: ref },
-  );
+  useEffect(() => {
+    const el = ref.current;
+    if (!inView || el == null || value == null) return undefined;
+    const state = { n: 0 };
+    const tween = gsap.to(state, {
+      n: value,
+      duration,
+      ease: "power2.out",
+      onUpdate: () => {
+        el.textContent = `${state.n.toFixed(decimals)}${suffix}`;
+      },
+    });
+    return () => tween.kill();
+  }, [inView, value, decimals, suffix, duration]);
 
-  if (value == null) {
-    return <span className={className}>—</span>;
-  }
-
+  // The ref span always renders — even while value is null — so the
+  // IntersectionObserver attaches on mount and the tween can fire the moment
+  // data arrives (a null-first render would otherwise never animate).
   return (
     <span ref={ref} className={`tabular-nums ${className}`}>
-      {`0${suffix}`}
+      {value == null ? "—" : `0${suffix}`}
     </span>
   );
 }

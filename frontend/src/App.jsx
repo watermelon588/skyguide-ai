@@ -4,7 +4,6 @@ import { Route, Routes } from "react-router-dom";
 import SocketTest from "./pages/SocketTest";
 import AuthTest from "./pages/AuthTest";
 import LoginPage from "./pages/LoginPage";
-import Dashboard from "./pages/Dashboard";
 import Align from "./pages/Align";
 import { useLocation } from "react-router-dom";
 import ChatWidget from "./components/chatbot/ChatWidget";
@@ -25,17 +24,22 @@ const AlignLab = import.meta.env.DEV
   ? lazy(() => import("./pages/AlignLab"))
   : null;
 
-// /tonight and the landing page carry three.js + GSAP — lazy-loaded so the
-// app-shell bundle stays lean and the sky stack downloads only where used.
+// /tonight, the landing page and the dashboard carry GSAP/three.js via the
+// shared sky components — lazy-loaded so the app shell stays lean and the
+// sky stack downloads only where used.
 const Tonight = lazy(() => import("./pages/Tonight"));
+const TargetPanel = lazy(() => import("./pages/TargetPanel"));
 const HomePage = lazy(() => import("./pages/HomePage"));
+const Dashboard = lazy(() => import("./pages/Dashboard"));
 
 function App() {
   const location = useLocation();
 
   const isAppPage = APP_PATHS.includes(location.pathname);
+  // startsWith so nested immersive routes (/tonight/M42) stay chat-free too.
   const showOverlayChat =
-    !HIDE_CHAT_ON.includes(location.pathname) && !isAppPage;
+    !HIDE_CHAT_ON.some((path) => location.pathname.startsWith(path)) &&
+    !isAppPage;
 
   return (
     <>
@@ -61,7 +65,9 @@ function App() {
           element={
             <ProtectedRoute>
               <AppLayout>
-                <Dashboard />
+                <Suspense fallback={null}>
+                  <Dashboard />
+                </Suspense>
               </AppLayout>
             </ProtectedRoute>
           }
@@ -73,6 +79,16 @@ function App() {
             <ProtectedRoute>
               <Suspense fallback={null}>
                 <Tonight />
+              </Suspense>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/tonight/:id"
+          element={
+            <ProtectedRoute>
+              <Suspense fallback={null}>
+                <TargetPanel />
               </Suspense>
             </ProtectedRoute>
           }

@@ -36,6 +36,16 @@ class Settings(BaseSettings):
     # Cached weather is considered fresh for this many seconds (TTL = 10 min).
     WEATHER_CACHE_TTL_SECONDS: int = 600
 
+    # --- Satellites (Celestrak TLEs) ---
+    # The 'stations' group carries the ISS and CSS. TLEs age gracefully, so a
+    # day-old cache is fine for pass prediction, and a stale cache is still
+    # used (with a warning) when Celestrak is unreachable.
+    TLE_URL: str = (
+        "https://celestrak.org/NORAD/elements/gp.php?GROUP=stations&FORMAT=tle"
+    )
+    TLE_CACHE_PATH: str = "data/stations.tle"
+    TLE_CACHE_MAX_AGE_SECONDS: int = 24 * 3600
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

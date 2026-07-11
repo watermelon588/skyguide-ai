@@ -5,6 +5,7 @@ import {
   compassPoint,
   formatDegrees,
   scoreColor,
+  typeKey,
   typeMeta,
   TYPE_META,
 } from "./vocabulary";
@@ -46,16 +47,22 @@ function dotRadius(score) {
   return 2 + (score / 100) * 4.5;
 }
 
-export default function SkyDome({ targets, moon, onSelect }) {
+export default function SkyDome({ targets, moon, onSelect, compact = false }) {
   const [hovered, setHovered] = useState(null);
+  // Type filter — "all", or a typeKey. Local preference, resets per visit.
+  const [typeFilter, setTypeFilter] = useState("all");
 
   const plotted = useMemo(
     () =>
-      targets.map((t) => ({
-        ...t,
-        ...project(t.altitude_deg, t.azimuth_deg),
-      })),
-    [targets],
+      targets
+        .filter(
+          (t) => typeFilter === "all" || typeKey(t.object_type) === typeFilter,
+        )
+        .map((t) => ({
+          ...t,
+          ...project(t.altitude_deg, t.azimuth_deg),
+        })),
+    [targets, typeFilter],
   );
 
   const moonPos =
@@ -67,24 +74,20 @@ export default function SkyDome({ targets, moon, onSelect }) {
     ? plotted.find((p) => p.catalog_id === hovered)
     : null;
 
-  return (
-    <section data-reveal className="mx-auto w-full max-w-7xl px-6 sm:px-12">
-      <div className="mb-6 flex items-end justify-between">
-        <div>
+  // Compact mode (dashboard grid cell) renders just the chart card with a
+  // slim identity row; the full mode keeps its /tonight section header.
+  const card = (
+    <SpotlightCard className={compact ? "h-full p-4 sm:p-6" : "p-4 sm:p-8"}>
+      {compact && (
+        <div className="mb-4 flex items-baseline justify-between gap-4">
           <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-[#FF8C1A]">
             All-Sky Chart
           </p>
-          <h2 className="mt-2 text-3xl font-bold text-white sm:text-4xl">
-            Your dome, right now
-          </h2>
+          <p className="truncate text-xs text-[#6B7280]">
+            zenith at center · horizon at the rim
+          </p>
         </div>
-        <p className="hidden max-w-xs text-right text-xs text-[#6B7280] sm:block">
-          Zenith at center, horizon at the rim. Azimuth runs N → E → S → W.
-          Click any object for the full dossier.
-        </p>
-      </div>
-
-      <SpotlightCard className="p-4 sm:p-8">
+      )}
         <div className="flex flex-col gap-6 lg:flex-row lg:items-center">
           <svg
             viewBox="-170 -170 340 340"
@@ -231,16 +234,27 @@ export default function SkyDome({ targets, moon, onSelect }) {
               )}
             </div>
 
-            <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs text-[#AAB4C5]">
-              {Object.entries(TYPE_META)
-                .filter(([key]) => key !== "other")
+            {/* Legend doubles as the type filter — tap to isolate a family. */}
+            <div className="flex flex-wrap gap-1.5">
+              {[["all", { symbol: "✳", label: "All types" }]]
+                .concat(
+                  Object.entries(TYPE_META).filter(([key]) => key !== "other"),
+                )
                 .map(([key, meta]) => (
-                  <span key={key} className="flex items-center gap-2">
-                    <span className="text-base leading-none text-[#FB923C]">
-                      {meta.symbol}
-                    </span>
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => setTypeFilter(key)}
+                    aria-pressed={typeFilter === key}
+                    className={`flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs transition-colors duration-300 ${
+                      typeFilter === key
+                        ? "border-[#FF8C1A]/50 bg-[#FF8C1A]/15 text-[#FF8C1A]"
+                        : "border-white/10 bg-white/5 text-[#AAB4C5] hover:bg-white/10"
+                    }`}
+                  >
+                    <span className="text-sm leading-none">{meta.symbol}</span>
                     {meta.label}
-                  </span>
+                  </button>
                 ))}
             </div>
 
@@ -251,7 +265,28 @@ export default function SkyDome({ targets, moon, onSelect }) {
             </p>
           </div>
         </div>
-      </SpotlightCard>
+    </SpotlightCard>
+  );
+
+  if (compact) return card;
+
+  return (
+    <section data-reveal className="mx-auto w-full max-w-7xl px-6 sm:px-12">
+      <div className="mb-6 flex items-end justify-between">
+        <div>
+          <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-[#FF8C1A]">
+            All-Sky Chart
+          </p>
+          <h2 className="mt-2 text-3xl font-bold text-white sm:text-4xl">
+            Your dome, right now
+          </h2>
+        </div>
+        <p className="hidden max-w-xs text-right text-xs text-[#6B7280] sm:block">
+          Zenith at center, horizon at the rim. Azimuth runs N → E → S → W.
+          Click any object for the full dossier.
+        </p>
+      </div>
+      {card}
     </section>
   );
 }

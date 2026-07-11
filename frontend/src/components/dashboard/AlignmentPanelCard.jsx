@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { FiCrosshair } from "react-icons/fi";
 import {
@@ -33,11 +33,25 @@ const STATES = {
   lost: { label: "Signal Lost", tone: "error" },
 };
 
-export default function AlignmentPanelCard() {
+export default function AlignmentPanelCard({ launchTarget = null, onLaunched }) {
   const feed = useAlignmentFeed();
   const orientation = useOrientationFeed();
   const { hasLocation } = useLocation();
   const [open, setOpen] = useState(false);
+
+  // Guided observe flow (/dashboard?observe=<id>): the moment we're paired
+  // with a pending launch target, aim the engine and open the overlay — the
+  // user never picks the target manually. Ref-guarded so the set_target
+  // request fires exactly once per target.
+  const launchedRef = useRef(null);
+  useEffect(() => {
+    if (!launchTarget || !feed.paired) return;
+    if (launchedRef.current === launchTarget) return;
+    launchedRef.current = launchTarget;
+    feed.setTarget(launchTarget);
+    setOpen(true);
+    onLaunched?.();
+  }, [launchTarget, feed, onLaunched]);
 
   // The card itself is paired-only, but an OPEN overlay must survive a
   // mid-session pairing drop so it can show its "Phone disconnected" card

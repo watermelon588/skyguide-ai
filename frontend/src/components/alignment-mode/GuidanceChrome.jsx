@@ -2,6 +2,7 @@ import { memo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FiX, FiActivity } from "react-icons/fi";
 import TargetGlyph from "./TargetGlyph";
+import MarkObservedChip from "../plan/MarkObservedChip";
 
 /**
  * The thin DOM layer over the guidance canvas: exit, target pill, the ONE
@@ -103,9 +104,9 @@ function GuidanceChrome({
         </div>
       )}
 
-      {/* Bottom-center: the one copy line */}
+      {/* Bottom-center: the one copy line (+ the log chip once locked) */}
       <div
-        className="absolute inset-x-0 flex justify-center px-6"
+        className="absolute inset-x-0 flex flex-col items-center gap-3 px-6"
         style={{ bottom: "max(2.5rem, env(safe-area-inset-bottom, 0px))" }}
       >
         <AnimatePresence mode="wait">
@@ -122,6 +123,11 @@ function GuidanceChrome({
             >
               {copyLine}
             </motion.p>
+          )}
+        </AnimatePresence>
+        <AnimatePresence>
+          {locked && target?.catalog_id && (
+            <MarkObservedChip catalogId={target.catalog_id} />
           )}
         </AnimatePresence>
       </div>

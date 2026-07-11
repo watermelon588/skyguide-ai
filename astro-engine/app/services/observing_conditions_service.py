@@ -1,12 +1,18 @@
 """Observing conditions service — turns weather into an astronomy assessment.
 
-Given a provider-independent weather snapshot, this computes a deterministic
-0–100 observing score, maps it to a quality band, rates each contributing
-factor, and produces a plain-language recommendation.
+Given a provider-independent weather snapshot (plus an optional lunar light
+state from the Moon Engine), this computes a deterministic 0–100 observing
+score, maps it to a quality band, rates each contributing factor, estimates
+seeing and transparency, and produces a plain-language recommendation.
 
 Scope:
     - NO HTTP requests (that is ``weather_service``'s job).
-    - NO astronomy geometry, moon, seeing or transparency (future sessions).
+    - NO ephemeris computation (the caller passes ``moon_service.light_state``).
+
+Seeing and transparency are weather-derived estimates on the amateur 1–5 scale
+(5 = best), not measurements: seeing degrades chiefly with wind (turbulence)
+and humidity; transparency with haze (visibility), humidity and cloud. Honest
+approximations until a dedicated atmospheric model lands.
 
 The scoring is intentionally modular: a future ML model can replace
 ``compute_observing_score`` without touching the quality mapping or the API.
@@ -27,6 +33,9 @@ PRECIPITATION_WEIGHT = 0.10
 WIND_MAX_KMH = 40.0            # >= this wind speed scores zero
 VISIBILITY_MAX_KM = 10.0       # >= this visibility scores full marks
 NEUTRAL = 50.0                 # points for a missing input (no data either way)
+
+# A fully-lit, high Moon can cost at most this fraction of the weather score.
+MOON_SCORE_WEIGHT = 0.30
 
 # OpenWeather condition groups that imply active precipitation. Used to derive a
 # precipitation probability since the "current weather" endpoint has no `pop`.
@@ -128,20 +137,56 @@ def score_to_quality(score: float) -> str:
     return "Unusable"
 
 
-def assess(weather: dict) -> dict:
-    """Build the full observing-conditions assessment from normalized weather.
+def _points_to_scale5(points: float) -> float:
+    """Map 0–100 points onto the amateur 1–5 scale (5 = best), half steps."""
+    return round((1.0 + points / 25.0) * 2.0) / 2.0
 
-    Reserved fields (seeing, transparency, moon_penalty, bortle_class) are left
-    null for future sessions.
+
+def estimate_seeing(weather: dict) -> float:
+    """Seeing estimate, 1–5. Wind-driven turbulence dominates; humid air
+    (thermal gradients, dew) contributes."""
+    points = (
+        0.65 * _wind_points(weather.get("wind_speed_kmh"))
+        + 0.35 * _humidity_points(weather.get("humidity_percent"))
+    )
+    return _points_to_scale5(points)
+
+
+def estimate_transparency(weather: dict) -> float:
+    """Transparency estimate, 1–5. Haze (reported visibility) dominates;
+    humidity and cloud scatter the rest."""
+    points = (
+        0.50 * _visibility_points(weather.get("visibility_km"))
+        + 0.30 * _humidity_points(weather.get("humidity_percent"))
+        + 0.20 * _cloud_points(weather.get("cloud_cover_percent"))
+    )
+    return _points_to_scale5(points)
+
+
+def assess(weather: dict, moon: dict | None = None) -> dict:
+    """Build the full observing-conditions assessment from normalized weather,
+    optionally folding in the Moon's light (``moon_service.light_state``).
+
+    ``bortle_class`` stays null — it needs a light-pollution dataset, and an
+    invented value would be worse than none.
     """
-    score = compute_observing_score(weather)
+    weather_score = compute_observing_score(weather)
+
+    moon_penalty = float(moon["moon_penalty"]) if moon else None
+    if moon_penalty:
+        score = int(round(weather_score * (1.0 - MOON_SCORE_WEIGHT * moon_penalty)))
+    else:
+        score = weather_score
     quality = score_to_quality(score)
 
     cloud_rating = score_to_quality(_cloud_points(weather.get("cloud_cover_percent")))
     humidity_rating = score_to_quality(_humidity_points(weather.get("humidity_percent")))
     wind_rating = score_to_quality(_wind_points(weather.get("wind_speed_kmh")))
 
-    logger.info("Observing Score Calculated -> score=%d quality=%s", score, quality)
+    logger.info(
+        "Observing Score Calculated -> score=%d quality=%s (weather=%d moon_penalty=%s)",
+        score, quality, weather_score, moon_penalty,
+    )
 
     return {
         "observing_score": score,
@@ -150,9 +195,9 @@ def assess(weather: dict) -> dict:
         "humidity_rating": humidity_rating,
         "wind_rating": wind_rating,
         "recommendation": _RECOMMENDATIONS[quality],
-        # Reserved — do NOT populate in this session.
-        "seeing": None,
-        "transparency": None,
-        "moon_penalty": None,
+        "seeing": estimate_seeing(weather),
+        "transparency": estimate_transparency(weather),
+        "moon_penalty": moon_penalty,
+        # Reserved — requires a light-pollution dataset.
         "bortle_class": None,
     }

@@ -42,8 +42,27 @@ class VisibleObject(BaseModel):
     altitude_deg: float
     azimuth_deg: float
     hour_angle_hours: float
+    airmass: float | None = None
+    moon_separation_deg: float | None = None
+    moon_penalty: float = 0.0
     visibility_score: int
     is_visible: bool
+    # Next events, local HH:MM in the observer's timezone (None where the
+    # concept doesn't apply — e.g. rise/set for a circumpolar target).
+    circumpolar: bool = False
+    rise: str | None = None
+    transit: str | None = None
+    set: str | None = None
+    hours_until_set: float | None = None
+
+
+class MoonSummary(BaseModel):
+    """The Moon as it affects tonight's scores — full state lives at /moon."""
+
+    altitude_deg: float
+    azimuth_deg: float
+    illumination: float
+    above_horizon: bool
 
 
 class ObserverEcho(BaseModel):
@@ -56,6 +75,7 @@ class ObserverEcho(BaseModel):
 class VisibilityData(BaseModel):
     observer: ObserverEcho
     utc_time: str
+    moon: MoonSummary | None = None
     count: int
     objects: list[VisibleObject]
 

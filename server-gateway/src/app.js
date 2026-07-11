@@ -17,6 +17,7 @@ const initializeSockets = require("./sockets");
 const chatRoutes = require("./routes/chat.routes");
 const userRoutes = require("./routes/user.routes");
 const telescopeRoutes = require("./routes/telescope.routes");
+const observationRoutes = require("./routes/observation.routes");
 
 const app = express();
 
@@ -68,6 +69,7 @@ app.use("/api/v1/alignment", alignmentRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/v1/users", userRoutes);
 app.use("/api/v1/telescope", telescopeRoutes);
+app.use("/api/v1/observations", observationRoutes);
 
 
 app.get("/health", (req, res) => {

@@ -1,5 +1,5 @@
-import { useCallback, useMemo, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { useCallback, useRef } from "react";
+import { Link, useNavigate } from "react-router-dom";
 
 import Starfield from "../components/tonight/Starfield";
 import TonightHero from "../components/tonight/TonightHero";
@@ -9,7 +9,6 @@ import TopTargets from "../components/tonight/TopTargets";
 import MoonPanel from "../components/tonight/MoonPanel";
 import ConditionsPanel from "../components/tonight/ConditionsPanel";
 import CatalogTable from "../components/tonight/CatalogTable";
-import ObjectDrawer from "../components/tonight/ObjectDrawer";
 import { useReveal } from "../components/tonight/fx/useReveal";
 import { useTonight } from "../hooks/useTonight";
 
@@ -20,6 +19,7 @@ import { useTonight } from "../hooks/useTonight";
  * Alignment Mode) composed of: cinematic hero -> live stat readout -> all-sky
  * chart -> ranked recommendations -> Moon + conditions dossiers -> the full
  * deep-sky ledger. All science comes from the Astro Engine via useTonight.
+ * Every object click navigates to its Detailed Target Panel (/tonight/:id).
  */
 
 function CenteredShell({ children }) {
@@ -89,7 +89,7 @@ function ErrorState({ onRetry }) {
 
 export default function Tonight() {
   const scope = useRef(null);
-  const [selectedId, setSelectedId] = useState(null);
+  const navigate = useNavigate();
   const tonight = useTonight();
 
   const {
@@ -110,16 +110,10 @@ export default function Tonight() {
   const ready = located && !isLoading && !isError;
   useReveal(scope, ready);
 
-  const selected = useMemo(() => {
-    if (!selectedId) return null;
-    return (
-      targets.find((t) => t.catalog_id === selectedId) ||
-      belowHorizon.find((t) => t.catalog_id === selectedId) ||
-      null
-    );
-  }, [selectedId, targets, belowHorizon]);
-
-  const closeDrawer = useCallback(() => setSelectedId(null), []);
+  const openTarget = useCallback(
+    (catalogId) => navigate(`/tonight/${catalogId}`),
+    [navigate],
+  );
 
   if (!located) return <NoLocationState />;
   if (isLoading) return <LoadingState />;
@@ -154,9 +148,9 @@ export default function Tonight() {
       <main className="relative z-10 flex flex-col gap-24 pb-32">
         <StatStrip targets={targets} moon={moon} conditions={conditions} />
 
-        <SkyDome targets={targets} moon={moon} onSelect={setSelectedId} />
+        <SkyDome targets={targets} moon={moon} onSelect={openTarget} />
 
-        <TopTargets targets={targets} onSelect={setSelectedId} />
+        <TopTargets targets={targets} onSelect={openTarget} />
 
         <section
           data-reveal-group
@@ -169,7 +163,7 @@ export default function Tonight() {
         <CatalogTable
           targets={targets}
           belowHorizon={belowHorizon}
-          onSelect={setSelectedId}
+          onSelect={openTarget}
         />
 
         <footer className="mx-auto w-full max-w-7xl px-6 text-center sm:px-12">
@@ -180,8 +174,6 @@ export default function Tonight() {
           </p>
         </footer>
       </main>
-
-      <ObjectDrawer object={selected} onClose={closeDrawer} />
     </div>
   );
 }

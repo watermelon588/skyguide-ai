@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 
+import AddToPlanButton from "../plan/AddToPlanButton";
 import {
   compassPoint,
   formatDegrees,
@@ -29,6 +30,7 @@ const COLUMNS = [
   { key: "altitude_deg", label: "Alt", sortable: true, numeric: true },
   { key: "azimuth_deg", label: "Az", sortable: true, numeric: true },
   { key: "visibility_score", label: "Score", sortable: true, numeric: true },
+  { key: "plan", label: "Plan", sortable: false },
 ];
 
 function compare(a, b, key, direction) {
@@ -212,6 +214,9 @@ export default function CatalogTable({ targets, belowHorizon, onSelect }) {
                     ) : (
                       <span className="text-xs text-[#6B7280]">set</span>
                     )}
+                  </td>
+                  <td className="px-4 py-2.5">
+                    <AddToPlanButton catalogId={row.catalog_id} />
                   </td>
                 </tr>
               );
