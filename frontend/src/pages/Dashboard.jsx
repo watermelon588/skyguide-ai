@@ -13,6 +13,7 @@ import AlignmentPanelCard from "../components/dashboard/AlignmentPanelCard";
 import WelcomeHeader from "../components/dashboard/WelcomeHeader";
 import TonightGlance from "../components/dashboard/TonightGlance";
 import PlannerCard from "../components/dashboard/PlannerCard";
+import IssPassCard from "../components/dashboard/IssPassCard";
 import MoonPanel from "../components/tonight/MoonPanel";
 import ConditionsPanel from "../components/tonight/ConditionsPanel";
 import SkyDome from "../components/tonight/SkyDome";
@@ -246,13 +247,16 @@ function DashboardInner() {
                 )}
               </motion.div>
               {/* 7 · The plan — every queued target links to its panel. */}
-              <motion.div custom={4} variants={cell} initial="hidden" animate="show" className="min-w-0 xl:col-span-3">
+              <motion.div custom={4} variants={cell} initial="hidden" animate="show" className="min-w-0 xl:col-span-2">
                 <PlannerCard
                   targets={tonight.targets}
                   catalogTotal={
                     tonight.targets.length + tonight.belowHorizon.length
                   }
                 />
+              </motion.div>
+              <motion.div custom={5} variants={cell} initial="hidden" animate="show" className="min-w-0">
+                <IssPassCard />
               </motion.div>
             </div>
           </>

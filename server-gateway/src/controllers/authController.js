@@ -2,6 +2,7 @@ const User = require("../models/Users");
 const jwt = require("jsonwebtoken");
 const sendEmail = require("../utils/email");
 const crypto = require("crypto");
+const { getClientUrl } = require("../config/network");
 
 // Helper function to bundle JWT token creation and browser cookie options configuration
 const sendTokenCookie = (user, statusCode, res) => {
@@ -56,10 +57,10 @@ exports.register = async (req, res, next) => {
             validateBeforeSave: false,
         });
 
+        // Links land on the FRONTEND page, which calls the verify API and
+        // shows a proper success screen (and signals any waiting signup tab).
         const verificationURL =
-            `${req.protocol}://${req.get(
-                "host"
-            )}/api/v1/auth/verify-email/${verificationToken}`;
+            `${getClientUrl()}/verify-email/${verificationToken}`;
 
         await sendEmail({
             email: user.email,
@@ -191,10 +192,12 @@ exports.forgotPassword =
                 });
 
             if (!user) {
-                return res.status(404).json({
-                    success: false,
+                // Same response as success — a different answer for unknown
+                // emails would let anyone probe which accounts exist.
+                return res.status(200).json({
+                    success: true,
                     message:
-                        "No user found with that email.",
+                        "If that account exists, a reset link is on its way.",
                 });
             }
 
@@ -205,10 +208,10 @@ exports.forgotPassword =
                 validateBeforeSave: false,
             });
 
+            // The API route is a PATCH — an email link must land on the
+            // frontend reset page, which collects the new password and calls it.
             const resetURL =
-                `${req.protocol}://${req.get(
-                    "host"
-                )}/api/v1/auth/reset-password/${resetToken}`;
+                `${getClientUrl()}/reset-password/${resetToken}`;
 
             await sendEmail({
                 email: user.email,
@@ -313,9 +316,7 @@ exports.resendVerification =
             });
 
             const verificationURL =
-                `${req.protocol}://${req.get(
-                    "host"
-                )}/api/v1/auth/verify-email/${verificationToken}`;
+                `${getClientUrl()}/verify-email/${verificationToken}`;
 
             await sendEmail({
                 email: user.email,

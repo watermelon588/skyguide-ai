@@ -79,7 +79,10 @@ after reload. Edge: planned object below horizon shows "rises at HH:MM".
 > this file stay valid. **User directive, Session 20** — this reshapes the
 > core UX and outranks everything below it.
 
-**Status:** 🔄 In progress (Session 20)
+**Status:** ✅ Shipped (Session 20) — one caveat: the final flow stage
+(paired → auto-aim + overlay open) is code-complete but was verified only to
+the pairing step; confirm once with a real phone. Deferred: the Moon as a
+guidable target (needs an engine-side ephemeris target type).
 **Depends on:** Feature 1 ✅
 **Effort:** 1–2 sessions
 
@@ -147,7 +150,16 @@ on /tonight. Planner rows link to panels.
 
 # Feature 2 — Auth UX completion: password reset + smooth signup
 
-**Status:** ⏳ Backend ✅ (endpoints exist) · Frontend pending
+**Status:** ✅ Shipped (Session 22) — /forgot-password, /reset-password/:token
+(strength hint, auto-login, expired-token dead-end), /verify-email (inbox
+waiter with cross-tab localStorage signal + token redeemer). LoginPage gained
+the forgot link, signup→/verify-email hand-off, and an inline resend panel on
+403-unverified. Gateway now points reset/verify emails at frontend routes via
+getClientUrl() (reset previously linked the PATCH API = unusable from email)
+and forgot-password returns a generic 200 for unknown emails (no enumeration).
+**Verified:** reset loop (new pw logs in, old 401, token consumed), verify
+happy path live, generic forgot, 400 on bad tokens. Browser note: the user's
+portfolio dev server squats 5173/5174 — verify skyguide on its own port.
 **Depends on:** nothing
 **Effort:** 1 session
 
@@ -196,7 +208,12 @@ advances. Rate limiter still fires on hammering resend.
 
 # Feature 3 — Consume the Session-18 science (set times, airmass, ISS)
 
-**Status:** ⏳ Backend ✅ · Frontend pending
+**Status:** ✅ Shipped (Session 21) — ledger gained Airmass / Moon ° / Sets
+columns (Sets ascending = catch-these-first, <2 h in accent orange); glance
+rows swap magnitude for "sets HH:MM" under 4 h; IssPassCard (next pass with
+rise/peak/set + countdown chip <3 h, next-3 list) sits beside the planner;
+MoonPanel shows the lunar target score + supermoon badge. Item 1 (drawer
+rows) was superseded by Feature 1.5's VisibilityStrip on the target panel.
 **Depends on:** nothing (pairs well with Feature 1 in the same session)
 **Effort:** 0.5–1 session
 

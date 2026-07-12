@@ -55,6 +55,9 @@ function MoonDisc({ illumination, phase, size = 150 }) {
 export default function MoonPanel({ moon }) {
   if (!moon) return null;
 
+  const targetScore = moon.reserved?.lunar_target_score ?? null;
+  const supermoon = moon.reserved?.supermoon === true;
+
   const rows = [
     ["Phase", moon.phase],
     ["Age", `${moon.age_days} days`],
@@ -69,12 +72,24 @@ export default function MoonPanel({ moon }) {
         : "Below horizon",
     ],
   ];
+  if (targetScore != null) {
+    // Terminator relief peaks at the quarters — this is "how rewarding is
+    // the Moon itself in the eyepiece right now", straight from the engine.
+    rows.push(["Telescope target", `${Math.round(targetScore)}/100`]);
+  }
 
   return (
     <SpotlightCard data-reveal className="flex h-full flex-col p-7">
-      <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-[#FF8C1A]">
-        The Moon
-      </p>
+      <div className="flex items-baseline justify-between gap-3">
+        <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-[#FF8C1A]">
+          The Moon
+        </p>
+        {supermoon && (
+          <span className="shrink-0 rounded-lg border border-[#FF8C1A]/40 bg-[#FF8C1A]/10 px-2.5 py-1 text-[11px] font-semibold text-[#FF8C1A]">
+            Supermoon
+          </span>
+        )}
+      </div>
       <div className="mt-5 flex flex-1 items-center gap-7">
         <MoonDisc illumination={moon.illumination} phase={moon.phase} />
         <div className="min-w-0 flex-1">

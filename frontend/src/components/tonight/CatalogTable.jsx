@@ -29,6 +29,10 @@ const COLUMNS = [
   { key: "distance_ly", label: "Distance", sortable: true, numeric: true },
   { key: "altitude_deg", label: "Alt", sortable: true, numeric: true },
   { key: "azimuth_deg", label: "Az", sortable: true, numeric: true },
+  { key: "airmass", label: "Airmass", sortable: true, numeric: true },
+  { key: "moon_separation_deg", label: "Moon °", sortable: true, numeric: true },
+  // Sorting "Sets" ascending = the catch-these-first view.
+  { key: "hours_until_set", label: "Sets", sortable: true, numeric: true },
   { key: "visibility_score", label: "Score", sortable: true, numeric: true },
   { key: "plan", label: "Plan", sortable: false },
 ];
@@ -129,7 +133,7 @@ export default function CatalogTable({ targets, belowHorizon, onSelect }) {
 
       {/* Table */}
       <div className="overflow-x-auto rounded-2xl border border-white/10 bg-white/5 shadow-2xl backdrop-blur-3xl">
-        <table className="w-full min-w-[880px] text-left text-sm">
+        <table className="w-full min-w-[1080px] text-left text-sm">
           <thead>
             <tr className="border-b border-white/10 text-[11px] uppercase tracking-[0.15em] text-[#6B7280]">
               {COLUMNS.map((column) => (
@@ -194,6 +198,27 @@ export default function CatalogTable({ targets, belowHorizon, onSelect }) {
                     {row.azimuth_deg != null
                       ? `${Math.round(row.azimuth_deg)}° ${compassPoint(row.azimuth_deg)}`
                       : "—"}
+                  </td>
+                  <td className="px-4 py-2.5 tabular-nums text-[#AAB4C5]">
+                    {row.airmass != null ? row.airmass.toFixed(2) : "—"}
+                  </td>
+                  <td className="px-4 py-2.5 tabular-nums text-[#AAB4C5]">
+                    {row.moon_separation_deg != null
+                      ? `${Math.round(row.moon_separation_deg)}°`
+                      : "—"}
+                  </td>
+                  <td
+                    className={`whitespace-nowrap px-4 py-2.5 tabular-nums ${
+                      row.hours_until_set != null && row.hours_until_set < 2
+                        ? "font-semibold text-[#FF8C1A]"
+                        : "text-[#AAB4C5]"
+                    }`}
+                  >
+                    {row.circumpolar
+                      ? "never"
+                      : row.set != null
+                        ? `${row.set} (${row.hours_until_set}h)`
+                        : "—"}
                   </td>
                   <td className="px-4 py-2.5">
                     {visible ? (

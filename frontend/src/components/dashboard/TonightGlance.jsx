@@ -94,9 +94,25 @@ function TargetRow({ target, onOpen }) {
         <span className="block">
           {formatDegrees(target.altitude_deg)} {compassPoint(target.azimuth_deg)}
         </span>
-        <span className="block text-[#6B7280]">
-          mag {formatMagnitude(target.magnitude)}
-        </span>
+        {/* The second line is whatever is most actionable: an imminent set
+            time beats a magnitude the user can read on the panel. */}
+        {target.hours_until_set != null && target.hours_until_set < 4 ? (
+          <span
+            className={`block ${
+              target.hours_until_set < 2
+                ? "font-semibold text-[#FF8C1A]"
+                : "text-[#6B7280]"
+            }`}
+          >
+            sets {target.set} ({target.hours_until_set}h)
+          </span>
+        ) : target.circumpolar ? (
+          <span className="block text-[#6B7280]">up all night</span>
+        ) : (
+          <span className="block text-[#6B7280]">
+            mag {formatMagnitude(target.magnitude)}
+          </span>
+        )}
       </span>
       <AddToPlanButton catalogId={target.catalog_id} />
     </div>

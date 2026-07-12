@@ -4,6 +4,9 @@ import { Route, Routes } from "react-router-dom";
 import SocketTest from "./pages/SocketTest";
 import AuthTest from "./pages/AuthTest";
 import LoginPage from "./pages/LoginPage";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
+import VerifyEmail from "./pages/VerifyEmail";
 import Align from "./pages/Align";
 import { useLocation } from "react-router-dom";
 import ChatWidget from "./components/chatbot/ChatWidget";
@@ -16,7 +19,16 @@ import NetworkStatus from "./components/dev/NetworkStatus";
 // integrated AI sidebar + launcher). Every other page keeps the legacy
 // floating overlay chat so the Landing page is unchanged.
 const APP_PATHS = ["/dashboard"];
-const HIDE_CHAT_ON = ["/login", "/signup", "/align", "/align-lab", "/tonight"];
+const HIDE_CHAT_ON = [
+  "/login",
+  "/signup",
+  "/forgot-password",
+  "/reset-password",
+  "/verify-email",
+  "/align",
+  "/align-lab",
+  "/tonight",
+];
 
 // Dev-only Alignment Mode simulator. The dead branch is eliminated from
 // production builds, so the lab never ships.
@@ -60,6 +72,10 @@ function App() {
           }
         />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password/:token" element={<ResetPassword />} />
+        <Route path="/verify-email" element={<VerifyEmail />} />
+        <Route path="/verify-email/:token" element={<VerifyEmail />} />
         <Route
           path="/dashboard"
           element={
