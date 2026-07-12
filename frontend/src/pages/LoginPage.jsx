@@ -1,26 +1,35 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { assets } from "../assets/assets";
 import { useEffect } from "react";
 import "../styles/animations.css";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowLeft } from "@fortawesome/free-solid-svg-icons";
 import { useAuth } from "../context/AuthContext";
+import { resendVerification } from "../services/auth.service";
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { loginUser, registerUser } = useAuth();
   const [currentState, setCurrentState] = useState("Login");
 
   const [formData, setFormData] = useState({
     username: "",
-    email: "",
+    // Prefill after a verify/reset hand-off ("Email verified — sign in").
+    email: location.state?.email || "",
     password: "",
   });
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [showError, setShowError] = useState(false);
+  // Green banner from verify/reset hand-offs (location.state.notice).
+  const [notice, setNotice] = useState(location.state?.notice || "");
+  // Set when login fails specifically because the email isn't verified —
+  // renders an inline resend panel instead of the generic error toast.
+  const [unverified, setUnverified] = useState(false);
+  const [resendState, setResendState] = useState("idle");
 
   const handleChange = (e) => {
     setFormData((prev) => ({
@@ -34,6 +43,8 @@ export default function LoginPage() {
 
     setLoading(true);
     setError("");
+    setUnverified(false);
+    setNotice("");
 
     try {
       if (currentState === "Sign up") {
@@ -42,25 +53,44 @@ export default function LoginPage() {
           email: formData.email,
           password: formData.password,
         });
-      } else {
-        await loginUser({
-          email: formData.email,
-          password: formData.password,
-        });
+        // No session exists yet (email must be verified first) — hand off to
+        // the inbox waiter, which advances by itself once the link is clicked.
+        navigate("/verify-email", { state: { email: formData.email } });
+        return;
       }
-      // Redirect
+      await loginUser({
+        email: formData.email,
+        password: formData.password,
+      });
       navigate("/dashboard");
     } catch (err) {
-      setError(err.response?.data?.message || "Something went wrong.");
+      const message = err.response?.data?.message || "Something went wrong.";
+      if (err.response?.status === 403 && /verify your email/i.test(message)) {
+        setUnverified(true);
+      } else {
+        setError(message);
+        setShowError(true); // reveal the toast at the source of the error
+      }
     } finally {
       setLoading(false);
     }
   };
 
+  const onResend = async () => {
+    if (resendState === "sending") return;
+    setResendState("sending");
+    try {
+      await resendVerification(formData.email);
+      setResendState("sent");
+    } catch {
+      setResendState("error");
+    }
+  };
+
+  // showError is raised where the error is set; this effect only schedules
+  // the auto-hide + clear so no setState runs synchronously in the effect body.
   useEffect(() => {
     if (!error) return;
-
-    setShowError(true);
 
     const hideTimer = setTimeout(() => {
       setShowError(false);
@@ -205,6 +235,37 @@ ease-[cubic-bezier(0.22,1,0.36,1)]
           {error}
         </div>
 
+        {/* Verified/reset hand-off banner */}
+        {notice && (
+          <p className="mb-4 rounded-md border border-green-400/20 bg-green-900/40 px-4 py-2 text-center text-sm text-green-100">
+            {notice}
+          </p>
+        )}
+
+        {/* Unverified-login panel — actionable, not just an error */}
+        {unverified && (
+          <div className="mb-4 space-y-2 rounded-md border border-orange-400/20 bg-orange-900/30 px-4 py-3 text-sm">
+            <p className="text-orange-100">
+              Your email isn't verified yet — check your inbox, or resend the
+              link.
+            </p>
+            <button
+              type="button"
+              onClick={onResend}
+              disabled={resendState === "sending"}
+              className="font-semibold text-white hover:underline disabled:opacity-60"
+            >
+              {resendState === "sending"
+                ? "Sending…"
+                : resendState === "sent"
+                  ? "Sent — check your inbox"
+                  : resendState === "error"
+                    ? "Failed — try again"
+                    : "Resend verification email"}
+            </button>
+          </div>
+        )}
+
         {/* Form */}
 
         <form
@@ -289,6 +350,18 @@ ease-[cubic-bezier(0.22,1,0.36,1)]
             transition
           "
           />
+
+          {/* Forgot password — login mode only */}
+          {currentState === "Login" && (
+            <div className="-mt-2 text-right">
+              <Link
+                to="/forgot-password"
+                className="text-xs text-gray-400 transition hover:text-white hover:underline"
+              >
+                Forgot password?
+              </Link>
+            </div>
+          )}
 
           {/* Submit Button */}
 
