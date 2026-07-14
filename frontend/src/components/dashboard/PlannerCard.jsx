@@ -3,7 +3,6 @@ import { Link, useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { Check, Pencil, RotateCcw, Trash2, X } from "lucide-react";
 
-import SpotlightCard from "../tonight/fx/SpotlightCard";
 import { useObservations } from "../../hooks/useObservations";
 import { compassPoint, formatDegrees } from "../tonight/vocabulary";
 
@@ -28,13 +27,13 @@ function NotesEditor({ entry, onSave, onCancel, saving }) {
         maxLength={2000}
         placeholder="Eyepiece, sky, what you saw…"
         autoFocus
-        className="w-full resize-none rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-white placeholder-[#6B7280] outline-none transition-colors focus:border-[#FF8C1A]/60"
+        className="w-full resize-none border border-line bg-surface-3 px-3 py-2 text-xs text-ink placeholder-ink-3 outline-none transition-colors focus:border-accent"
       />
       <div className="mt-1.5 flex justify-end gap-2">
         <button
           type="button"
           onClick={onCancel}
-          className="rounded-lg px-3 py-1 text-xs text-[#6B7280] transition-colors hover:text-white"
+          className="px-3 py-1 text-xs text-ink-3 transition-colors hover:text-ink"
         >
           Cancel
         </button>
@@ -42,7 +41,7 @@ function NotesEditor({ entry, onSave, onCancel, saving }) {
           type="button"
           disabled={saving}
           onClick={() => onSave(draft.trim())}
-          className="rounded-lg bg-[#FF8C1A] px-3 py-1 text-xs font-semibold text-[#090B10] transition-colors hover:bg-[#FF6B00] disabled:opacity-60"
+          className="bg-accent px-3 py-1 text-xs font-semibold text-ink transition-colors hover:bg-accent-hi disabled:opacity-60"
         >
           Save note
         </button>
@@ -76,33 +75,33 @@ function PlannedRow({ entry, live, update, remove }) {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, x: -12 }}
       transition={{ duration: 0.25 }}
-      className="rounded-xl border border-white/5 bg-white/[0.03] px-4 py-3"
+      className="border border-line bg-surface-3 px-4 py-3"
     >
       <div className="flex items-center gap-3">
         <span
           aria-hidden="true"
           className={`h-2 w-2 shrink-0 rounded-full ${
-            status.up ? "bg-[#22C55E]" : "bg-[#6B7280]"
+            status.up ? "bg-success" : "bg-ink-4"
           }`}
         />
         <div className="min-w-0 flex-1">
           <Link
             to={`/tonight/${entry.catalog_id}`}
-            className="block truncate text-sm font-semibold text-white transition-colors hover:text-[#FF8C1A]"
+            className="block truncate text-sm font-semibold text-ink transition-colors hover:text-accent"
           >
             {live?.name || entry.catalog_id}
-            <span className="ml-2 text-xs font-normal text-[#6B7280]">
+            <span className="ml-2 text-xs font-normal text-ink-3">
               {entry.catalog_id}
             </span>
           </Link>
-          <p className="truncate text-[11px] text-[#AAB4C5]">{status.label}</p>
+          <p className="truncate text-[11px] text-ink-2">{status.label}</p>
         </div>
         <div className="flex shrink-0 items-center gap-1.5">
           <button
             type="button"
             onClick={() => resolve("observed")}
             title="Mark observed"
-            className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#22C55E]/25 bg-[#22C55E]/10 text-[#22C55E] transition-colors hover:bg-[#22C55E]/20"
+            className="flex h-8 w-8 items-center justify-center border border-success/25 bg-success/10 text-success transition-colors hover:bg-success/20"
           >
             <Check size={14} />
           </button>
@@ -110,7 +109,7 @@ function PlannedRow({ entry, live, update, remove }) {
             type="button"
             onClick={() => resolve("skipped")}
             title="Skip"
-            className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-[#AAB4C5] transition-colors hover:bg-white/10 hover:text-white"
+            className="flex h-8 w-8 items-center justify-center border border-line bg-surface-2 text-ink-2 transition-colors hover:bg-surface-3 hover:text-ink"
           >
             <X size={14} />
           </button>
@@ -118,10 +117,10 @@ function PlannedRow({ entry, live, update, remove }) {
             type="button"
             onClick={() => setEditing((v) => !v)}
             title={entry.notes ? "Edit note" : "Add note"}
-            className={`flex h-8 w-8 items-center justify-center rounded-lg border transition-colors ${
+            className={`flex h-8 w-8 items-center justify-center border transition-colors ${
               entry.notes
-                ? "border-[#FF8C1A]/30 bg-[#FF8C1A]/10 text-[#FF8C1A]"
-                : "border-white/10 bg-white/5 text-[#6B7280] hover:text-white"
+                ? "border-accent/30 bg-accent/10 text-accent"
+                : "border-line bg-surface-2 text-ink-3 hover:text-ink"
             }`}
           >
             <Pencil size={13} />
@@ -130,7 +129,7 @@ function PlannedRow({ entry, live, update, remove }) {
             type="button"
             onClick={() => remove.mutate(entry._id)}
             title="Remove from plan"
-            className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-[#6B7280] transition-colors hover:border-[#EF4444]/40 hover:text-[#EF4444]"
+            className="flex h-8 w-8 items-center justify-center border border-line bg-surface-2 text-ink-3 transition-colors hover:border-danger hover:text-danger"
           >
             <Trash2 size={13} />
           </button>
@@ -138,7 +137,7 @@ function PlannedRow({ entry, live, update, remove }) {
       </div>
 
       {!editing && entry.notes && (
-        <p className="mt-2 border-l-2 border-white/10 pl-3 text-xs italic leading-relaxed text-[#AAB4C5]">
+        <p className="mt-2 border-l-2 border-line pl-3 text-xs italic leading-relaxed text-ink-2">
           {entry.notes}
         </p>
       )}
@@ -166,25 +165,25 @@ function HistoryRow({ entry, update }) {
       })
     : "";
   return (
-    <li className="flex items-center gap-3 border-b border-white/5 py-2 text-xs last:border-0">
+    <li className="flex items-center gap-3 border-b border-line py-2 text-xs last:border-0">
       <span
         className={`shrink-0 font-semibold ${
-          observed ? "text-[#22C55E]" : "text-[#6B7280]"
+          observed ? "text-success" : "text-ink-3"
         }`}
       >
         {observed ? "✓" : "—"}
       </span>
-      <span className="min-w-0 flex-1 truncate text-[#AAB4C5]">
+      <span className="min-w-0 flex-1 truncate text-ink-2">
         <Link
           to={`/tonight/${entry.catalog_id}`}
-          className="font-medium text-white transition-colors hover:text-[#FF8C1A]"
+          className="font-medium text-ink transition-colors hover:text-accent"
         >
           {entry.catalog_id}
         </Link>
         {" · "}
         {observed ? "observed" : "skipped"} {when}
         {entry.notes && (
-          <span className="text-[#6B7280]"> — “{entry.notes}”</span>
+          <span className="text-ink-3"> — “{entry.notes}”</span>
         )}
       </span>
       <button
@@ -193,7 +192,7 @@ function HistoryRow({ entry, update }) {
           update.mutate({ id: entry._id, changes: { status: "planned" } })
         }
         title="Back onto the plan"
-        className="shrink-0 text-[#6B7280] transition-colors hover:text-[#FF8C1A]"
+        className="shrink-0 text-ink-3 transition-colors hover:text-accent"
       >
         <RotateCcw size={13} />
       </button>
@@ -226,13 +225,13 @@ export default function PlannerCard({ targets, catalogTotal }) {
   const shownHistory = showAllHistory ? history : history.slice(0, 5);
 
   return (
-    <SpotlightCard className="flex h-full flex-col p-6">
+    <div className="flex h-full flex-col border border-line bg-surface-2 p-6">
       <div className="flex items-baseline justify-between gap-4">
         <div>
-          <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-[#FF8C1A]">
+          <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-accent">
             Observation plan
           </p>
-          <p className="mt-1 text-xs text-[#6B7280]">
+          <p className="mt-1 text-xs text-ink-3">
             {planned.length} queued
             {catalogTotal > 0 &&
               ` · life list ${observedDistinct}/${catalogTotal}`}
@@ -241,7 +240,7 @@ export default function PlannerCard({ targets, catalogTotal }) {
         <button
           type="button"
           onClick={() => navigate("/tonight")}
-          className="shrink-0 text-xs font-medium text-[#AAB4C5] transition-colors duration-300 hover:text-[#FF8C1A]"
+          className="shrink-0 text-xs font-medium text-ink-2 transition-colors duration-300 hover:text-accent"
         >
           Find targets →
         </button>
@@ -251,17 +250,17 @@ export default function PlannerCard({ targets, catalogTotal }) {
         {isLoading ? (
           <div className="space-y-2">
             {[...Array(3)].map((_, i) => (
-              <div key={i} className="h-[52px] animate-pulse rounded-xl bg-white/5" />
+              <div key={i} className="h-[52px] animate-pulse bg-surface-3" />
             ))}
           </div>
         ) : isError ? (
-          <p className="rounded-xl border border-[#EF4444]/30 bg-[#EF4444]/10 px-4 py-3 text-sm text-[#EF4444]">
+          <p className="border border-danger/30 bg-danger/10 px-4 py-3 text-sm text-danger">
             Couldn't load your plan — check the gateway and retry.
           </p>
         ) : planned.length === 0 ? (
-          <p className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-[#AAB4C5]">
+          <p className="border border-line bg-surface-3 px-4 py-3 text-sm text-ink-2">
             Nothing queued yet. Tap{" "}
-            <span className="font-semibold text-[#FF8C1A]">+</span> on any
+            <span className="font-semibold text-accent">+</span> on any
             target — here, or in tonight's full report.
           </p>
         ) : (
@@ -282,16 +281,16 @@ export default function PlannerCard({ targets, catalogTotal }) {
       </div>
 
       {history.length > 0 && (
-        <div className="mt-5 border-t border-white/10 pt-3">
+        <div className="mt-5 border-t border-line pt-3">
           <div className="flex items-baseline justify-between">
-            <p className="text-[10px] uppercase tracking-[0.2em] text-[#6B7280]">
+            <p className="text-[10px] uppercase tracking-[0.2em] text-ink-3">
               History
             </p>
             {history.length > 5 && (
               <button
                 type="button"
                 onClick={() => setShowAllHistory((v) => !v)}
-                className="text-[11px] text-[#6B7280] transition-colors hover:text-white"
+                className="text-[11px] text-ink-3 transition-colors hover:text-ink"
               >
                 {showAllHistory ? "Show less" : `All ${history.length}`}
               </button>
@@ -304,6 +303,6 @@ export default function PlannerCard({ targets, catalogTotal }) {
           </ul>
         </div>
       )}
-    </SpotlightCard>
+    </div>
   );
 }

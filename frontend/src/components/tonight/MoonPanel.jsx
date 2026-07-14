@@ -72,25 +72,25 @@ export default function MoonPanel({ moon }) {
 
   return (
     <SpotlightCard data-reveal className="flex h-full flex-col p-7">
-      <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-[#FF8C1A]">
+      <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-accent">
         The Moon
       </p>
       <div className="mt-5 flex flex-1 items-center gap-7">
         <MoonDisc illumination={moon.illumination} phase={moon.phase} />
         <div className="min-w-0 flex-1">
-          <p className="text-3xl font-bold text-white">
+          <p className="text-3xl font-bold text-ink">
             {moon.illumination}
-            <span className="text-lg text-[#AAB4C5]">%</span>
+            <span className="text-lg text-ink-2">%</span>
           </p>
-          <p className="text-sm text-[#AAB4C5]">illuminated · {moon.phase}</p>
+          <p className="text-sm text-ink-2">illuminated · {moon.phase}</p>
           <dl className="mt-4 space-y-1.5">
             {rows.map(([label, value]) => (
               <div
                 key={label}
-                className="flex items-baseline justify-between gap-4 border-b border-white/5 pb-1.5 text-sm"
+                className="flex items-baseline justify-between gap-4 border-b border-line pb-1.5 text-sm"
               >
-                <dt className="shrink-0 text-[#6B7280]">{label}</dt>
-                <dd className="truncate text-right font-medium tabular-nums text-white">
+                <dt className="shrink-0 text-ink-3">{label}</dt>
+                <dd className="truncate text-right font-medium tabular-nums text-ink">
                   {value}
                 </dd>
               </div>
@@ -98,7 +98,7 @@ export default function MoonPanel({ moon }) {
           </dl>
         </div>
       </div>
-      <p className="mt-4 text-xs leading-relaxed text-[#6B7280]">
+      <p className="mt-4 text-xs leading-relaxed text-ink-3">
         {moon.above_horizon
           ? "The Moon is up — bright targets tolerate it, faint nebulae and galaxies prefer it below the horizon."
           : "The Moon is below your horizon — prime time for faint deep-sky objects."}

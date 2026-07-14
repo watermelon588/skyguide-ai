@@ -74,7 +74,7 @@ export default function AlignmentPanelCard({ launchTarget = null, onLaunched }) 
         >
           <CardIdentity
             className="flex-1"
-            icon={<FiCrosshair className="text-lg text-orange-400" />}
+            icon={<FiCrosshair className="text-lg text-accent" />}
             title="Alignment Mode"
             subtitle={subtitle}
             trailing={

@@ -17,10 +17,10 @@ import {
 function Stat({ label, value }) {
   return (
     <div className="flex flex-col leading-tight">
-      <span className="text-[10px] uppercase tracking-wide text-[#6B7280]">
+      <span className="text-[10px] uppercase tracking-wide text-ink-3">
         {label}
       </span>
-      <span className="text-sm font-semibold text-white">{value}</span>
+      <span className="text-sm font-semibold tabular-nums text-ink">{value}</span>
     </div>
   );
 }
@@ -29,10 +29,10 @@ function Stat({ label, value }) {
 function Chip({ label, on }) {
   return (
     <span
-      className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium ${
+      className={`inline-flex items-center gap-1 border px-2 py-0.5 text-[11px] font-medium ${
         on
-          ? "border-[#22C55E]/30 bg-[#22C55E]/10 text-[#22C55E]"
-          : "border-white/10 bg-white/5 text-[#6B7280]"
+          ? "border-success/30 bg-success/10 text-success"
+          : "border-line bg-surface-3 text-ink-3"
       }`}
     >
       {on ? <FiCheck className="text-xs" /> : <FiX className="text-xs" />}
@@ -75,7 +75,7 @@ export default function TelescopeCard() {
           <>
             {/* Identity */}
             <CardIdentity
-              icon={<TbTelescope className="text-lg text-orange-400" />}
+              icon={<TbTelescope className="text-lg text-accent" />}
               title={title}
               subtitle={
                 telescope.nickname?.trim()
@@ -118,8 +118,8 @@ export default function TelescopeCard() {
           <>
             <CardIdentity
               className="flex-1"
-              icon={<TbTelescope className="text-lg text-[#6B7280]" />}
-              iconClassName="border-white/10 bg-white/5"
+              icon={<TbTelescope className="text-lg text-ink-3" />}
+              iconClassName="border-line bg-surface-3"
               title="No telescope configured"
               subtitle="Configure your telescope to receive personalized observation recommendations."
             />

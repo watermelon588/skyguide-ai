@@ -1,14 +1,20 @@
 import { useRef } from "react";
 
 /**
- * Glass card with a cursor-tracked radial spotlight (reactbits.dev-inspired,
- * rebuilt on our design tokens). The highlight is written to CSS variables in
- * a pointermove handler — no React re-renders while the cursor moves.
+ * Flat surface card following the redesign v2 contract
+ * (bg-surface-2 · border border-line · radius 0 · no glass).
  *
- * Follows the DESIGN_SYSTEM glass contract:
- *   bg-white/5 · border-white/10 · backdrop-blur-3xl · shadow-2xl · rounded-2xl
+ * By default it carries a cursor-tracked radial spotlight in the electric-blue
+ * accent (written to CSS variables in a pointermove handler — no React
+ * re-renders). Pass `spotlight={false}` to drop the glow entirely for a
+ * quieter card; callers then supply their own hover treatment via `className`.
  */
-export default function SpotlightCard({ className = "", children, ...rest }) {
+export default function SpotlightCard({
+  className = "",
+  spotlight = true,
+  children,
+  ...rest
+}) {
   const ref = useRef(null);
 
   const onPointerMove = (event) => {
@@ -27,20 +33,22 @@ export default function SpotlightCard({ className = "", children, ...rest }) {
   return (
     <div
       ref={ref}
-      onPointerMove={onPointerMove}
-      onPointerLeave={onPointerLeave}
-      className={`relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 shadow-2xl backdrop-blur-3xl ${className}`}
+      onPointerMove={spotlight ? onPointerMove : undefined}
+      onPointerLeave={spotlight ? onPointerLeave : undefined}
+      className={`relative overflow-hidden border border-line bg-surface-2 ${className}`}
       {...rest}
     >
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 transition-opacity duration-300"
-        style={{
-          opacity: "var(--spot-opacity, 0)",
-          background:
-            "radial-gradient(340px circle at var(--spot-x, 50%) var(--spot-y, 50%), rgba(255,140,26,0.08), transparent 65%)",
-        }}
-      />
+      {spotlight && (
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 transition-opacity duration-300"
+          style={{
+            opacity: "var(--spot-opacity, 0)",
+            background:
+              "radial-gradient(340px circle at var(--spot-x, 50%) var(--spot-y, 50%), rgba(30,99,255,0.10), transparent 65%)",
+          }}
+        />
+      )}
       <div className="relative">{children}</div>
     </div>
   );

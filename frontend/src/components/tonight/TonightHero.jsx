@@ -88,14 +88,14 @@ export default function TonightHero({
     >
       <p
         data-hero
-        className="mb-4 text-xs font-medium uppercase tracking-[0.35em] text-[#AAB4C5]"
+        className="mb-4 text-xs font-medium uppercase tracking-[0.35em] text-ink-2"
       >
         SkyGuide Atlas · Live Sky Report
       </p>
 
       <h1
         aria-label={TITLE}
-        className="select-none text-[clamp(4.5rem,16vw,13rem)] font-bold leading-[0.95] tracking-tight text-white"
+        className="select-none text-[clamp(4.5rem,16vw,13rem)] font-bold leading-[0.95] tracking-tight text-ink"
       >
         {TITLE.split("").map((char, i) => (
           <span key={i} className="inline-block overflow-hidden align-bottom">
@@ -104,34 +104,34 @@ export default function TonightHero({
             </span>
           </span>
         ))}
-        <span className="hero-char ml-2 inline-block align-super text-[0.18em] font-medium text-[#FF8C1A]">
+        <span className="hero-char ml-2 inline-block align-super text-[0.18em] font-medium text-accent">
           LIVE
         </span>
       </h1>
 
-      <p data-hero className="mt-6 max-w-xl text-lg text-[#AAB4C5]">
+      <p data-hero className="mt-6 max-w-xl text-lg text-ink-2">
         {dateLine}
         {summaryBits.length > 0 && (
           <>
             <br />
-            <span className="text-white">{summaryBits.join("  ·  ")}</span>
+            <span className="text-ink">{summaryBits.join("  ·  ")}</span>
           </>
         )}
       </p>
 
       <div data-hero className="mt-10 flex flex-wrap items-center gap-3 text-sm">
-        <span className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-[#AAB4C5] backdrop-blur-3xl">
+        <span className="rounded-xl border border-line bg-surface-2 px-4 py-2 text-ink-2">
           {latitude != null && longitude != null
             ? `${latitude.toFixed(3)}°, ${longitude.toFixed(3)}°`
             : "Location unknown"}
         </span>
-        <span className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-[#AAB4C5] backdrop-blur-3xl">
+        <span className="rounded-xl border border-line bg-surface-2 px-4 py-2 text-ink-2">
           {timezone || "UTC"} · <LiveClock timezone={timezone} />
         </span>
-        <span className="flex items-center gap-2 rounded-xl border border-[#FF8C1A]/30 bg-[#FF8C1A]/10 px-4 py-2 font-medium text-[#FF8C1A]">
+        <span className="flex items-center gap-2 rounded-xl border border-accent/30 bg-accent/10 px-4 py-2 font-medium text-accent">
           <span className="relative flex h-2 w-2">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#FF8C1A] opacity-60" />
-            <span className="relative inline-flex h-2 w-2 rounded-full bg-[#FF8C1A]" />
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent opacity-60" />
+            <span className="relative inline-flex h-2 w-2 rounded-full bg-accent" />
           </span>
           Computed for this instant
         </span>
@@ -139,10 +139,10 @@ export default function TonightHero({
 
       <div
         data-hero-cue
-        className="absolute bottom-10 left-1/2 flex -translate-x-1/2 flex-col items-center gap-2 text-[#6B7280]"
+        className="absolute bottom-10 left-1/2 flex -translate-x-1/2 flex-col items-center gap-2 text-ink-3"
       >
         <span className="text-[11px] uppercase tracking-[0.3em]">Explore</span>
-        <span className="h-8 w-px animate-pulse bg-gradient-to-b from-[#FF8C1A] to-transparent" />
+        <span className="h-8 w-px animate-pulse bg-gradient-to-b from-accent to-transparent" />
       </div>
     </header>
   );

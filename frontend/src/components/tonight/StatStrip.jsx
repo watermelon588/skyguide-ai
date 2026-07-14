@@ -62,17 +62,17 @@ export default function StatStrip({ targets, moon, conditions }) {
     >
       {stats.map((stat) => (
         <SpotlightCard key={stat.label} data-reveal className="p-5">
-          <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-[#6B7280]">
+          <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-ink-3">
             {stat.label}
           </p>
-          <p className="mt-2 text-3xl font-bold text-white">
+          <p className="mt-2 text-3xl font-black tabular-nums text-ink">
             <CountUp
               value={stat.value}
               suffix={stat.suffix || ""}
               decimals={stat.decimals || 0}
             />
           </p>
-          <p className="mt-1 truncate text-xs text-[#AAB4C5]">{stat.detail}</p>
+          <p className="mt-1 truncate text-xs text-ink-2">{stat.detail}</p>
         </SpotlightCard>
       ))}
     </section>

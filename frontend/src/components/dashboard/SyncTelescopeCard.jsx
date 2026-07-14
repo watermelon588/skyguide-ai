@@ -30,7 +30,7 @@ function PairingPendingCard({ status, onViewQr, onCancel }) {
     <div className={DASHBOARD_CARD_ROW}>
       <CardIdentity
         className="flex-1"
-        icon={<FiSmartphone className="text-lg text-orange-400" />}
+        icon={<FiSmartphone className="text-lg text-accent" />}
         title="Pairing In Progress"
         subtitle={
           <ConnectionIndicator tone={indicator.tone} label={indicator.label} />
@@ -55,7 +55,7 @@ function SyncPromptCard({ error, onSync }) {
       <div className={DASHBOARD_CARD_ROW}>
         <CardIdentity
           className="flex-1"
-          icon={<FiSmartphone className="text-lg text-orange-400" />}
+          icon={<FiSmartphone className="text-lg text-accent" />}
           title="Sync Telescope"
           subtitle="Connect your mobile device to begin telescope alignment."
         />
@@ -78,12 +78,12 @@ function SyncPromptCard({ error, onSync }) {
             exit={{ opacity: 0, height: 0 }}
             className="overflow-hidden"
           >
-            <div className="mt-4 flex items-center gap-2 rounded-lg border border-[#EF4444]/30 bg-[#EF4444]/10 px-3 py-2 text-sm text-[#EF4444]">
+            <div className="mt-4 flex items-center gap-2 border border-danger/30 bg-danger/10 px-3 py-2 text-sm text-danger">
               <FiAlertTriangle className="shrink-0 text-base" />
               <span className="flex-1">{error}</span>
               <button
                 onClick={onSync}
-                className="font-semibold text-white underline-offset-2 hover:underline"
+                className="font-semibold text-ink underline-offset-2 hover:underline"
               >
                 Retry
               </button>

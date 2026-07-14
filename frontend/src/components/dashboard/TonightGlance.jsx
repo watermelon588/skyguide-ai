@@ -1,7 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 
-import SpotlightCard from "../tonight/fx/SpotlightCard";
 import ScoreRing from "../tonight/fx/ScoreRing";
 import CountUp from "../tonight/fx/CountUp";
 import AddToPlanButton from "../plan/AddToPlanButton";
@@ -76,25 +75,25 @@ function TargetRow({ target, onOpen }) {
           onOpen();
         }
       }}
-      className="group flex w-full min-w-0 cursor-pointer items-center gap-3 rounded-xl border border-white/5 bg-white/[0.03] px-3 py-2 text-left transition-colors duration-300 hover:border-white/10 hover:bg-white/10"
+      className="group flex w-full min-w-0 cursor-pointer items-center gap-3 border border-line bg-surface-3 px-3 py-2 text-left transition-colors duration-300 hover:border-accent"
     >
-      <span className="w-6 shrink-0 text-sm font-bold tabular-nums text-[#6B7280] group-hover:text-[#FF8C1A]">
+      <span className="w-6 shrink-0 text-sm font-bold tabular-nums text-ink-3 group-hover:text-accent">
         {target.rank}
       </span>
       <ScoreRing score={target.visibility_score} size={38} strokeWidth={3} />
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-sm font-semibold text-white">
+        <span className="block truncate text-sm font-semibold text-ink">
           {target.name || target.catalog_id}
         </span>
-        <span className="block truncate text-[11px] text-[#6B7280]">
+        <span className="block truncate text-[11px] text-ink-3">
           {target.catalog_id} · {meta.label}
         </span>
       </span>
-      <span className="hidden shrink-0 text-right text-[11px] tabular-nums text-[#AAB4C5] sm:block">
+      <span className="hidden shrink-0 text-right text-[11px] tabular-nums text-ink-2 sm:block">
         <span className="block">
           {formatDegrees(target.altitude_deg)} {compassPoint(target.azimuth_deg)}
         </span>
-        <span className="block text-[#6B7280]">
+        <span className="block text-ink-3">
           mag {formatMagnitude(target.magnitude)}
         </span>
       </span>
@@ -109,7 +108,7 @@ function Skeleton() {
       {[...Array(5)].map((_, i) => (
         <div
           key={i}
-          className="h-[54px] animate-pulse rounded-xl bg-white/5"
+          className="h-[54px] animate-pulse bg-surface-3"
           style={{ animationDelay: `${i * 120}ms` }}
         />
       ))}
@@ -128,20 +127,20 @@ export default function TonightGlance({
   const notes = fieldNotes({ targets, moon, conditions });
 
   return (
-    <SpotlightCard className="flex h-full flex-col p-6">
+    <div className="flex h-full flex-col border border-line bg-surface-2 p-6">
       <div className="flex items-baseline justify-between gap-4">
         <div>
-          <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-[#FF8C1A]">
+          <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-accent">
             Tonight at a glance
           </p>
-          <p className="mt-1 text-xs text-[#6B7280]">
+          <p className="mt-1 text-xs text-ink-3">
             live geometry for your coordinates
           </p>
         </div>
         <button
           type="button"
           onClick={() => navigate("/tonight")}
-          className="group flex shrink-0 items-center gap-1.5 text-xs font-medium text-[#AAB4C5] transition-colors duration-300 hover:text-[#FF8C1A]"
+          className="group flex shrink-0 items-center gap-1.5 text-xs font-medium text-ink-2 transition-colors duration-300 hover:text-accent"
         >
           Full report
           <ArrowRight
@@ -156,12 +155,12 @@ export default function TonightGlance({
         {statTiles({ targets, moon, conditions }).map((stat) => (
           <div
             key={stat.label}
-            className="rounded-xl border border-white/5 bg-white/[0.03] px-3 py-2.5 transition-colors duration-300 hover:border-white/10"
+            className="border border-line bg-surface-3 px-3 py-2.5 transition-colors duration-300 hover:border-accent"
           >
-            <p className="text-[10px] uppercase tracking-[0.18em] text-[#6B7280]">
+            <p className="text-[10px] uppercase tracking-[0.18em] text-ink-3">
               {stat.label}
             </p>
-            <p className="mt-0.5 text-xl font-bold text-white">
+            <p className="mt-0.5 text-xl font-bold text-ink">
               <CountUp
                 value={stat.value}
                 suffix={stat.suffix || ""}
@@ -177,11 +176,11 @@ export default function TonightGlance({
         {isLoading ? (
           <Skeleton />
         ) : isError ? (
-          <p className="rounded-xl border border-[#EF4444]/30 bg-[#EF4444]/10 px-4 py-3 text-sm text-[#EF4444]">
+          <p className="border border-danger/30 bg-danger/10 px-4 py-3 text-sm text-danger">
             Couldn't reach the Astro Engine — tonight's ranking is unavailable.
           </p>
         ) : targets.length === 0 ? (
-          <p className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-[#AAB4C5]">
+          <p className="border border-line bg-surface-3 px-4 py-3 text-sm text-ink-2">
             Nothing above your horizon right now — the sky turns; check back
             after dusk.
           </p>
@@ -200,23 +199,23 @@ export default function TonightGlance({
 
       {/* Field notes — dynamic guidance */}
       {notes.length > 0 && (
-        <div className="mt-5 border-t border-white/10 pt-4">
-          <p className="text-[10px] uppercase tracking-[0.2em] text-[#6B7280]">
+        <div className="mt-5 border-t border-line pt-4">
+          <p className="text-[10px] uppercase tracking-[0.2em] text-ink-3">
             Field notes
           </p>
           <ul className="mt-2 space-y-1.5">
             {notes.map((note) => (
               <li
                 key={note}
-                className="flex gap-2 text-xs leading-relaxed text-[#AAB4C5]"
+                className="flex gap-2 text-xs leading-relaxed text-ink-2"
               >
-                <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-[#FF8C1A]" />
+                <span className="mt-1.5 h-1 w-1 shrink-0 bg-accent" />
                 {note}
               </li>
             ))}
           </ul>
         </div>
       )}
-    </SpotlightCard>
+    </div>
   );
 }

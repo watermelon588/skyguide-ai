@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Crosshair, MapPin } from "lucide-react";
 
@@ -50,11 +50,11 @@ const cell = {
 function SectionLabel({ children, hint }) {
   return (
     <div className="flex items-baseline gap-3 pt-2">
-      <h2 className="shrink-0 text-[11px] font-medium uppercase tracking-[0.3em] text-[#6B7280]">
+      <h2 className="shrink-0 text-[11px] font-medium uppercase tracking-[0.3em] text-ink-3">
         {children}
       </h2>
-      <span className="h-px flex-1 bg-white/10" />
-      {hint && <span className="shrink-0 text-[11px] text-[#6B7280]">{hint}</span>}
+      <span className="h-px flex-1 bg-line" />
+      {hint && <span className="shrink-0 text-[11px] text-ink-3">{hint}</span>}
     </div>
   );
 }
@@ -63,15 +63,21 @@ function SectionLabel({ children, hint }) {
 function LocationSetupCard({ onManual }) {
   const { status, detectAndSaveLocation } = useLocation();
   return (
-    <div className="flex flex-wrap items-center gap-4 rounded-2xl border border-[#FF8C1A]/25 bg-[#FF8C1A]/5 px-5 py-4 backdrop-blur-3xl">
-      <span className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#FF8C1A]/25 bg-[#FF8C1A]/10 text-[#FF8C1A]">
+    <div className="flex flex-wrap items-center gap-4 border border-accent/30 bg-accent/5 px-5 py-4">
+      <span className="flex h-10 w-10 items-center justify-center border border-accent/30 bg-accent/10 text-accent">
         <MapPin size={18} />
       </span>
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-bold text-white">Set your observing location</p>
-        <p className="text-xs text-[#AAB4C5]">
+        <p className="text-sm font-bold text-ink">Set your observing location</p>
+        <p className="text-xs text-ink-2">
           Everything below — rankings, chart, Moon, conditions — is computed
-          for your exact coordinates.
+          for your exact coordinates.{" "}
+          <Link
+            to="/guide"
+            className="font-medium text-accent transition-colors hover:text-accent-hi"
+          >
+            New here? Follow the guide.
+          </Link>
         </p>
       </div>
       <div className="flex shrink-0 gap-2">
@@ -97,7 +103,7 @@ function FlowSlot({ active, children }) {
     <div
       className={
         active
-          ? "rounded-2xl ring-2 ring-[#FF8C1A]/70 ring-offset-2 ring-offset-[#090B12] transition-shadow"
+          ? "ring-2 ring-accent ring-offset-2 ring-offset-black transition-shadow"
           : undefined
       }
     >
@@ -163,10 +169,10 @@ function DashboardInner() {
           <motion.div
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex flex-wrap items-center gap-3 rounded-2xl border border-[#FF8C1A]/30 bg-[#FF8C1A]/10 px-5 py-3"
+            className="flex flex-wrap items-center gap-3 border border-accent/30 bg-accent/10 px-5 py-3"
           >
-            <Crosshair size={16} className="shrink-0 text-[#FF8C1A]" />
-            <p className="min-w-0 flex-1 text-sm text-white">
+            <Crosshair size={16} className="shrink-0 text-accent" />
+            <p className="min-w-0 flex-1 text-sm text-ink">
               Preparing to observe{" "}
               <span className="font-bold">{observeId}</span> —{" "}
               {flowStage === "telescope" &&
@@ -178,7 +184,7 @@ function DashboardInner() {
             <button
               type="button"
               onClick={clearFlow}
-              className="shrink-0 text-xs text-[#AAB4C5] transition-colors hover:text-white"
+              className="shrink-0 text-xs text-ink-2 transition-colors hover:text-ink"
             >
               Cancel
             </button>
@@ -204,6 +210,25 @@ function DashboardInner() {
           </FlowSlot>
         </div>
 
+        {/* 3 · Operations — pairing + sensors + alignment. Promoted to the top
+            section so telescope sync sits with setup; the observe flow scrolls
+            here. Works without a location, so it lives outside the gate below. */}
+        <SectionLabel hint="pairing · sensors · guidance">
+          Telescope operations
+        </SectionLabel>
+        <div className="flex flex-col gap-4">
+          <div id="sync-card">
+            <FlowSlot active={flowStage === "sync"}>
+              <SyncTelescopeCard />
+            </FlowSlot>
+          </div>
+          <OrientationPanelCard />
+          <AlignmentPanelCard
+            launchTarget={flowStage === "launch" ? observeId : null}
+            onLaunched={clearFlow}
+          />
+        </div>
+
         {hasLocation && (
           <>
             {/* 3–6 · Tonight at a glance / Moon / chart / conditions. */}
@@ -224,7 +249,7 @@ function DashboardInner() {
                 {tonight.moon ? (
                   <MoonPanel moon={tonight.moon} />
                 ) : (
-                  <div className="h-full min-h-[200px] animate-pulse rounded-2xl border border-white/10 bg-white/5" />
+                  <div className="h-full min-h-[200px] animate-pulse border border-line bg-surface-2" />
                 )}
               </motion.div>
               <motion.div custom={2} variants={cell} initial="hidden" animate="show" className="min-w-0 xl:col-span-2">
@@ -242,7 +267,7 @@ function DashboardInner() {
                     conditions={tonight.conditions}
                   />
                 ) : (
-                  <div className="h-full min-h-[200px] animate-pulse rounded-2xl border border-white/10 bg-white/5" />
+                  <div className="h-full min-h-[200px] animate-pulse border border-line bg-surface-2" />
                 )}
               </motion.div>
               {/* 7 · The plan — every queued target links to its panel. */}
@@ -258,22 +283,6 @@ function DashboardInner() {
           </>
         )}
 
-        {/* 8 · Operations — pairing + alignment; the flow scrolls here. */}
-        <SectionLabel hint="pairing · sensors · guidance">
-          Telescope operations
-        </SectionLabel>
-        <div className="flex flex-col gap-4">
-          <div id="sync-card">
-            <FlowSlot active={flowStage === "sync"}>
-              <SyncTelescopeCard />
-            </FlowSlot>
-          </div>
-          <OrientationPanelCard />
-          <AlignmentPanelCard
-            launchTarget={flowStage === "launch" ? observeId : null}
-            onLaunched={clearFlow}
-          />
-        </div>
       </div>
 
       <LocationPermissionModal

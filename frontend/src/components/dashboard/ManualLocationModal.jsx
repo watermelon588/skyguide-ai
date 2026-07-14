@@ -47,22 +47,22 @@ function validate({ latitude, longitude, timezone }) {
 function Field({ label, error, hint, ...props }) {
   return (
     <label className="block">
-      <span className="mb-1.5 block text-xs font-medium text-[#AAB4C5]">
+      <span className="mb-1.5 block text-xs font-medium text-ink-2">
         {label}
       </span>
       <input
         {...props}
         className="
-          w-full rounded-lg border bg-white/5 px-3 py-2.5 text-sm text-white
-          outline-none transition-colors placeholder:text-[#6B7280]
-          focus:border-orange-500 focus:ring-1 focus:ring-orange-500
+          w-full border bg-surface-2 px-3 py-2.5 text-sm text-ink
+          outline-none transition-colors placeholder:text-ink-3
+          focus:border-accent
         "
-        style={{ borderColor: error ? "#EF4444" : "rgba(255,255,255,0.1)" }}
+        style={{ borderColor: error ? "#EF4444" : "#232427" }}
       />
       {error ? (
-        <span className="mt-1 block text-xs text-[#EF4444]">{error}</span>
+        <span className="mt-1 block text-xs text-danger">{error}</span>
       ) : hint ? (
-        <span className="mt-1 block text-xs text-[#6B7280]">{hint}</span>
+        <span className="mt-1 block text-xs text-ink-3">{hint}</span>
       ) : null}
     </label>
   );
@@ -147,7 +147,7 @@ function ManualLocationForm({ onClose, initial }) {
   return (
     <>
       <motion.div
-        className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm"
+        className="fixed inset-0 z-40 bg-black/60"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
@@ -167,21 +167,21 @@ function ManualLocationForm({ onClose, initial }) {
               transition={{ duration: 0.3 }}
               onClick={(e) => e.stopPropagation()}
               className="
-                w-full max-w-md rounded-2xl border border-white/10 bg-white/5
-                px-8 py-6 shadow-2xl backdrop-blur-3xl
+                w-full max-w-md border border-line bg-surface-1
+                px-8 py-6
               "
             >
               {/* Header */}
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-orange-400/20 bg-orange-500/15">
-                    <FiMapPin className="text-xl text-orange-400" />
+                  <div className="flex h-11 w-11 items-center justify-center border border-accent/30 bg-accent/15">
+                    <FiMapPin className="text-xl text-accent" />
                   </div>
                   <div>
-                    <h2 className="text-lg font-bold text-white">
+                    <h2 className="text-lg font-bold text-ink">
                       Enter Location Manually
                     </h2>
-                    <p className="text-xs text-[#6B7280]">
+                    <p className="text-xs text-ink-3">
                       Provide your observing coordinates
                     </p>
                   </div>
@@ -232,7 +232,7 @@ function ManualLocationForm({ onClose, initial }) {
                   <button
                     type="button"
                     onClick={detectTimezone}
-                    className="mt-2 inline-flex items-center gap-1.5 text-xs font-medium text-orange-400 transition-colors hover:text-orange-300"
+                    className="mt-2 inline-flex items-center gap-1.5 text-xs font-medium text-accent transition-colors hover:text-accent-hi"
                   >
                     <FiCrosshair className="text-sm" />
                     Detect from browser
@@ -245,7 +245,7 @@ function ManualLocationForm({ onClose, initial }) {
                       initial={{ opacity: 0, y: -4 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0 }}
-                      className="text-sm text-[#EF4444]"
+                      className="text-sm text-danger"
                     >
                       {errorMessage}
                     </motion.p>
@@ -255,7 +255,7 @@ function ManualLocationForm({ onClose, initial }) {
                       initial={{ opacity: 0, y: -4 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0 }}
-                      className="text-sm text-[#22C55E]"
+                      className="text-sm text-success"
                     >
                       Location saved.
                     </motion.p>

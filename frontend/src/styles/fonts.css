@@ -1,0 +1,18 @@
+/* Satoshi — self-hosted variable font (Fontshare, weight 300–900).
+   Replaces Geist as the single system typeface for the redesigned UI. */
+
+@font-face {
+  font-family: "Satoshi Variable";
+  src: url("/fonts/Satoshi-Variable.woff2") format("woff2-variations");
+  font-weight: 300 900;
+  font-display: swap;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Satoshi Variable";
+  src: url("/fonts/Satoshi-VariableItalic.woff2") format("woff2-variations");
+  font-weight: 300 900;
+  font-display: swap;
+  font-style: italic;
+}

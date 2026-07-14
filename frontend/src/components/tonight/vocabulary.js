@@ -1,9 +1,9 @@
 /**
  * Shared visual vocabulary for the /tonight experience.
  *
- * Per DESIGN_SYSTEM.md, orange is the only saturated accent — so object
+ * Per DESIGN_SYSTEM.md, electric blue is the only saturated accent — so object
  * *types* are distinguished by glyph shape and neutral tone, while *score*
- * (importance) is what earns orange. Data viz stays in the same language as
+ * (importance) is what earns blue. Data viz stays in the same language as
  * the rest of the instrument.
  */
 
@@ -31,13 +31,13 @@ export function typeMeta(objectType) {
   return TYPE_META[typeKey(objectType)];
 }
 
-/** 0–100 score -> tone. Only strong scores earn full accent orange. */
+/** 0–100 score -> tone. Only strong scores earn full electric blue. */
 export function scoreColor(score) {
-  if (score == null) return "#4B5563";
-  if (score >= 70) return "#FF8C1A";
-  if (score >= 50) return "#FB923C";
-  if (score >= 30) return "#AAB4C5";
-  return "#6B7280";
+  if (score == null) return "#6B6C70";
+  if (score >= 70) return "#1E63FF";
+  if (score >= 50) return "#0049CD";
+  if (score >= 30) return "#9D9D9C";
+  return "#6B6C70";
 }
 
 /** Azimuth in degrees -> 16-wind compass point ("NNE"). */

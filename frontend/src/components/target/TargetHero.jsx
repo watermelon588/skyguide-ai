@@ -22,7 +22,7 @@ export default function TargetHero({ target }) {
   const image = target.hero_image || target.thumbnail || null;
 
   return (
-    <section className="overflow-hidden rounded-2xl border border-white/10 bg-white/5 shadow-2xl backdrop-blur-3xl">
+    <section className="overflow-hidden border border-line bg-surface-2">
       {/* Visual band */}
       <div className="relative flex h-56 items-center justify-center overflow-hidden sm:h-72">
         {image ? (
@@ -33,30 +33,30 @@ export default function TargetHero({ target }) {
           />
         ) : (
           <>
-            <div className="absolute inset-0 bg-gradient-to-br from-[#131A26] via-[#0B0F16] to-[#05070A]" />
+            <div className="absolute inset-0 bg-gradient-to-br from-surface-3 via-surface-1 to-bg" />
             <span
               aria-hidden="true"
-              className="relative text-[7rem] leading-none text-[#FF8C1A]/25 sm:text-[9rem]"
+              className="relative text-[7rem] leading-none text-accent/25 sm:text-[9rem]"
             >
               {meta.symbol}
             </span>
           </>
         )}
-        <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[#0B0F16] to-transparent" />
+        <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-surface-1 to-transparent" />
       </div>
 
       {/* Identity + actions */}
       <div className="flex flex-wrap items-end justify-between gap-6 p-6 sm:p-8">
         <div className="min-w-0">
-          <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-[#FF8C1A]">
+          <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-accent">
             {target.catalog_id} · {meta.symbol} {meta.label}
             {target.constellation && ` · ${target.constellation}`}
           </p>
-          <h1 className="mt-2 text-3xl font-bold text-white sm:text-5xl">
+          <h1 className="mt-2 text-3xl font-black uppercase tracking-tight text-ink sm:text-5xl">
             {target.name || target.catalog_id}
           </h1>
           {target.aliases?.length > 0 && (
-            <p className="mt-1 text-sm text-[#6B7280]">
+            <p className="mt-1 text-sm text-ink-3">
               also “{target.aliases.join("”, “")}”
             </p>
           )}
@@ -82,7 +82,7 @@ export default function TargetHero({ target }) {
                 ? "Guided telescope alignment onto this target"
                 : "Below your horizon right now — try when it rises"
             }
-            className="flex items-center gap-2 rounded-xl bg-[#FF8C1A] px-6 py-2.5 text-sm font-semibold text-[#090B10] transition-colors duration-300 hover:bg-[#FF6B00] disabled:cursor-not-allowed disabled:opacity-40"
+            className="flex items-center gap-2 bg-accent px-6 py-2.5 text-sm font-semibold text-ink transition-colors duration-300 hover:bg-accent-hi disabled:cursor-not-allowed disabled:opacity-40"
           >
             <Crosshair size={15} />
             Start observing

@@ -80,10 +80,10 @@ export default function SkyDome({ targets, moon, onSelect, compact = false }) {
     <SpotlightCard className={compact ? "h-full p-4 sm:p-6" : "p-4 sm:p-8"}>
       {compact && (
         <div className="mb-4 flex items-baseline justify-between gap-4">
-          <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-[#FF8C1A]">
+          <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-accent">
             All-Sky Chart
           </p>
-          <p className="truncate text-xs text-[#6B7280]">
+          <p className="truncate text-xs text-ink-3">
             zenith at center · horizon at the rim
           </p>
         </div>
@@ -110,7 +110,7 @@ export default function SkyDome({ targets, moon, onSelect, compact = false }) {
                 <text
                   x="4"
                   y={-((90 - alt) / 90) * R + 12}
-                  fill="#6B7280"
+                  fill="#6B6C70"
                   fontSize="8"
                 >
                   {label}
@@ -120,7 +120,7 @@ export default function SkyDome({ targets, moon, onSelect, compact = false }) {
             {/* Crosshair + zenith */}
             <line x1={-R} y1="0" x2={R} y2="0" stroke="rgba(255,255,255,0.05)" />
             <line x1="0" y1={-R} x2="0" y2={R} stroke="rgba(255,255,255,0.05)" />
-            <circle cx="0" cy="0" r="1.5" fill="#6B7280" />
+            <circle cx="0" cy="0" r="1.5" fill="#6B6C70" />
 
             {/* Cardinal labels */}
             {CARDINALS.map(({ az, label }) => {
@@ -131,7 +131,7 @@ export default function SkyDome({ targets, moon, onSelect, compact = false }) {
                   x={x}
                   y={y + 3}
                   textAnchor="middle"
-                  fill={label === "N" ? "#FF8C1A" : "#AAB4C5"}
+                  fill={label === "N" ? "#1E63FF" : "#DADADA"}
                   fontSize="11"
                   fontWeight="600"
                 >
@@ -161,7 +161,7 @@ export default function SkyDome({ targets, moon, onSelect, compact = false }) {
                   x={moonPos.x}
                   y={moonPos.y - 15}
                   textAnchor="middle"
-                  fill="#AAB4C5"
+                  fill="#DADADA"
                   fontSize="8"
                 >
                   Moon
@@ -184,7 +184,7 @@ export default function SkyDome({ targets, moon, onSelect, compact = false }) {
                     cy={p.y}
                     r={dotRadius(p.visibility_score) + 6}
                     fill="none"
-                    stroke="#FF8C1A"
+                    stroke="#0049CD"
                     strokeWidth="1"
                     opacity="0.6"
                   />
@@ -203,30 +203,30 @@ export default function SkyDome({ targets, moon, onSelect, compact = false }) {
 
           {/* Readout / legend column */}
           <div className="flex min-w-0 flex-1 flex-col gap-4">
-            <div className="min-h-[120px] rounded-2xl border border-white/10 bg-white/5 p-5">
+            <div className="min-h-[120px] border border-line bg-surface-3 p-5">
               {active ? (
                 <>
-                  <p className="text-[11px] uppercase tracking-[0.2em] text-[#FF8C1A]">
+                  <p className="text-[11px] uppercase tracking-[0.2em] text-accent">
                     {active.catalog_id} · {typeMeta(active.object_type).label}
                   </p>
-                  <p className="mt-1 truncate text-xl font-semibold text-white">
+                  <p className="mt-1 truncate text-xl font-semibold text-ink">
                     {active.name || active.catalog_id}
                   </p>
-                  <p className="mt-2 text-sm text-[#AAB4C5]">
+                  <p className="mt-2 text-sm text-ink-2">
                     Alt {formatDegrees(active.altitude_deg)} · Az{" "}
                     {formatDegrees(active.azimuth_deg)} (
                     {compassPoint(active.azimuth_deg)}) · Score{" "}
-                    <span className="font-semibold text-white">
+                    <span className="font-semibold text-ink">
                       {active.visibility_score}
                     </span>
                   </p>
                 </>
               ) : (
                 <>
-                  <p className="text-[11px] uppercase tracking-[0.2em] text-[#6B7280]">
+                  <p className="text-[11px] uppercase tracking-[0.2em] text-ink-3">
                     Readout
                   </p>
-                  <p className="mt-2 text-sm text-[#AAB4C5]">
+                  <p className="mt-2 text-sm text-ink-2">
                     Hover a point to identify it. Larger, warmer dots are
                     tonight's strongest targets.
                   </p>
@@ -246,10 +246,10 @@ export default function SkyDome({ targets, moon, onSelect, compact = false }) {
                     type="button"
                     onClick={() => setTypeFilter(key)}
                     aria-pressed={typeFilter === key}
-                    className={`flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs transition-colors duration-300 ${
+                    className={`flex items-center gap-1.5 border px-2.5 py-1 text-xs transition-colors duration-300 ${
                       typeFilter === key
-                        ? "border-[#FF8C1A]/50 bg-[#FF8C1A]/15 text-[#FF8C1A]"
-                        : "border-white/10 bg-white/5 text-[#AAB4C5] hover:bg-white/10"
+                        ? "border-accent/50 bg-accent/15 text-accent"
+                        : "border-line bg-surface-2 text-ink-2 hover:bg-surface-3"
                     }`}
                   >
                     <span className="text-sm leading-none">{meta.symbol}</span>
@@ -258,7 +258,7 @@ export default function SkyDome({ targets, moon, onSelect, compact = false }) {
                 ))}
             </div>
 
-            <p className="text-xs leading-relaxed text-[#6B7280]">
+            <p className="text-xs leading-relaxed text-ink-3">
               {plotted.length} objects plotted from live geometry — altitude,
               azimuth and score recomputed by the Astro Engine for your exact
               coordinates and this exact moment.
@@ -274,14 +274,14 @@ export default function SkyDome({ targets, moon, onSelect, compact = false }) {
     <section data-reveal className="mx-auto w-full max-w-7xl px-6 sm:px-12">
       <div className="mb-6 flex items-end justify-between">
         <div>
-          <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-[#FF8C1A]">
+          <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-accent">
             All-Sky Chart
           </p>
-          <h2 className="mt-2 text-3xl font-bold text-white sm:text-4xl">
+          <h2 className="mt-2 text-3xl font-bold text-ink sm:text-4xl">
             Your dome, right now
           </h2>
         </div>
-        <p className="hidden max-w-xs text-right text-xs text-[#6B7280] sm:block">
+        <p className="hidden max-w-xs text-right text-xs text-ink-3 sm:block">
           Zenith at center, horizon at the rim. Azimuth runs N → E → S → W.
           Click any object for the full dossier.
         </p>

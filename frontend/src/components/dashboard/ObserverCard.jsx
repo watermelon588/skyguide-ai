@@ -23,10 +23,10 @@ const SPRING = { type: "spring", stiffness: 400, damping: 32 };
 function Stat({ label, value }) {
   return (
     <div className="flex flex-col leading-tight">
-      <span className="text-[10px] uppercase tracking-wide text-[#6B7280]">
+      <span className="text-[10px] uppercase tracking-wide text-ink-3">
         {label}
       </span>
-      <span className="text-sm font-semibold text-white">{value}</span>
+      <span className="text-sm font-semibold tabular-nums text-ink">{value}</span>
     </div>
   );
 }
@@ -40,31 +40,31 @@ function refreshStateConfig(status, errorMessage) {
       return {
         icon: <FiRefreshCw className="animate-spin text-base" />,
         label: "Refreshing GPS...",
-        tone: "border-white/10 bg-white/5 text-white",
+        tone: "border-line bg-surface-3 text-ink",
       };
     case "success":
       return {
         icon: <FiCheck className="text-base" />,
         label: "Location Updated",
-        tone: "border-[#22C55E]/30 bg-[#22C55E]/15 text-[#22C55E]",
+        tone: "border-success/30 bg-success/15 text-success",
       };
     case "denied":
       return {
         icon: <FiAlertTriangle className="text-base" />,
         label: "GPS Permission Required",
-        tone: "border-orange-400/30 bg-orange-500/15 text-orange-300",
+        tone: "border-warning/30 bg-warning/15 text-warning",
       };
     case "error":
       return {
         icon: <FiAlertTriangle className="text-base" />,
         label: errorMessage || "GPS Update Failed",
-        tone: "border-orange-400/30 bg-orange-500/15 text-orange-300",
+        tone: "border-danger/30 bg-danger/15 text-danger",
       };
     default:
       return {
         icon: <FiRefreshCw className="text-base" />,
         label: "Refresh GPS",
-        tone: "border-white/10 bg-white/5 text-white hover:bg-white/10",
+        tone: "border-line bg-surface-2 text-ink hover:bg-surface-3",
       };
   }
 }
@@ -147,20 +147,19 @@ export default function ObserverCard({ onEdit }) {
       transition={{ duration: 0.3 }}
       className="
         flex w-full flex-col overflow-hidden
-        rounded-2xl border border-white/10 bg-white/5
-        shadow-2xl backdrop-blur-3xl transition-all
+        border border-line bg-surface-2 transition-colors
       "
     >
       {/* Summary row — the collapsed Observer bar (unchanged height). */}
       <div className={`${DASHBOARD_CARD_ROW} px-5 py-3`}>
       {/* Left: identity */}
       <CardIdentity
-        icon={<FaLocationDot className="text-lg text-orange-400" />}
+        icon={<FaLocationDot className="text-lg text-accent" />}
         title="Observer Location"
         subtitle={placeName ?? "Location name unavailable"}
         trailing={
-          <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] font-medium text-[#22C55E]">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#22C55E]" />
+          <span className="inline-flex shrink-0 items-center gap-1.5 border border-line bg-surface-3 px-2.5 py-1 text-[11px] font-medium text-success">
+            <span className="h-1.5 w-1.5 rounded-full bg-success" />
             Active
           </span>
         }
@@ -240,13 +239,7 @@ export default function ObserverCard({ onEdit }) {
             transition={{ type: "spring", bounce: 0, duration: 0.25 }}
             className="w-full overflow-hidden"
           >
-            <div
-              className="border-t border-white/[0.08] px-5 py-4"
-              style={{
-                background: "rgba(20,22,30,0.95)",
-                backdropFilter: "blur(20px)",
-              }}
-            >
+            <div className="border-t border-line bg-surface-1 px-5 py-4">
               <WeatherPopover
                 data={weatherData}
                 isLoading={weatherLoading}

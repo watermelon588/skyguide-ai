@@ -111,7 +111,7 @@ export default function TelescopeModal({ open, initial, onClose, onSave, onDelet
       {open && (
         <>
           <motion.div
-            className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
+            className="fixed inset-0 z-40 bg-black/70"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -129,19 +129,19 @@ export default function TelescopeModal({ open, initial, onClose, onSave, onDelet
               exit={{ opacity: 0, y: 20, scale: 0.97 }}
               transition={{ duration: 0.3 }}
               onClick={(e) => e.stopPropagation()}
-              className="flex max-h-[88vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0B0D12]/90 shadow-2xl backdrop-blur-3xl"
+              className="flex max-h-[88vh] w-full max-w-4xl flex-col overflow-hidden border border-line bg-surface-1"
             >
               {/* Header */}
-              <div className="flex items-center justify-between border-b border-white/10 px-6 py-4">
+              <div className="flex items-center justify-between border-b border-line px-6 py-4">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-orange-400/20 bg-orange-500/15">
-                    <TbTelescope className="text-lg text-orange-400" />
+                  <div className="flex h-10 w-10 items-center justify-center border border-accent/30 bg-accent/15">
+                    <TbTelescope className="text-lg text-accent" />
                   </div>
                   <div>
-                    <h2 className="text-lg font-bold text-white">
+                    <h2 className="text-lg font-bold text-ink">
                       Configure Telescope
                     </h2>
-                    <p className="text-xs text-[#6B7280]">
+                    <p className="text-xs text-ink-3">
                       Search a model or add your own
                     </p>
                   </div>
@@ -156,18 +156,18 @@ export default function TelescopeModal({ open, initial, onClose, onSave, onDelet
                 {/* Left: search + form */}
                 <div className="min-w-0 space-y-5">
                   <section>
-                    <h3 className="mb-2.5 text-sm font-semibold text-white">
+                    <h3 className="mb-2.5 text-sm font-semibold text-ink">
                       Search Telescope
                     </h3>
                     <TelescopeSearch onSelect={handleSelect} selectedId={draft.sourceId} />
                   </section>
 
                   <div className="flex items-center gap-3">
-                    <span className="h-px flex-1 bg-white/10" />
-                    <span className="text-[11px] font-medium uppercase tracking-wide text-[#6B7280]">
+                    <span className="h-px flex-1 bg-line" />
+                    <span className="text-[11px] font-medium uppercase tracking-wide text-ink-3">
                       or add custom
                     </span>
-                    <span className="h-px flex-1 bg-white/10" />
+                    <span className="h-px flex-1 bg-line" />
                   </div>
 
                   <TelescopeForm draft={draft} onChange={handleChange} />
@@ -180,7 +180,7 @@ export default function TelescopeModal({ open, initial, onClose, onSave, onDelet
               </div>
 
               {/* Footer */}
-              <div className="flex items-center gap-3 border-t border-white/10 px-6 py-4">
+              <div className="flex items-center gap-3 border-t border-line px-6 py-4">
                 {initial && onDelete && (
                   <Button variant="danger" onClick={onDelete}>
                     <FiTrash2 className="text-base" />

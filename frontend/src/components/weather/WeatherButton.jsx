@@ -40,9 +40,9 @@ export default function WeatherButton({
       whileHover={disabled ? undefined : { scale: 1.03 }}
       whileTap={disabled ? undefined : { scale: 0.97 }}
       aria-expanded={open}
-      className="flex max-w-[180px] items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-1.5 text-left transition-colors hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
+      className="flex max-w-[180px] items-center gap-2 border border-line bg-surface-2 px-3 py-1.5 text-left transition-colors hover:bg-surface-3 disabled:cursor-not-allowed disabled:opacity-60"
     >
-      <span className="flex h-6 w-6 shrink-0 items-center justify-center text-orange-400">
+      <span className="flex h-6 w-6 shrink-0 items-center justify-center text-accent">
         {loading ? (
           <FiLoader className="animate-spin text-sm" />
         ) : (
@@ -52,7 +52,7 @@ export default function WeatherButton({
 
       {weather ? (
         <span className="flex min-w-0 flex-col leading-tight">
-          <span className="text-sm font-semibold text-white">
+          <span className="text-sm font-semibold tabular-nums text-ink">
             {formatMetric(weather.temperature_c, "°C")}
           </span>
           <span className={`truncate text-[10px] font-medium ${qualityText}`}>
@@ -60,13 +60,13 @@ export default function WeatherButton({
           </span>
         </span>
       ) : (
-        <span className="text-sm font-medium text-white">Weather</span>
+        <span className="text-sm font-medium text-ink">Weather</span>
       )}
 
       <motion.span
         animate={{ rotate: open ? 180 : 0 }}
         transition={SPRING}
-        className="ml-auto text-[#6B7280]"
+        className="ml-auto text-ink-3"
       >
         <FiChevronDown className="text-sm" />
       </motion.span>

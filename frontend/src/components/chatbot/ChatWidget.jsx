@@ -18,17 +18,15 @@ export default function ChatWidget() {
         right-30
         z-40
 
-        rounded-xl
         border
-        border-white/15
+        border-line
 
-        bg-black/40
-        backdrop-blur-xl
+        bg-surface-2
 
         px-4
         py-3
 
-        text-white
+        text-ink
         text-sm
 
         transition-all

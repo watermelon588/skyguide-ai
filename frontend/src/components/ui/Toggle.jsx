@@ -4,7 +4,7 @@ const SPRING = { type: "spring", stiffness: 500, damping: 34 };
 
 /**
  * Accessible on/off switch matching the SkyGuide design system.
- * Orange track when on, glass track when off; the knob springs across.
+ * Electric-blue track when on, flat surface track when off; knob springs across.
  *
  * @param {{
  *   checked: boolean,
@@ -25,8 +25,8 @@ export default function Toggle({ checked, onChange, label, hint, disabled }) {
       onClick={() => onChange(!checked)}
       className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
         checked
-          ? "border-orange-400/40 bg-orange-500/90"
-          : "border-white/10 bg-white/10"
+          ? "border-accent bg-accent"
+          : "border-line bg-surface-3"
       }`}
     >
       <motion.span
@@ -43,8 +43,8 @@ export default function Toggle({ checked, onChange, label, hint, disabled }) {
   return (
     <label className="flex items-center justify-between gap-3">
       <span className="flex flex-col leading-tight">
-        <span className="text-sm font-medium text-white">{label}</span>
-        {hint && <span className="text-[11px] text-[#6B7280]">{hint}</span>}
+        <span className="text-sm font-medium text-ink">{label}</span>
+        {hint && <span className="text-[11px] text-ink-3">{hint}</span>}
       </span>
       {button}
     </label>

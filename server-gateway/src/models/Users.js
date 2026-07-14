@@ -120,8 +120,45 @@ const UserSchema = new mongoose.Schema(
     },
 
     avatar: {
+      // A compact data URL (client-cropped 256px square) or a hosted URL.
+      // Kept small so it can live on the document; swappable for a CDN later.
       type: String,
       default: "",
+    },
+
+    avatarPublicId: {
+      // Reserved for a future CDN (e.g. Cloudinary) — the asset handle to
+      // delete/replace. Null while avatars are stored inline.
+      type: String,
+      default: null,
+    },
+
+    // --- Public identity (Feature 4) ---
+    displayName: {
+      type: String,
+      trim: true,
+      maxlength: 50,
+      default: "",
+    },
+
+    bio: {
+      type: String,
+      trim: true,
+      maxlength: 280,
+      default: "",
+    },
+
+    // Who may view /observers/:username. "observers" = any signed-in user.
+    profileVisibility: {
+      type: String,
+      enum: ["public", "observers", "private"],
+      default: "public",
+    },
+
+    // When false, the public profile hides the city/region label entirely.
+    showApproxLocation: {
+      type: Boolean,
+      default: true,
     },
 
     location: {
@@ -146,6 +183,12 @@ const UserSchema = new mongoose.Schema(
         type: String,
         default: "UTC",
       },
+
+      // Human-readable place, filled by best-effort reverse geocoding on save.
+      // These — never the raw coordinates — are what public profiles may show.
+      city: { type: String, default: null },
+      state: { type: String, default: null },
+      country: { type: String, default: null },
     },
 
     telescopeProfile: {

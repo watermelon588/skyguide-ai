@@ -10,9 +10,9 @@ export default function TelescopeTypeBadge({ type, className = "" }) {
   if (!type) return null;
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] font-medium text-[#AAB4C5] ${className}`}
+      className={`inline-flex items-center gap-1.5 border border-line bg-surface-2 px-2.5 py-1 text-[11px] font-medium text-ink-2 ${className}`}
     >
-      <TbTelescope className="text-xs text-orange-400" />
+      <TbTelescope className="text-xs text-accent" />
       {type}
     </span>
   );

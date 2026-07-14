@@ -33,7 +33,7 @@ export default function OrientationPanelCard() {
     >
       <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
         <CardIdentity
-          icon={<FiCompass className="text-lg text-orange-400" />}
+          icon={<FiCompass className="text-lg text-accent" />}
           title="Orientation Engine"
           subtitle="Temporary dev panel — calibrated phone orientation"
           className="flex-1"
@@ -48,7 +48,7 @@ export default function OrientationPanelCard() {
       {live ? (
         <ModelView feed={feed} />
       ) : (
-        <p className="mt-4 text-xs text-[#6B7280]">{emptyMessage(feed)}</p>
+        <p className="mt-4 text-xs text-ink-3">{emptyMessage(feed)}</p>
       )}
     </motion.section>
   );
@@ -69,17 +69,17 @@ function emptyMessage(feed) {
 }
 
 const CONFIDENCE_TONE = {
-  high: "text-[#22C55E]",
-  medium: "text-orange-400",
-  low: "text-[#EF4444]",
-  initializing: "text-[#6B7280]",
+  high: "text-success",
+  medium: "text-accent",
+  low: "text-danger",
+  initializing: "text-ink-3",
 };
 
 const CALIBRATION_LABEL = {
-  calibrated: { text: "Calibrated", tone: "text-[#22C55E]" },
-  degraded: { text: "Degraded", tone: "text-orange-400" },
-  unreferenced: { text: "No North Ref", tone: "text-orange-400" },
-  initializing: { text: "Initializing", tone: "text-[#6B7280]" },
+  calibrated: { text: "Calibrated", tone: "text-success" },
+  degraded: { text: "Degraded", tone: "text-accent" },
+  unreferenced: { text: "No North Ref", tone: "text-accent" },
+  initializing: { text: "Initializing", tone: "text-ink-3" },
 };
 
 function ModelView({ feed }) {
@@ -125,17 +125,17 @@ function ModelView({ feed }) {
         />
       </div>
 
-      <div className="mt-3 rounded-lg border border-white/10 bg-white/5 px-3 py-2">
-        <p className="text-[10px] uppercase tracking-wide text-[#6B7280]">
+      <div className="mt-3 border border-line bg-surface-3 px-3 py-2">
+        <p className="text-[10px] uppercase tracking-wide text-ink-3">
           Quaternion (screen → world)
         </p>
-        <p className="mt-0.5 font-mono text-[11px] text-[#AAB4C5]">
+        <p className="mt-0.5 font-mono text-[11px] text-ink-2">
           w {fmt(m.quaternion?.w, 4)} · x {fmt(m.quaternion?.x, 4)} · y{" "}
           {fmt(m.quaternion?.y, 4)} · z {fmt(m.quaternion?.z, 4)}
         </p>
       </div>
 
-      <p className="mt-3 text-[10px] text-[#6B7280]">
+      <p className="mt-3 text-[10px] text-ink-3">
         Stream rate tracks motion by design (unchanged poses are deduplicated
         to a keepalive).{m.gimbal && " *Roll referenced to North near zenith/nadir."}
         {m.calibration?.status === "unreferenced" &&
@@ -147,24 +147,24 @@ function ModelView({ feed }) {
 
 function BigValue({ label, value }) {
   return (
-    <div className="rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-center">
-      <p className="text-[10px] uppercase tracking-wide text-[#6B7280]">
+    <div className="border border-line bg-surface-3 px-3 py-2.5 text-center">
+      <p className="text-[10px] uppercase tracking-wide text-ink-3">
         {label}
       </p>
-      <p className="mt-1 font-mono text-lg font-bold text-white">{value}</p>
+      <p className="mt-1 font-mono text-lg font-bold text-ink">{value}</p>
     </div>
   );
 }
 
 function Metric({ label, value, valueClass, warn = false }) {
   return (
-    <div className="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
-      <p className="text-[10px] uppercase tracking-wide text-[#6B7280]">
+    <div className="border border-line bg-surface-3 px-3 py-2">
+      <p className="text-[10px] uppercase tracking-wide text-ink-3">
         {label}
       </p>
       <p
         className={`mt-0.5 truncate font-mono text-xs ${
-          valueClass ?? (warn ? "text-[#EF4444]" : "text-white")
+          valueClass ?? (warn ? "text-danger" : "text-ink")
         }`}
       >
         {value}

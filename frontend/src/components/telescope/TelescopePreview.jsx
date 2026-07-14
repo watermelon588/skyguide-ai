@@ -8,10 +8,10 @@ import { formatFocalRatio } from "../../utils/telescopeCalculations";
 function Stat({ label, value }) {
   return (
     <div className="flex flex-col leading-tight">
-      <span className="text-[10px] uppercase tracking-wide text-[#6B7280]">
+      <span className="text-[10px] uppercase tracking-wide text-ink-3">
         {label}
       </span>
-      <span className="text-sm font-semibold text-white">{value}</span>
+      <span className="text-sm font-semibold text-ink">{value}</span>
     </div>
   );
 }
@@ -20,10 +20,10 @@ function Stat({ label, value }) {
 function Capability({ label, on }) {
   return (
     <span
-      className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium ${
+      className={`inline-flex items-center gap-1 border px-2 py-0.5 text-[11px] font-medium ${
         on
-          ? "border-[#22C55E]/30 bg-[#22C55E]/10 text-[#22C55E]"
-          : "border-white/10 bg-white/5 text-[#6B7280]"
+          ? "border-success/30 bg-success/10 text-success"
+          : "border-line bg-surface-3 text-ink-3"
       }`}
     >
       {on ? <FiCheck className="text-xs" /> : <FiX className="text-xs" />}
@@ -48,16 +48,16 @@ export default function TelescopePreview({ telescope }) {
     "New Telescope";
 
   return (
-    <div className="flex h-full flex-col gap-4 rounded-2xl border border-white/10 bg-white/[0.04] p-5 shadow-xl backdrop-blur-xl">
+    <div className="flex h-full flex-col gap-4 border border-line bg-surface-2 p-5">
       {/* Identity */}
       <div className="flex items-center gap-3">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-orange-400/20 bg-orange-500/15">
-          <TbTelescope className="text-xl text-orange-400" />
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center border border-accent/30 bg-accent/15">
+          <TbTelescope className="text-xl text-accent" />
         </div>
         <div className="min-w-0">
-          <p className="truncate text-base font-bold text-white">{title}</p>
+          <p className="truncate text-base font-bold text-ink">{title}</p>
           {nickname?.trim() && (brand || model) && (
-            <p className="truncate text-xs text-[#6B7280]">
+            <p className="truncate text-xs text-ink-3">
               {[brand, model].filter(Boolean).join(" ")}
             </p>
           )}
@@ -67,7 +67,7 @@ export default function TelescopePreview({ telescope }) {
       {type && <TelescopeTypeBadge type={type} />}
 
       {/* Optics */}
-      <div className="flex flex-wrap items-center gap-x-6 gap-y-3 rounded-xl border border-white/5 bg-white/[0.02] px-4 py-3">
+      <div className="flex flex-wrap items-center gap-x-6 gap-y-3 border border-line bg-surface-3 px-4 py-3">
         <Stat label="Aperture" value={aperture_mm ? `${aperture_mm} mm` : "—"} />
         <Stat
           label="Focal Length"
@@ -87,7 +87,7 @@ export default function TelescopePreview({ telescope }) {
         <Capability label="Camera" on={!!telescope.cameraSupport} />
       </div>
 
-      <div className="h-px w-full bg-white/10" />
+      <div className="h-px w-full bg-line" />
 
       <TelescopeSpecs telescope={telescope} />
     </div>

@@ -230,7 +230,20 @@ instead of showing nulls.
 
 # Feature 4 — User Profile: avatar, bio, public identity
 
-**Status:** ⏳ Not started (User model has `avatar: String` placeholder)
+**Status:** ✅ Shipped (Session 23). `/profile` (editable: avatar, display
+name, bio, 3-way visibility, approx-location toggle, observing résumé) and
+`/observers/:username` (public, visibility-gated). Gateway: profileService +
+controller, `/users/me/profile`, `/users/me/avatar`, `/observers/:username`
+(optionalAuth), reverse geocoding on location save (Nominatim, built-in https,
+best-effort). Verified: edit/save persists, every visibility gate (private→404,
+observers→403 anon, unknown→404, owner always 200), and public payload leaks no
+email/coordinates.
+
+**Deviation from the plan below:** avatars are **client-cropped 256px data URLs
+stored inline on the user doc** (canvas crop → WEBP/JPEG ≤200KB), NOT Cloudinary
+— chosen to ship credential-free. `avatarPublicId` field + the `POST
+/users/me/avatar` endpoint are the clean swap-in points for a CDN later. The
+Cloudinary write-up below is kept as the future migration target.
 **Depends on:** nothing; **prerequisite for Feature 6 (Community)**
 **Effort:** 1–2 sessions
 
@@ -289,7 +302,19 @@ location save, no exact coordinates anywhere in public payloads.
 
 # Feature 5 — Step-by-step Guidance page ("First Light Guide")
 
-**Status:** ⏳ Not started
+**Status:** ✅ Shipped (Session 24). Public `/guide` route: 9-step scroll page
+in the /tonight visual language (starfield + useReveal), sticky `GuideRail`
+that doubles as a checklist, per-step deep-link CTAs. Content in
+`components/guide/guide.steps.jsx`; completion detection in `useGuideProgress`
+(from auth/location/telescope/observations — no new backend; anonymous reads
+all-incomplete). Signed-in users get a progress bar + green ticks on the six
+trackable steps. Entry points: home nav "Guide", in-app navbar "Guide", and
+the dashboard empty-location card. **No new dependencies** (reuses GSAP/three).
+**Verified:** anonymous render (9 steps/rail/CTAs, no console errors), rail
+scroll offset math, lint + build. **Not live-verified:** the signed-in
+checklist path — the Atlas DB was unreachable (DNS `ESERVFAIL`) at session end,
+so login/user-state couldn't be exercised; logic is a straightforward read of
+already-verified hooks.
 **Depends on:** nothing (update it as later features ship)
 **Effort:** 1 session
 
@@ -342,9 +367,19 @@ step 2 checked; every deep link lands on the right surface; mobile scroll
 
 # Feature 6 — Community: nearby observers + location chat rooms
 
-**Status:** ⏳ Not started
+**Status:** 🔄 In progress — **Phase A (Discovery) shipped (Session 26)**;
+Phases B (chat rooms) + C (safety/moderation) pending.
+Phase A: gateway `GET /api/v1/community/nearby?radius=` (`$geoNear` over the
+users' 2dsphere index; reciprocity + privacy gates enforced server-side;
+returns coarse **distance bands**, never coordinates — `communityService`/
+`communityController`/`community.routes`). Frontend: `community.service.js`,
+`useNearbyObservers`, `pages/Community.jsx` (protected, in AppLayout) +
+`components/community/{ObserverCard,RadiusSelector}`, navbar link. No schema
+change — the 2dsphere index + `showApproxLocation`/`profileVisibility` already
+existed. **Not live-verified** (auth-gated; gateway/Atlas unavailable in the
+build session) — parses, lints, builds clean.
 **Depends on:** Feature 4 (profiles + privacy) — HARD dependency
-**Effort:** 2–3 sessions (a: discovery, b: chat, c: polish/moderation)
+**Effort:** 2–3 sessions (a: discovery ✅, b: chat, c: polish/moderation)
 
 ## Objective
 
@@ -536,8 +571,14 @@ Phase C: offline eval (held-out AUC) before wiring; API contract unchanged.
 - **Night-vision mode:** deep-red UI toggle (CSS filter/theme swap on the
   app shell), persisted per user — cheap, thematically perfect, do alongside
   Feature 3.
-- **Landing-page live teaser:** "the sky right now over [city]" strip on `/`
-  using the public visibility endpoint with IP-coarse or browser geolocation.
+- **Landing-page live teaser:** ✅ Shipped (Session 24) — `LiveSkyTeaser`
+  computes a real sky (public visibility + moon) for a labeled showcase site
+  (Kitt Peak) so anonymous visitors see live data; degrades to an inviting
+  static panel when the engine/DB is unreachable. Also this session: hero
+  ambient-glow layer, feature-card hover (lift + border glow), and the orange
+  cursor-spotlight made opt-out (`SpotlightCard spotlight={false}`, off on the
+  landing page). Future upgrade: use the visitor's own location (browser
+  geolocation on an explicit "Compute my sky" tap) instead of the showcase.
 - **Dashboard alignment prefill:** Alignment Mode target dropdown pre-filled
   from the plan (Feature 1 follow-through).
 - **Shared API client:** axios instance with interceptors (401 → session

@@ -1,4 +1,5 @@
 const User = require("../models/Users");
+const { reverseGeocode } = require("../utils/geocode");
 
 exports.updateLocation = async (req, res, next) => {
     try {
@@ -8,6 +9,11 @@ exports.updateLocation = async (req, res, next) => {
             elevation_m,
             timezone,
         } = req.body;
+
+        // Best-effort coarse place labels (city/state/country) for the
+        // observer's public profile. Never blocks the save — resolves to
+        // nulls on any failure.
+        const place = await reverseGeocode(latitude, longitude);
 
         const user = await User.findByIdAndUpdate(
             req.user._id,
@@ -20,6 +26,9 @@ exports.updateLocation = async (req, res, next) => {
                     ],
                     elevation_m,
                     timezone,
+                    city: place.city,
+                    state: place.state,
+                    country: place.country,
                 },
             },
             {

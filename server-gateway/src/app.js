@@ -18,6 +18,8 @@ const chatRoutes = require("./routes/chat.routes");
 const userRoutes = require("./routes/user.routes");
 const telescopeRoutes = require("./routes/telescope.routes");
 const observationRoutes = require("./routes/observation.routes");
+const observerRoutes = require("./routes/observer.routes");
+const communityRoutes = require("./routes/community.routes");
 
 const app = express();
 
@@ -70,6 +72,8 @@ app.use("/api/chat", chatRoutes);
 app.use("/api/v1/users", userRoutes);
 app.use("/api/v1/telescope", telescopeRoutes);
 app.use("/api/v1/observations", observationRoutes);
+app.use("/api/v1/observers", observerRoutes);
+app.use("/api/v1/community", communityRoutes);
 
 
 app.get("/health", (req, res) => {

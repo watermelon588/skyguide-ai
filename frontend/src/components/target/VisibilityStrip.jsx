@@ -14,14 +14,14 @@ import {
 
 function Cell({ label, value, hint }) {
   return (
-    <div className="rounded-xl border border-white/5 bg-white/[0.03] px-4 py-3">
-      <p className="text-[10px] uppercase tracking-[0.2em] text-[#6B7280]">
+    <div className="border border-line bg-surface-3 px-4 py-3">
+      <p className="text-[10px] uppercase tracking-[0.2em] text-ink-3">
         {label}
       </p>
-      <p className="mt-1 text-lg font-semibold tabular-nums text-white">
+      <p className="mt-1 text-lg font-semibold tabular-nums text-ink">
         {value}
       </p>
-      {hint && <p className="text-[11px] text-[#6B7280]">{hint}</p>}
+      {hint && <p className="text-[11px] text-ink-3">{hint}</p>}
     </div>
   );
 }
@@ -48,13 +48,13 @@ export default function VisibilityStrip({ target }) {
   if (!target.visible) {
     return (
       <SpotlightCard className="p-6">
-        <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-[#6B7280]">
+        <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-ink-3">
           Visibility
         </p>
-        <p className="mt-2 font-semibold text-white">
+        <p className="mt-2 font-semibold text-ink">
           Below your horizon right now.
         </p>
-        <p className="mt-1 text-sm text-[#AAB4C5]">
+        <p className="mt-1 text-sm text-ink-2">
           {target.season
             ? `Best season from your sky: ${target.season}.`
             : "Check back later tonight — the sky turns."}
@@ -106,10 +106,10 @@ export default function VisibilityStrip({ target }) {
 
   return (
     <SpotlightCard className="p-6">
-      <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-[#FF8C1A]">
+      <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-accent">
         Visibility · live for your coordinates
       </p>
-      <p className="mt-2 font-medium text-white">{windowLine(target)}</p>
+      <p className="mt-2 font-medium text-ink">{windowLine(target)}</p>
       <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
         {cells.map((cell) => (
           <Cell key={cell.label} {...cell} />

@@ -8,7 +8,7 @@
  * skeleton shimmer.
  */
 function Bar({ className = "" }) {
-  return <div className={`rounded-md bg-white/10 ${className}`} />;
+  return <div className={`bg-surface-3 ${className}`} />;
 }
 
 export default function WeatherSkeleton() {
@@ -19,9 +19,9 @@ export default function WeatherSkeleton() {
         {Array.from({ length: 6 }).map((_, i) => (
           <div
             key={i}
-            className="flex items-center gap-2.5 rounded-lg border border-white/5 bg-white/[0.03] px-2.5 py-2"
+            className="flex items-center gap-2.5 border border-line bg-surface-3 px-2.5 py-2"
           >
-            <div className="h-7 w-7 shrink-0 rounded-md bg-white/10" />
+            <div className="h-7 w-7 shrink-0 bg-surface-2" />
             <div className="flex-1 space-y-1.5">
               <Bar className="h-2 w-2/3" />
               <Bar className="h-3 w-1/2" />
@@ -30,11 +30,11 @@ export default function WeatherSkeleton() {
         ))}
       </div>
 
-      <div className="h-px w-full bg-white/10" />
+      <div className="h-px w-full bg-line" />
 
       {/* Observing block */}
       <div className="flex items-center gap-3">
-        <div className="h-12 w-12 rounded-full bg-white/10" />
+        <div className="h-12 w-12 rounded-full bg-surface-3" />
         <div className="flex-1 space-y-2">
           <Bar className="h-3 w-1/3" />
           <Bar className="h-3 w-3/4" />

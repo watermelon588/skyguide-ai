@@ -14,7 +14,7 @@ import ChatWidget from "../components/chatbot/ChatWidget";
  */
 export default function AppLayout({ children }) {
   return (
-    <div className="flex h-screen overflow-hidden bg-[#090B12] text-white">
+    <div className="flex h-screen overflow-hidden bg-bg text-ink">
       <MainContent>
         <Navbar />
         {children}

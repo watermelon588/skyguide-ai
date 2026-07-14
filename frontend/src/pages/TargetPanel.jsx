@@ -21,18 +21,18 @@ import {
 
 function Shell({ children }) {
   return (
-    <div className="relative min-h-screen bg-[#05070A] text-white">
+    <div className="relative min-h-screen bg-bg text-ink">
       <Starfield />
       <nav className="relative z-20 mx-auto flex w-full max-w-5xl items-center justify-between px-6 py-5">
         <Link
           to="/tonight"
-          className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-[#AAB4C5] backdrop-blur-3xl transition-colors hover:bg-white/10 hover:text-white"
+          className="border border-line bg-surface-2 px-4 py-2 text-sm text-ink-2 transition-colors hover:bg-surface-3 hover:text-ink"
         >
           ← Tonight's sky
         </Link>
         <Link
           to="/dashboard"
-          className="text-sm font-semibold tracking-wide text-white/80 transition-colors hover:text-white"
+          className="text-sm font-semibold tracking-wide text-ink-2 transition-colors hover:text-ink"
         >
           Dashboard
         </Link>
@@ -48,7 +48,7 @@ function Centered({ title, body, cta }) {
   return (
     <div className="flex min-h-[50vh] flex-col items-center justify-center text-center">
       <h1 className="text-2xl font-bold">{title}</h1>
-      <p className="mt-2 max-w-sm text-sm text-[#AAB4C5]">{body}</p>
+      <p className="mt-2 max-w-sm text-sm text-ink-2">{body}</p>
       {cta}
     </div>
   );
@@ -67,7 +67,7 @@ export default function TargetPanel() {
           cta={
             <Link
               to="/dashboard"
-              className="mt-5 rounded-xl bg-[#FF8C1A] px-6 py-2.5 text-sm font-semibold text-[#090B10] transition-colors hover:bg-[#FF6B00]"
+              className="mt-5 bg-accent px-6 py-2.5 text-sm font-semibold text-ink transition-colors hover:bg-accent-hi"
             >
               Go to dashboard
             </Link>
@@ -80,9 +80,9 @@ export default function TargetPanel() {
   if (isLoading || (!target && !notFound && !isError)) {
     return (
       <Shell>
-        <div className="h-72 animate-pulse rounded-2xl border border-white/10 bg-white/5" />
-        <div className="h-32 animate-pulse rounded-2xl border border-white/10 bg-white/5" />
-        <div className="h-48 animate-pulse rounded-2xl border border-white/10 bg-white/5" />
+        <div className="h-72 animate-pulse border border-line bg-surface-2" />
+        <div className="h-32 animate-pulse border border-line bg-surface-2" />
+        <div className="h-48 animate-pulse border border-line bg-surface-2" />
       </Shell>
     );
   }
@@ -126,28 +126,28 @@ export default function TargetPanel() {
       <div className="grid gap-5 lg:grid-cols-[1.5fr_1fr]">
         {/* Story: description + tips */}
         <SpotlightCard className="p-6">
-          <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-[#FF8C1A]">
+          <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-accent">
             The object
           </p>
           {target.description ? (
-            <p className="mt-3 leading-relaxed text-[#AAB4C5]">
+            <p className="mt-3 leading-relaxed text-ink-2">
               {target.description}
             </p>
           ) : (
-            <p className="mt-3 text-sm text-[#6B7280]">
+            <p className="mt-3 text-sm text-ink-3">
               No description in the catalog yet.
             </p>
           )}
           {target.tips?.length > 0 && (
             <>
-              <p className="mt-6 text-[11px] font-medium uppercase tracking-[0.3em] text-[#6B7280]">
+              <p className="mt-6 text-[11px] font-medium uppercase tracking-[0.3em] text-ink-3">
                 Observation tips
               </p>
               <ul className="mt-3 space-y-2">
                 {target.tips.map((tip) => (
                   <li
                     key={tip}
-                    className="border-l-2 border-[#FF8C1A]/40 pl-3 text-sm leading-relaxed text-[#AAB4C5]"
+                    className="border-l-2 border-accent/40 pl-3 text-sm leading-relaxed text-ink-2"
                   >
                     {tip}
                   </li>
@@ -159,17 +159,17 @@ export default function TargetPanel() {
 
         {/* Data sheet */}
         <SpotlightCard className="p-6">
-          <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-[#FF8C1A]">
+          <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-accent">
             Data sheet
           </p>
           <dl className="mt-4 space-y-1.5">
             {facts.map(([label, value]) => (
               <div
                 key={label}
-                className="flex items-baseline justify-between gap-4 border-b border-white/5 pb-1.5 text-sm"
+                className="flex items-baseline justify-between gap-4 border-b border-line pb-1.5 text-sm"
               >
-                <dt className="text-[#6B7280]">{label}</dt>
-                <dd className="text-right font-medium tabular-nums text-white">
+                <dt className="text-ink-3">{label}</dt>
+                <dd className="text-right font-medium tabular-nums text-ink">
                   {value}
                 </dd>
               </div>
@@ -178,7 +178,7 @@ export default function TargetPanel() {
         </SpotlightCard>
       </div>
 
-      <p className="text-center text-xs text-[#6B7280]">
+      <p className="text-center text-xs text-ink-3">
         Coming to this panel: AI analysis, why-observe-tonight, and your
         observation history with this object.
       </p>

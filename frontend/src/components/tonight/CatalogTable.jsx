@@ -77,14 +77,14 @@ export default function CatalogTable({ targets, belowHorizon, onSelect }) {
     <section data-reveal className="mx-auto w-full max-w-7xl px-6 sm:px-12">
       <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-[#FF8C1A]">
+          <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-accent">
             The Deep-Sky Ledger
           </p>
-          <h2 className="mt-2 text-3xl font-bold text-white sm:text-4xl">
+          <h2 className="mt-2 text-3xl font-bold text-ink sm:text-4xl">
             Full catalog, live geometry
           </h2>
         </div>
-        <p className="text-xs text-[#6B7280]">
+        <p className="text-xs text-ink-3">
           {rows.length} object{rows.length === 1 ? "" : "s"} shown
         </p>
       </div>
@@ -96,7 +96,7 @@ export default function CatalogTable({ targets, belowHorizon, onSelect }) {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search name, ID, alias, constellation…"
-          className="w-full max-w-xs rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-sm text-white placeholder-[#6B7280] outline-none backdrop-blur-3xl transition-colors focus:border-[#FF8C1A]/60"
+          className="w-full max-w-xs border border-line bg-surface-2 px-4 py-2 text-sm text-ink placeholder-ink-3 outline-none transition-colors focus:border-accent"
         />
         <div className="flex flex-wrap gap-1.5">
           {["all", ...Object.keys(TYPE_META).filter((k) => k !== "other")].map(
@@ -105,10 +105,10 @@ export default function CatalogTable({ targets, belowHorizon, onSelect }) {
                 key={key}
                 type="button"
                 onClick={() => setType(key)}
-                className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors duration-300 ${
+                className={`border px-3 py-1.5 text-xs font-medium transition-colors duration-300 ${
                   type === key
-                    ? "border-[#FF8C1A]/50 bg-[#FF8C1A]/15 text-[#FF8C1A]"
-                    : "border-white/10 bg-white/5 text-[#AAB4C5] hover:bg-white/10"
+                    ? "border-accent/50 bg-accent/15 text-accent"
+                    : "border-line bg-surface-2 text-ink-2 hover:bg-surface-3"
                 }`}
               >
                 {key === "all" ? "All types" : TYPE_META[key].label}
@@ -116,35 +116,35 @@ export default function CatalogTable({ targets, belowHorizon, onSelect }) {
             ),
           )}
         </div>
-        <label className="ml-auto flex cursor-pointer items-center gap-2 text-xs text-[#AAB4C5]">
+        <label className="ml-auto flex cursor-pointer items-center gap-2 text-xs text-ink-2">
           <input
             type="checkbox"
             checked={showBelow}
             onChange={(e) => setShowBelow(e.target.checked)}
-            className="h-3.5 w-3.5 accent-[#FF8C1A]"
+            className="h-3.5 w-3.5 accent-[#0049CD]"
           />
           Include below-horizon
         </label>
       </div>
 
       {/* Table */}
-      <div className="overflow-x-auto rounded-2xl border border-white/10 bg-white/5 shadow-2xl backdrop-blur-3xl">
+      <div className="overflow-x-auto border border-line bg-surface-2">
         <table className="w-full min-w-[880px] text-left text-sm">
           <thead>
-            <tr className="border-b border-white/10 text-[11px] uppercase tracking-[0.15em] text-[#6B7280]">
+            <tr className="border-b border-line text-[11px] uppercase tracking-[0.15em] text-ink-3">
               {COLUMNS.map((column) => (
                 <th
                   key={column.key}
                   onClick={() => onHeaderClick(column)}
                   className={`px-4 py-3 font-medium ${
                     column.sortable
-                      ? "cursor-pointer select-none transition-colors hover:text-[#FF8C1A]"
+                      ? "cursor-pointer select-none transition-colors hover:text-accent"
                       : ""
                   }`}
                 >
                   {column.label}
                   {sort.key === column.key && (
-                    <span className="ml-1 text-[#FF8C1A]">
+                    <span className="ml-1 text-accent">
                       {sort.direction === "asc" ? "↑" : "↓"}
                     </span>
                   )}
@@ -159,38 +159,38 @@ export default function CatalogTable({ targets, belowHorizon, onSelect }) {
                 <tr
                   key={row.catalog_id}
                   onClick={() => onSelect?.(row.catalog_id)}
-                  className={`cursor-pointer border-b border-white/5 transition-colors duration-200 hover:bg-white/10 ${
+                  className={`cursor-pointer border-b border-line transition-colors duration-200 hover:bg-surface-3 ${
                     visible ? "" : "opacity-45"
                   }`}
                 >
-                  <td className="px-4 py-2.5 font-semibold text-[#FF8C1A]">
+                  <td className="px-4 py-2.5 font-semibold text-accent">
                     {row.catalog_id}
                   </td>
-                  <td className="max-w-[180px] truncate px-4 py-2.5 text-white">
-                    {row.name || <span className="text-[#6B7280]">unnamed</span>}
+                  <td className="max-w-[180px] truncate px-4 py-2.5 text-ink">
+                    {row.name || <span className="text-ink-3">unnamed</span>}
                   </td>
-                  <td className="whitespace-nowrap px-4 py-2.5 text-[#AAB4C5]">
-                    <span className="mr-1.5 text-[#FB923C]">
+                  <td className="whitespace-nowrap px-4 py-2.5 text-ink-2">
+                    <span className="mr-1.5 text-accent">
                       {typeMeta(row.object_type).symbol}
                     </span>
                     {row.object_type || "—"}
                   </td>
-                  <td className="px-4 py-2.5 text-[#AAB4C5]">
+                  <td className="px-4 py-2.5 text-ink-2">
                     {row.constellation || "—"}
                   </td>
-                  <td className="px-4 py-2.5 tabular-nums text-[#AAB4C5]">
+                  <td className="px-4 py-2.5 tabular-nums text-ink-2">
                     {formatMagnitude(row.magnitude)}
                   </td>
-                  <td className="px-4 py-2.5 tabular-nums text-[#AAB4C5]">
+                  <td className="px-4 py-2.5 tabular-nums text-ink-2">
                     {row.angular_size_arcmin?.toFixed(1) ?? "—"}
                   </td>
-                  <td className="whitespace-nowrap px-4 py-2.5 tabular-nums text-[#AAB4C5]">
+                  <td className="whitespace-nowrap px-4 py-2.5 tabular-nums text-ink-2">
                     {formatDistance(row.distance_ly)}
                   </td>
-                  <td className="px-4 py-2.5 tabular-nums text-white">
+                  <td className="px-4 py-2.5 tabular-nums text-ink">
                     {formatDegrees(row.altitude_deg)}
                   </td>
-                  <td className="whitespace-nowrap px-4 py-2.5 tabular-nums text-[#AAB4C5]">
+                  <td className="whitespace-nowrap px-4 py-2.5 tabular-nums text-ink-2">
                     {row.azimuth_deg != null
                       ? `${Math.round(row.azimuth_deg)}° ${compassPoint(row.azimuth_deg)}`
                       : "—"}
@@ -198,21 +198,21 @@ export default function CatalogTable({ targets, belowHorizon, onSelect }) {
                   <td className="px-4 py-2.5">
                     {visible ? (
                       <span className="flex items-center gap-2">
-                        <span className="h-1.5 w-14 overflow-hidden rounded-full bg-white/10">
+                        <span className="h-1.5 w-14 overflow-hidden bg-surface-3">
                           <span
-                            className="block h-full rounded-full"
+                            className="block h-full"
                             style={{
                               width: `${row.visibility_score}%`,
                               background: scoreColor(row.visibility_score),
                             }}
                           />
                         </span>
-                        <span className="tabular-nums text-white">
+                        <span className="tabular-nums text-ink">
                           {row.visibility_score}
                         </span>
                       </span>
                     ) : (
-                      <span className="text-xs text-[#6B7280]">set</span>
+                      <span className="text-xs text-ink-3">set</span>
                     )}
                   </td>
                   <td className="px-4 py-2.5">
@@ -225,7 +225,7 @@ export default function CatalogTable({ targets, belowHorizon, onSelect }) {
               <tr>
                 <td
                   colSpan={COLUMNS.length}
-                  className="px-4 py-10 text-center text-sm text-[#6B7280]"
+                  className="px-4 py-10 text-center text-sm text-ink-3"
                 >
                   Nothing matches — clear the search or include below-horizon
                   objects.

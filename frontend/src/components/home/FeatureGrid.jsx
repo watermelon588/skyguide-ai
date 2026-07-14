@@ -1,9 +1,9 @@
-import SpotlightCard from "../tonight/fx/SpotlightCard";
+import AngularText from "../fx/AngularText";
 
 /**
- * The platform, card by card — six spotlight cards that stagger-rise on
- * scroll (via the page-level useReveal). Icons are inline SVG line-work so
- * everything stays one visual weight.
+ * The platform, tile by tile — a compact bento grid of flat (radius-0, no-glass)
+ * tiles that stagger-rise on scroll (via the page-level useReveal). Icons are
+ * inline SVG line-work so everything stays one visual weight.
  */
 
 const STROKE = { fill: "none", stroke: "currentColor", strokeWidth: 1.5, strokeLinecap: "round", strokeLinejoin: "round" };
@@ -73,34 +73,42 @@ export default function FeatureGrid() {
   return (
     <section
       id="features"
-      className="mx-auto w-full max-w-6xl scroll-mt-24 px-6 sm:px-12"
+      className="mx-auto w-full max-w-7xl scroll-mt-24 px-6 sm:px-12"
     >
       <div data-reveal className="mb-10 max-w-2xl">
-        <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-[#FF8C1A]">
+        <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-accent">
           The platform
         </p>
-        <h2 className="mt-2 text-3xl font-bold text-white sm:text-4xl">
-          An observatory workflow, end to end
-        </h2>
-        <p className="mt-3 text-[#AAB4C5]">
+        <AngularText
+          text="An observatory workflow, end to end"
+          className="mt-3 text-4xl font-black uppercase leading-[0.95] tracking-tight text-ink sm:text-5xl"
+        />
+        <p className="mt-4 text-ink-2">
           From "what should I look at?" to "it's in the eyepiece" — every step
           is computed, scored and guided.
         </p>
       </div>
 
-      <div data-reveal-group className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div
+        data-reveal-group
+        className="grid gap-px border border-line bg-line sm:grid-cols-2 lg:grid-cols-3"
+      >
         {FEATURES.map((feature) => (
-          <SpotlightCard key={feature.title} data-reveal className="p-7">
-            <span className="inline-flex rounded-xl border border-[#FF8C1A]/25 bg-[#FF8C1A]/10 p-3 text-[#FF8C1A]">
+          <div
+            key={feature.title}
+            data-reveal
+            className="group relative bg-surface-2 p-8 transition-colors duration-300 hover:bg-surface-3"
+          >
+            {/* accent edge on hover */}
+            <span className="absolute inset-x-0 top-0 h-px w-full origin-left scale-x-0 bg-accent transition-transform duration-300 group-hover:scale-x-100" />
+            <span className="inline-flex border border-line p-3 text-accent transition-colors duration-300 group-hover:border-accent">
               {feature.icon}
             </span>
-            <h3 className="mt-5 text-lg font-semibold text-white">
-              {feature.title}
-            </h3>
-            <p className="mt-2 text-sm leading-relaxed text-[#AAB4C5]">
+            <h3 className="mt-6 text-lg font-bold text-ink">{feature.title}</h3>
+            <p className="mt-2 text-sm leading-relaxed text-ink-2">
               {feature.body}
             </p>
-          </SpotlightCard>
+          </div>
         ))}
       </div>
     </section>
