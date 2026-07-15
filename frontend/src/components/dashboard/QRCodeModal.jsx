@@ -35,11 +35,11 @@ function formatTime(ts) {
 /** Small label/value row shared by the connected info panel. */
 function InfoRow({ label, value }) {
   return (
-    <div className="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 px-3 py-2">
-      <span className="text-xs uppercase tracking-wide text-[#6B7280]">
+    <div className="flex items-center justify-between border border-line bg-surface-2 px-3 py-2">
+      <span className="text-xs uppercase tracking-wide text-ink-3">
         {label}
       </span>
-      <span className="max-w-[190px] truncate text-sm font-medium text-white">
+      <span className="max-w-[190px] truncate text-sm font-medium text-ink">
         {value}
       </span>
     </div>
@@ -83,7 +83,7 @@ export default function QRCodeModal() {
       {modalOpen && (
         <>
           <motion.div
-            className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm"
+            className="fixed inset-0 z-40 bg-black/60"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -102,7 +102,7 @@ export default function QRCodeModal() {
               exit={{ opacity: 0, y: 20, scale: 0.95 }}
               transition={{ duration: 0.3 }}
               onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-sm rounded-2xl border border-white/10 bg-white/5 px-7 py-6 shadow-2xl backdrop-blur-3xl"
+              className="w-full max-w-sm border border-line bg-surface-1 px-7 py-6"
             >
               {/* Header */}
               <div className="flex items-start justify-between">
@@ -110,29 +110,29 @@ export default function QRCodeModal() {
                   <div
                     className={`flex h-11 w-11 items-center justify-center rounded-xl border ${
                       connected
-                        ? "border-[#22C55E]/30 bg-[#22C55E]/15"
+                        ? "border-success/30 bg-success/15"
                         : midSessionError
-                          ? "border-[#EF4444]/30 bg-[#EF4444]/10"
-                          : "border-orange-400/20 bg-orange-500/15"
+                          ? "border-danger/30 bg-danger/10"
+                          : "border-accent/30 bg-accent/15"
                     }`}
                   >
                     {connected ? (
-                      <FiCheckCircle className="text-xl text-[#22C55E]" />
+                      <FiCheckCircle className="text-xl text-success" />
                     ) : midSessionError ? (
-                      <FiAlertTriangle className="text-xl text-[#EF4444]" />
+                      <FiAlertTriangle className="text-xl text-danger" />
                     ) : (
-                      <FiSmartphone className="text-xl text-orange-400" />
+                      <FiSmartphone className="text-xl text-accent" />
                     )}
                   </div>
                   <div>
-                    <h2 className="text-lg font-bold text-white">
+                    <h2 className="text-lg font-bold text-ink">
                       {connected
                         ? "Telescope Connected"
                         : midSessionError
                           ? "Pairing Error"
                           : "Pair Your Phone"}
                     </h2>
-                    <p className="text-xs text-[#6B7280]">
+                    <p className="text-xs text-ink-3">
                       {connected
                         ? "Session active"
                         : midSessionError
@@ -166,14 +166,14 @@ export default function QRCodeModal() {
                       initial={{ scale: 0.6, opacity: 0 }}
                       animate={{ scale: 1, opacity: 1 }}
                       transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                      className="flex h-20 w-20 items-center justify-center rounded-full border border-[#22C55E]/30 bg-[#22C55E]/15"
+                      className="flex h-20 w-20 items-center justify-center rounded-full border border-success/30 bg-success/15"
                     >
-                      <FiCheckCircle className="text-4xl text-[#22C55E]" />
+                      <FiCheckCircle className="text-4xl text-success" />
                     </motion.div>
-                    <h3 className="text-lg font-bold text-white">
+                    <h3 className="text-lg font-bold text-ink">
                       Device Connected
                     </h3>
-                    <p className="text-sm text-[#AAB4C5]">Ready to Align</p>
+                    <p className="text-sm text-ink-2">Ready to Align</p>
                   </motion.div>
                 ) : creating ? (
                   <motion.div
@@ -183,8 +183,8 @@ export default function QRCodeModal() {
                     exit={{ opacity: 0 }}
                     className="mt-6 flex flex-col items-center gap-3 py-8"
                   >
-                    <FiRefreshCw className="animate-spin text-3xl text-orange-400" />
-                    <p className="text-sm text-[#AAB4C5]">Creating session...</p>
+                    <FiRefreshCw className="animate-spin text-3xl text-accent" />
+                    <p className="text-sm text-ink-2">Creating session...</p>
                   </motion.div>
                 ) : !midSessionError ? (
                   <motion.div
@@ -217,7 +217,7 @@ export default function QRCodeModal() {
                             exit={{ opacity: 0 }}
                             className="absolute inset-0 flex items-center justify-center rounded-2xl bg-white/40"
                           >
-                            <span className="rounded-lg bg-[#0b0e14] px-3 py-1.5 text-xs font-semibold text-white">
+                            <span className="rounded-lg bg-[#0b0e14] px-3 py-1.5 text-xs font-semibold text-ink">
                               Session Expired
                             </span>
                           </motion.div>
@@ -238,8 +238,8 @@ export default function QRCodeModal() {
                     value={formatTime(phone.connectedAt)}
                   />
                 ) : (
-                  <div className="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 px-3 py-2">
-                    <span className="flex items-center gap-1.5 text-xs uppercase tracking-wide text-[#6B7280]">
+                  <div className="flex items-center justify-between border border-line bg-surface-2 px-3 py-2">
+                    <span className="flex items-center gap-1.5 text-xs uppercase tracking-wide text-ink-3">
                       <FiClock className="text-sm" />
                       Expires In
                     </span>
@@ -257,7 +257,7 @@ export default function QRCodeModal() {
                 {connected ? (
                   <ConnectionIndicator tone="connected" label="Phone Connected" />
                 ) : expired ? (
-                  <span className="text-[#6B7280]">
+                  <span className="text-ink-3">
                     Generate a new session to continue.
                   </span>
                 ) : midSessionError ? null : creating ? null : (

@@ -31,11 +31,11 @@ function AnimatedScore({ score, colorClass }) {
   }, [score]);
 
   return (
-    <div className="flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-full border border-white/10 bg-white/5">
-      <span className={`text-lg font-bold leading-none ${colorClass}`}>
+    <div className="flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-full border border-line bg-surface-2">
+      <span className={`text-lg font-bold leading-none tabular-nums ${colorClass}`}>
         {display}
       </span>
-      <span className="text-[9px] uppercase tracking-wide text-[#6B7280]">
+      <span className="text-[9px] uppercase tracking-wide text-ink-3">
         score
       </span>
     </div>
@@ -45,11 +45,11 @@ function AnimatedScore({ score, colorClass }) {
 /** Reserved astronomy metric (future sessions) — shows "Coming Soon". */
 function ReservedStat({ label }) {
   return (
-    <div className="flex flex-col items-center gap-1 rounded-lg border border-white/5 bg-white/[0.03] px-2 py-2 text-center">
-      <span className="text-[10px] uppercase tracking-wide text-[#6B7280]">
+    <div className="flex flex-col items-center gap-1 border border-line bg-surface-3 px-2 py-2 text-center">
+      <span className="text-[10px] uppercase tracking-wide text-ink-3">
         {label}
       </span>
-      <span className="text-[10px] font-medium text-[#AAB4C5]">Coming Soon</span>
+      <span className="text-[10px] font-medium text-ink-2">Coming Soon</span>
     </div>
   );
 }
@@ -110,12 +110,12 @@ export default function WeatherPopover({ data, isLoading, isError, onRetry }) {
   if (isError) {
     return (
       <div className="flex flex-col items-center gap-3 py-6 text-center">
-        <FiAlertTriangle className="text-2xl text-orange-400" />
-        <p className="text-sm text-[#AAB4C5]">Unable to load weather.</p>
+        <FiAlertTriangle className="text-2xl text-warning" />
+        <p className="text-sm text-ink-2">Unable to load weather.</p>
         <button
           type="button"
           onClick={onRetry}
-          className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3.5 py-1.5 text-sm font-medium text-white transition-colors hover:bg-white/10"
+          className="inline-flex items-center gap-2 border border-line bg-surface-2 px-3.5 py-1.5 text-sm font-medium text-ink transition-colors hover:bg-surface-3"
         >
           <FiRefreshCw className="text-sm" />
           Retry
@@ -135,7 +135,7 @@ export default function WeatherPopover({ data, isLoading, isError, onRetry }) {
     <div className="space-y-4">
       {/* Current conditions */}
       <div>
-        <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-[#6B7280]">
+        <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-ink-3">
           Current Conditions
         </p>
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
@@ -150,11 +150,11 @@ export default function WeatherPopover({ data, isLoading, isError, onRetry }) {
         </div>
       </div>
 
-      <div className="h-px w-full bg-white/10" />
+      <div className="h-px w-full bg-line" />
 
       {/* Observing conditions */}
       <div>
-        <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-[#6B7280]">
+        <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-ink-3">
           Observing Conditions
         </p>
         <div className="flex items-center gap-3">
@@ -164,7 +164,7 @@ export default function WeatherPopover({ data, isLoading, isError, onRetry }) {
           />
           <div className="min-w-0 space-y-1.5">
             <WeatherQualityBadge quality={quality} />
-            <p className="text-xs leading-snug text-[#AAB4C5]">
+            <p className="text-xs leading-snug text-ink-2">
               {conditions.recommendation}
             </p>
           </div>

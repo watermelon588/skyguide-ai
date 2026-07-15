@@ -66,7 +66,7 @@ export default function ChatWindow({ variant = "overlay" }) {
 
   const wrapperClass = isDocked
     ? "flex h-full w-full flex-col"
-    : `fixed top-0 right-0 h-screen w-[420px] bg-black/40 backdrop-blur-2xl border-l border-white/10 z-[999] flex flex-col transition-all duration-500 ${
+    : `fixed top-0 right-0 h-screen w-[420px] bg-surface-1 border-l border-line z-[999] flex flex-col transition-all duration-500 ${
         isOpen ? "translate-x-0" : "translate-x-full"
       }`;
 
@@ -74,7 +74,7 @@ export default function ChatWindow({ variant = "overlay" }) {
     <div className={wrapperClass}>
       {/* Header */}
 
-      <div className="flex items-center justify-between p-5 border-b border-white/10">
+      <div className="flex items-center justify-between p-5 border-b border-line">
         <div
           className={`flex items-center gap-3 ${isOpen ? "animate-dock" : ""}`}
         >
@@ -87,15 +87,15 @@ export default function ChatWindow({ variant = "overlay" }) {
     `}
           />
           <div>
-            <h2 className="text-white text-2xl font-semibold">Astro</h2>
+            <h2 className="text-ink text-2xl font-black uppercase tracking-tight">Astro</h2>
 
-            <p className="text-gray-400 text-sm">AI Astronomy Assistant</p>
+            <p className="text-ink-3 text-sm">AI Astronomy Assistant</p>
           </div>
         </div>
 
         <button
           onClick={closeChat}
-          className="text-2xl text-gray-300 hover:text-white"
+          className="text-2xl text-ink-2 hover:text-ink"
         >
           ×
         </button>
@@ -112,10 +112,10 @@ export default function ChatWindow({ variant = "overlay" }) {
             }`}
           >
             <div
-              className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
+              className={`max-w-[80%] px-4 py-3 text-sm leading-relaxed ${
                 message.role === "user"
-                  ? "bg-orange-500 text-white"
-                  : "bg-white/10 text-white border border-white/10"
+                  ? "bg-accent text-ink"
+                  : "bg-surface-2 text-ink border border-line"
               }`}
             >
               {message.content}
@@ -124,7 +124,7 @@ export default function ChatWindow({ variant = "overlay" }) {
         ))}
 
         {loading && (
-          <div className="bg-white/10 rounded-xl px-4 py-2 text-gray-300 w-fit">
+          <div className="bg-surface-2 px-4 py-2 text-ink-2 w-fit">
             Astro is thinking...
           </div>
         )}
@@ -147,14 +147,13 @@ export default function ChatWindow({ variant = "overlay" }) {
               onClick={() => handleSend(question)}
               className="
               text-xs
-              text-white
-              bg-white/10
+              text-ink
+              bg-surface-2
               border
-              border-white/10
-              rounded-full
+              border-line
               px-3
               py-2
-              hover:bg-white/20
+              hover:bg-surface-3
             "
             >
               {question}
@@ -165,7 +164,7 @@ export default function ChatWindow({ variant = "overlay" }) {
 
       {/* Input */}
 
-      <div className="border-t border-white/10 p-4 flex gap-3">
+      <div className="border-t border-line p-4 flex gap-3">
         <input
           value={input}
           onChange={(e) => setInput(e.target.value)}
@@ -177,15 +176,16 @@ export default function ChatWindow({ variant = "overlay" }) {
           placeholder="Ask Astro..."
           className="
           flex-1
-          bg-white/10
+          bg-surface-2
           border
-          border-white/10
-          rounded-xl
+          border-line
           px-4
           py-3
-          text-white
+          text-ink
           outline-none
-          placeholder:text-gray-500
+          transition-colors
+          focus:border-accent
+          placeholder:text-ink-3
         "
         />
 

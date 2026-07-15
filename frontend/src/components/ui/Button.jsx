@@ -1,23 +1,23 @@
 import { motion } from "framer-motion";
 
 /**
- * Reusable button system for SkyGuide AI.
+ * Reusable button system for SkyGuide AI (redesign v2.0 "Bento / Electric Blue").
  *
- * One standardized accent (Tailwind orange, which maps exactly to the brand
- * palette): base #F97316, hover #FB923C, pressed #EA580C. Never introduce
- * other orange shades for buttons — use a variant here instead.
+ * One accent — electric blue #0049CD (hover #1E63FF). Flat surfaces, hairline
+ * borders, radius 0 (enforced globally). Never introduce other accent hues —
+ * add a variant here instead.
  */
 
 const base =
-  "inline-flex items-center justify-center gap-2 rounded-xl font-semibold " +
+  "inline-flex items-center justify-center gap-2 font-semibold " +
   "transition-colors focus:outline-none focus-visible:ring-2 " +
-  "focus-visible:ring-orange-500/40 disabled:cursor-not-allowed disabled:opacity-60";
+  "focus-visible:ring-accent/40 disabled:cursor-not-allowed disabled:opacity-60";
 
 const variants = {
-  primary: "bg-orange-500 text-white hover:bg-orange-400 active:bg-orange-600",
-  secondary: "border border-white/10 bg-white/5 text-white hover:bg-white/10",
-  danger: "bg-red-500 text-white hover:bg-red-400 active:bg-red-600",
-  ghost: "text-[#AAB4C5] hover:bg-white/5 hover:text-white",
+  primary: "bg-accent text-ink hover:bg-accent-hi active:bg-accent",
+  secondary: "border border-line bg-surface-2 text-ink hover:bg-surface-3",
+  danger: "bg-danger text-ink hover:bg-danger/90 active:bg-danger",
+  ghost: "text-ink-2 hover:bg-surface-2 hover:text-ink",
 };
 
 const sizes = {
@@ -51,7 +51,7 @@ export default function Button({
       {...props}
     >
       {loading && (
-        <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+        <span className="h-4 w-4 animate-spin rounded-full border-2 border-ink/30 border-t-ink" />
       )}
       {children}
     </motion.button>

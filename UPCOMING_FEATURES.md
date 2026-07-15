@@ -230,7 +230,20 @@ instead of showing nulls.
 
 # Feature 4 — User Profile: avatar, bio, public identity
 
-**Status:** ⏳ Not started (User model has `avatar: String` placeholder)
+**Status:** ✅ Shipped (Session 23). `/profile` (editable: avatar, display
+name, bio, 3-way visibility, approx-location toggle, observing résumé) and
+`/observers/:username` (public, visibility-gated). Gateway: profileService +
+controller, `/users/me/profile`, `/users/me/avatar`, `/observers/:username`
+(optionalAuth), reverse geocoding on location save (Nominatim, built-in https,
+best-effort). Verified: edit/save persists, every visibility gate (private→404,
+observers→403 anon, unknown→404, owner always 200), and public payload leaks no
+email/coordinates.
+
+**Deviation from the plan below:** avatars are **client-cropped 256px data URLs
+stored inline on the user doc** (canvas crop → WEBP/JPEG ≤200KB), NOT Cloudinary
+— chosen to ship credential-free. `avatarPublicId` field + the `POST
+/users/me/avatar` endpoint are the clean swap-in points for a CDN later. The
+Cloudinary write-up below is kept as the future migration target.
 **Depends on:** nothing; **prerequisite for Feature 6 (Community)**
 **Effort:** 1–2 sessions
 
@@ -289,7 +302,19 @@ location save, no exact coordinates anywhere in public payloads.
 
 # Feature 5 — Step-by-step Guidance page ("First Light Guide")
 
-**Status:** ⏳ Not started
+**Status:** ✅ Shipped (Session 24). Public `/guide` route: 9-step scroll page
+in the /tonight visual language (starfield + useReveal), sticky `GuideRail`
+that doubles as a checklist, per-step deep-link CTAs. Content in
+`components/guide/guide.steps.jsx`; completion detection in `useGuideProgress`
+(from auth/location/telescope/observations — no new backend; anonymous reads
+all-incomplete). Signed-in users get a progress bar + green ticks on the six
+trackable steps. Entry points: home nav "Guide", in-app navbar "Guide", and
+the dashboard empty-location card. **No new dependencies** (reuses GSAP/three).
+**Verified:** anonymous render (9 steps/rail/CTAs, no console errors), rail
+scroll offset math, lint + build. **Not live-verified:** the signed-in
+checklist path — the Atlas DB was unreachable (DNS `ESERVFAIL`) at session end,
+so login/user-state couldn't be exercised; logic is a straightforward read of
+already-verified hooks.
 **Depends on:** nothing (update it as later features ship)
 **Effort:** 1 session
 
@@ -342,9 +367,81 @@ step 2 checked; every deep link lands on the right surface; mobile scroll
 
 # Feature 6 — Community: nearby observers + location chat rooms
 
-**Status:** ⏳ Not started
+**Status:** ✅ **Shipped (Session 26)** — Phases A, B and C.
+
+> **Product change (user directive, Session 26):** the **global #first-light
+> room is REMOVED**. A single everyone-channel is the hardest thing to moderate
+> and the least useful ("is it clear over the river?" only means something
+> locally). In its place, **private 1:1 rooms gated by a ping request**: you ask
+> an observer to talk, and only if they accept does a room exist for the pair.
+> This *reverses* the "No DMs in v1" note below — the consent gate is precisely
+> what makes DMs tractable, since every private room was invited by its
+> recipient. Rooms are now: **your region** + **one room per accepted ping**.
+
+**Phase A — Discovery ✅.** Gateway `GET /api/v1/community/nearby?radius=`
+(`$geoNear` over the users' 2dsphere index; reciprocity + privacy gates
+enforced server-side; returns coarse **distance bands**, never coordinates).
+Frontend: `community.service.js`, `useNearbyObservers`, `pages/Community.jsx`
+(protected, in AppLayout) + `components/community/{ObserverCard,RadiusSelector}`,
+navbar link. No schema change — the 2dsphere index +
+`showApproxLocation`/`profileVisibility` already existed.
+
+**Phase B — Regional chat rooms ✅.** `utils/geohash.js` (in-house base32
+encode, no new dep), models `Room` + `Message`, `User.geohash4` (set on location
+save, lazily backfilled), `communityService.{listRooms,getMessages,postMessage,
+assertRoomAccess}`, REST `GET /community/rooms` + `/community/rooms/:key/messages`,
+and `sockets/communitySocket.js`. Frontend: `useRooms`, `useChatRoom`,
+`pages/CommunityChat.jsx` (`/community/chat`) +
+`community/{RoomSwitcher,MessageList,MessageComposer}`,
+`createCommunitySocket()`.
+
+> ⚠️ **Correction to the architecture note below:** the socket handshake does
+> **not** "already carry the session cookie" in a usable way. `io.use(socketMiddleware)`
+> gates the DEFAULT namespace on a *pairing* JWT bound to a telescope `roomId` —
+> a chat client has none. Chat therefore runs on its own **`/community`
+> namespace** with independent cookie auth. Namespace middleware does not
+> inherit `io.use()`, so the alignment rooms are untouched (regression-tested).
+
+**Phase C — Pings, safety ✅.** Models `Ping` / `Block` / `Report`;
+`pingService` (send / list / respond, creates the private room on accept only);
+`moderationService` (`blockedIdsFor` — the shared primitive; block/unblock/list;
+report with an evidence snapshot); `utils/profanity.js` (whole-word MASK, not
+reject). Endpoints: `POST|GET /community/pings`, `PATCH /community/pings/:id`,
+`GET|POST /community/blocks`, `DELETE /community/blocks/:username`,
+`POST /community/reports`. Socket: personal `user:<username>` channel for live
+`ping:new` / `ping:accepted`; message fan-out is per-socket when a block is
+involved. Frontend: `usePings`, `PingInbox`, Ping button + state on
+`ObserverCard`, report/block actions on `MessageList`.
+
+**Verified live (Session 26)** against a real gateway + Atlas on a throwaway
+port — **54 assertions** across four suites, test data removed afterwards:
+- *Discovery:* banding, private hidden, reciprocity gate, no coordinate/email leak.
+- *Rooms/chat:* shared cell, cross-region read → 403, cookie auth, live delivery,
+  typing, presence (multi-tab dedupe + disconnect decrement), rate limit (6th
+  refused, spam not persisted), history REST.
+- *Phase C:* no global room; ping gate (no room before accept, sender can't
+  accept their own, third party 404 on read AND socket join, mutual ping
+  auto-accepts, duplicate 409); profanity mask incl. Scunthorpe checks
+  (`class` / `assess` / `Uranus` untouched); report (self 400, snapshot,
+  duplicate no-op); **block is symmetric** (gone from BOTH users' discovery,
+  messages hidden, shared DM hidden then restored on unblock, blocked user
+  can't ping).
+- *Regression:* the pairing namespace still enforces its token and `join_room`
+  works; the two auth models reject each other both ways.
+
+UI verified in-pane: ping inbox → **Accept creates the room live**, ping states
+(Ping / Requested / Connected), report notice, and **block removes the author's
+messages from the stream + their DM from the list** without a page reload.
+
 **Depends on:** Feature 4 (profiles + privacy) — HARD dependency
-**Effort:** 2–3 sessions (a: discovery, b: chat, c: polish/moderation)
+**Effort:** 2–3 sessions (a: discovery ✅, b: chat ✅, c: pings + safety ✅)
+
+## Still open (deferred, not blocking)
+- **No admin review UI for reports.** `Report` docs accumulate with `status:
+  "open"`; nothing surfaces them yet. That's the natural next moderation step.
+- **Sparse-cell merging** for regions was never needed — the ping/DM path covers
+  "my region is empty" better than merging would.
+- Presence is per-room only; there's no global "N observing tonight" strip.
 
 ## Objective
 
@@ -362,9 +459,10 @@ answer.
    deep-links to privacy settings.
 2. **Regional rooms:** auto-assigned by geohash cell (roughly city-scale,
    e.g. geohash precision 4 ≈ 39 km cells, merged with neighbors under a
-   member minimum) — "SkyGuide · Kolkata region". One room per region, plus
-   a global **#first-light** room for everyone. No DMs in v1 (moderation
-   surface too big).
+   member minimum) — "SkyGuide · Kolkata region". One room per region.
+   ~~plus a global **#first-light** room for everyone. No DMs in v1 (moderation
+   surface too big).~~ **SUPERSEDED (Session 26):** no global room; DMs exist
+   but only behind a ping/accept consent gate — see the Status block above.
 3. **Chat UI:** right-drawer or `/community/chat` — message list with day
    dividers, avatars, "N observing tonight" presence strip (members with the
    app open), typing indicator. Push a "planning to observe tonight 🔭"
@@ -395,11 +493,24 @@ answer.
 - **Do not** touch the existing ChatWidget (AI assistant) — different
   product surface; keep naming distinct (`community chat` vs `AI chat`).
 
-## Open decisions (settle at build time)
+## Open decisions — SETTLED (Session 26)
 
-- Geohash precision 4 vs 5 (39 km vs 5 km cells) — start 4, merge sparse.
-- Message retention: 30 days vs. 500-message cap (lean: cap).
-- Presence: socket-connection-based only (no "last seen" — privacy).
+- **Geohash precision 4** (~39 km cells) — as leaned. Encoder verified against
+  the canonical reference; cells measure ~24–36 km wide depending on latitude.
+  No sparse-cell merging implemented yet: it only matters once real users
+  exist, and the global #first-light room already covers "my region is empty".
+- **500-message cap** (not a 30-day TTL) — as leaned. A quiet regional room
+  would erase itself between clear nights under a TTL; a cap keeps history
+  intact however slowly the room moves. Enforced by `pruneRoom` on insert.
+- **Presence: socket-connection-based only**, no "last seen" — as leaned.
+  Counts distinct *users*, not sockets, so multiple tabs is still one observer.
+- **Chat is NOT gated on `profileVisibility`** (new decision): discovery hides a
+  private observer from being *found*, but chat is something they actively opt
+  into by speaking. The reciprocity gate applies to `/community` only.
+- **Sends are server-echoed, not optimistic** (deviates from the architecture
+  note below): the server broadcasts each message to the room including the
+  sender. Costs a round-trip, but the stream only ever shows what actually
+  persisted — a rate-limited send has no phantom to roll back.
 
 ## Testing
 
@@ -412,10 +523,48 @@ paginates; alignment sockets unaffected (regression: run a pairing session).
 
 # Feature 7 — Notifications & daily alert system
 
-**Status:** ⏳ Not started
+**Status:** 🔄 **Phase 7a shipped (Session 26)** — notification engine, daily
+digest (in-app + email), and the in-app centre. Phase 7b (the other alert types)
+pending.
+
+**7a shipped:** `models/Notification` (`sentKey` unique index = the idempotency
+guard), `notificationPrefs` on the user, `services/notificationService`
+(idempotent create + live push), `services/digestService` (composition only —
+no astronomy), `jobs/digestJob` (**node-cron**, `*/15 * * * *`, selects by the
+observer's LOCAL hour), `sockets/notificationSocket` (`/notifications` namespace),
+and `middleware/socketSessionAuth` (extracted — `/community` now shares it).
+astroEngineClient gained `fetchObservable` / `fetchMoon` / `fetchCatalog`.
+Endpoints: `GET /api/v1/notifications`, `PATCH /:id/read`, `PATCH /read-all`,
+`GET|PATCH /preferences`. Frontend: `notification.service`, `useNotifications`
+(React Query + live socket merge), `NotificationBell` (navbar, unread badge,
+dropdown), `NotificationPrefs` (profile page).
+
+> **Only new dependency in Feature 6+7: `node-cron`** (the scheduler this file
+> chose). `DISABLE_CRON=true` disables scheduled jobs — **always set it on a
+> throwaway gateway**, since those share the production DB and would otherwise
+> email real observers from a test process.
+
+**Verified live (Session 26) — 60 assertions** against the real gateway + astro
+engine + Atlas: digest composition, rendering (grounded — no null/undefined
+leaks), **idempotency** (second send for the same day is a no-op; re-running the
+tick never double-sends), **local-hour selection** (IST vs UTC differ; wrong
+hour / digest-off / no-location users are skipped, not crashed), the
+notification API (cross-user read → 404, anon → 401, no `sentKey` leak),
+preferences (defaults, range validation, route ordering), and the **live socket
+push** (per-user channel — one observer never receives another's; duplicates
+don't re-push). Regression: `/community` and the pairing namespace both
+unaffected by the shared-middleware refactor.
+
+**Three bugs the live engine caught** (all fixed): the visibility endpoint
+returns `name: null` for most objects (names live in the **catalog**, which must
+be merged by catalog_id — and the engine **rejects `limit > 100`**, so it
+paginates); `set` is already a local `"HH:MM"` string, not an ISO timestamp; and
+`illumination` is already a percent (1.9 = 1.9%), so "normalising" it turned a
+0.5% new moon into 50%.
+
 **Depends on:** Features 1 & 3 give it content; Feature 4's settings page
 gives it a home for preferences
-**Effort:** 2 sessions (a: engine + email digest, b: in-app center + ISS/weather alerts)
+**Effort:** 2 sessions (a: engine + email digest + centre ✅, b: remaining alert types)
 
 ## Objective
 
@@ -426,11 +575,16 @@ event alerts — the reason users return on nights they'd otherwise forget.
 
 | Alert | Trigger | Channel |
 |---|---|---|
-| **Daily digest** | User-chosen local time (default 17:00) | Email + in-app |
-| **Great night** | observing_score ≥ 75 tonight | Email (opt-in) + in-app |
-| **ISS pass** | Pass with peak ≥ 40° within next 12 h | in-app + email opt-in |
-| **Plan urgency** | Planned object's last good window this month | in-app |
-| **Moon milestones** | New moon window opens / full supermoon | in-app |
+| Alert | Trigger | Channel | Status |
+|---|---|---|---|
+| **Daily digest** | User-chosen local time (default 17:00) | Email + in-app | ✅ 7a |
+| **Great night** | observing_score ≥ 75 tonight | Email (opt-in) + in-app | ⏳ 7b (pref exists) |
+| **ISS pass** | Pass with peak ≥ 40° within next 12 h | in-app + email opt-in | ⏳ 7b (pref exists) |
+| **Plan urgency** | Planned object's last good window this month | in-app | ⏳ 7b |
+| **Moon milestones** | New moon window opens / full supermoon | in-app | ⏳ 7b |
+
+The `Notification.type` enum and the `greatNight` / `issAlerts` preferences are
+already in place for 7b — the remaining work is the triggers, not the plumbing.
 
 Digest content: sky score + verdict, moon phase/illumination, top 3 targets
 with set times, planned-object statuses, next ISS pass. All computed from
@@ -536,8 +690,14 @@ Phase C: offline eval (held-out AUC) before wiring; API contract unchanged.
 - **Night-vision mode:** deep-red UI toggle (CSS filter/theme swap on the
   app shell), persisted per user — cheap, thematically perfect, do alongside
   Feature 3.
-- **Landing-page live teaser:** "the sky right now over [city]" strip on `/`
-  using the public visibility endpoint with IP-coarse or browser geolocation.
+- **Landing-page live teaser:** ✅ Shipped (Session 24) — `LiveSkyTeaser`
+  computes a real sky (public visibility + moon) for a labeled showcase site
+  (Kitt Peak) so anonymous visitors see live data; degrades to an inviting
+  static panel when the engine/DB is unreachable. Also this session: hero
+  ambient-glow layer, feature-card hover (lift + border glow), and the orange
+  cursor-spotlight made opt-out (`SpotlightCard spotlight={false}`, off on the
+  landing page). Future upgrade: use the visitor's own location (browser
+  geolocation on an explicit "Compute my sky" tap) instead of the showcase.
 - **Dashboard alignment prefill:** Alignment Mode target dropdown pre-filled
   from the plan (Feature 1 follow-through).
 - **Shared API client:** axios instance with interceptors (401 → session

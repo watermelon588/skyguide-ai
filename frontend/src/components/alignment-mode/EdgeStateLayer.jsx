@@ -19,12 +19,12 @@ import { EDGE_COPY } from "./copy";
  */
 
 const ICONS = {
-  permission_denied: { icon: FiAlertTriangle, tone: "text-[#EF4444]", ring: "border-[#EF4444]/30 bg-[#EF4444]/10" },
-  no_observer: { icon: FiMapPin, tone: "text-orange-400", ring: "border-orange-400/20 bg-orange-500/15" },
-  pairing_lost: { icon: FiSmartphone, tone: "text-orange-400", ring: "border-orange-400/20 bg-orange-500/15" },
-  stream_background: { icon: FiMoon, tone: "text-[#AAB4C5]", ring: "border-white/10 bg-white/5" },
-  stream_lost: { icon: FiWifiOff, tone: "text-orange-400", ring: "border-orange-400/20 bg-orange-500/15" },
-  below_horizon: { icon: FiMoon, tone: "text-[#AAB4C5]", ring: "border-white/10 bg-white/5" },
+  permission_denied: { icon: FiAlertTriangle, tone: "text-danger", ring: "border-danger/30 bg-danger/10" },
+  no_observer: { icon: FiMapPin, tone: "text-accent", ring: "border-accent/30 bg-accent/15" },
+  pairing_lost: { icon: FiSmartphone, tone: "text-accent", ring: "border-accent/30 bg-accent/15" },
+  stream_background: { icon: FiMoon, tone: "text-ink-2", ring: "border-line bg-surface-2" },
+  stream_lost: { icon: FiWifiOff, tone: "text-accent", ring: "border-accent/30 bg-accent/15" },
+  below_horizon: { icon: FiMoon, tone: "text-ink-2", ring: "border-line bg-surface-2" },
 };
 
 export default function EdgeStateLayer({ edge, targetName, onPrimary, onSecondary }) {
@@ -46,17 +46,17 @@ export default function EdgeStateLayer({ edge, targetName, onPrimary, onSecondar
           <div
             role="alertdialog"
             aria-label={copy.title}
-            className="pointer-events-auto w-full max-w-sm rounded-2xl border border-white/10 bg-white/5 px-6 py-5 shadow-2xl backdrop-blur-3xl"
+            className="pointer-events-auto w-full max-w-sm border border-line bg-surface-2 px-6 py-5 shadow-2xl"
           >
             <div className="flex items-start gap-3.5">
               <div
-                className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border ${visual.ring}`}
+                className={`flex h-10 w-10 shrink-0 items-center justify-center border ${visual.ring}`}
               >
                 <visual.icon className={`text-lg ${visual.tone}`} />
               </div>
               <div className="min-w-0">
-                <p className="text-sm font-bold text-white">{copy.title}</p>
-                <p className="mt-1 text-xs leading-5 text-[#AAB4C5]">
+                <p className="text-sm font-bold text-ink">{copy.title}</p>
+                <p className="mt-1 text-xs leading-5 text-ink-2">
                   {typeof copy.body === "function"
                     ? copy.body(targetName ?? "This target")
                     : copy.body}

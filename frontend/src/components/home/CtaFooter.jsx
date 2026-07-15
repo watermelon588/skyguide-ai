@@ -1,40 +1,50 @@
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
+import { ArrowRight } from "lucide-react";
 
 import { useAuth } from "../../context/AuthContext";
-import SpotlightCard from "../tonight/fx/SpotlightCard";
+import MagneticButton from "../fx/MagneticButton";
+import AngularText from "../fx/AngularText";
 
 /**
- * Closing invitation. One oversized glass panel, one orange action — the
- * page's last word before the site footer takes over.
+ * Closing invitation. One oversized flat panel with a bold blue action — the
+ * page's last word before the site footer takes over. Routing/auth unchanged.
  */
 export default function CtaFooter() {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
 
   return (
-    <section className="mx-auto w-full max-w-6xl px-6 sm:px-12">
-      <SpotlightCard data-reveal className="px-8 py-16 text-center sm:py-20">
-        <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-[#FF8C1A]">
+    <section className="mx-auto w-full max-w-7xl px-6 sm:px-12">
+      <div
+        data-reveal
+        className="relative overflow-hidden border border-line bg-surface-1 px-8 py-12 text-center sm:py-16"
+      >
+        {/* graphic accent bar */}
+        <span
+          aria-hidden="true"
+          className="absolute inset-x-0 top-0 h-1 bg-accent"
+        />
+        <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-accent">
           Clear skies are waiting
         </p>
-        <h2 className="mx-auto mt-4 max-w-2xl text-3xl font-bold leading-tight text-white sm:text-5xl">
-          The sky above you is already computed.
-        </h2>
-        <p className="mx-auto mt-4 max-w-xl text-[#AAB4C5]">
+        <AngularText
+          text="The sky above you is already computed."
+          className="mx-auto mt-4 max-w-2xl text-2xl font-black uppercase leading-[0.98] tracking-tight text-ink sm:text-4xl"
+        />
+        <p className="mx-auto mt-4 max-w-xl text-sm text-ink-2">
           Sign in, share your coordinates, and meet tonight's best targets in
           under a minute.
         </p>
-        <motion.button
-          type="button"
-          whileHover={{ scale: 1.03 }}
-          whileTap={{ scale: 0.97 }}
-          onClick={() => navigate(isAuthenticated ? "/tonight" : "/login")}
-          className="mt-8 rounded-xl bg-[#FF8C1A] px-9 py-4 font-semibold text-[#090B10] shadow-2xl transition-colors duration-300 hover:bg-[#FF6B00]"
-        >
-          {isAuthenticated ? "Open tonight's sky" : "Begin your first session"}
-        </motion.button>
-      </SpotlightCard>
+        <div className="mt-8 flex justify-center">
+          <MagneticButton
+            onClick={() => navigate(isAuthenticated ? "/tonight" : "/login")}
+            className="inline-flex items-center gap-2 bg-accent px-8 py-4 font-semibold text-ink transition-colors duration-300 hover:bg-accent-hi"
+          >
+            {isAuthenticated ? "Open tonight's sky" : "Begin your first session"}
+            <ArrowRight size={18} />
+          </MagneticButton>
+        </div>
+      </div>
     </section>
   );
 }

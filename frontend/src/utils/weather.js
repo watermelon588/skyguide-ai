@@ -2,17 +2,17 @@
  * Weather presentation helpers — the single source of truth for how observing
  * quality maps to colour, and how raw metric values become display strings.
  *
- * Colours stay within the established palette language: green (#22C55E) and
- * orange (#FF8C1A / red for danger) already used across the dashboard, plus
- * Tailwind's emerald / sky / amber tokens for the intermediate bands. Every
- * badge uses the same glass recipe as ObserverCard: soft tint + faint border.
+ * A sequential data-viz scale for observing quality: emerald → green → sky →
+ * amber → deep-amber → red. Deliberately avoids the brand blue (reserved for
+ * interactive accent) and the retired orange. Every badge is a flat tint +
+ * hairline border, matching the redesigned surfaces.
  */
 
 const UNKNOWN_STYLE = {
-  text: "text-[#AAB4C5]",
-  bg: "bg-white/5",
-  border: "border-white/10",
-  dot: "bg-[#6B7280]",
+  text: "text-ink-2",
+  bg: "bg-surface-2",
+  border: "border-line",
+  dot: "bg-ink-4",
 };
 
 /** quality label -> Tailwind classes for badge / dot / accents. */
@@ -24,10 +24,10 @@ const QUALITY_STYLES = {
     dot: "bg-emerald-400",
   },
   "Very Good": {
-    text: "text-[#22C55E]",
-    bg: "bg-[#22C55E]/15",
-    border: "border-[#22C55E]/30",
-    dot: "bg-[#22C55E]",
+    text: "text-success",
+    bg: "bg-success/15",
+    border: "border-success/30",
+    dot: "bg-success",
   },
   Good: {
     text: "text-sky-300",
@@ -42,10 +42,10 @@ const QUALITY_STYLES = {
     dot: "bg-amber-400",
   },
   Poor: {
-    text: "text-orange-300",
-    bg: "bg-orange-500/15",
-    border: "border-orange-400/30",
-    dot: "bg-orange-400",
+    text: "text-amber-400",
+    bg: "bg-amber-500/20",
+    border: "border-amber-500/40",
+    dot: "bg-amber-500",
   },
   Unusable: {
     text: "text-red-300",

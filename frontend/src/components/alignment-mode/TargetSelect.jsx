@@ -59,10 +59,10 @@ export default function TargetSelect({ feed, onExit }) {
           transition={{ duration: 0.35 }}
           className="text-center"
         >
-          <h1 className="text-[28px] font-semibold text-white">
+          <h1 className="text-[28px] font-semibold text-ink">
             Choose a target
           </h1>
-          <p className="mt-1.5 text-sm text-[#AAB4C5]">
+          <p className="mt-1.5 text-sm text-ink-2">
             Your telescope is paired and ready.
           </p>
         </motion.div>
@@ -79,28 +79,28 @@ export default function TargetSelect({ feed, onExit }) {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: 0.04 * i }}
-                className={`group relative flex min-h-[44px] flex-col items-start gap-2 rounded-2xl border px-4 py-3.5 text-left backdrop-blur-3xl transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-400/60 disabled:cursor-not-allowed ${
+                className={`group relative flex min-h-[44px] flex-col items-start gap-2 border px-4 py-3.5 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 disabled:cursor-not-allowed ${
                   isPendingCard
-                    ? "border-orange-400/50 bg-orange-500/10"
-                    : "border-white/10 bg-white/5 hover:bg-white/10"
+                    ? "border-accent/50 bg-accent/10"
+                    : "border-line bg-surface-2 hover:bg-surface-3"
                 }`}
               >
                 <span className="flex w-full items-center justify-between">
-                  <span className="text-orange-400">
+                  <span className="text-accent">
                     <TargetGlyph objectType={t.type} className="h-5 w-5" />
                   </span>
                   {trackingId === t.id && (
                     <span
-                      className="h-2 w-2 rounded-full bg-[#22C55E]"
+                      className="h-2 w-2 bg-success"
                       title="Currently tracking"
                     />
                   )}
                 </span>
                 <span className="min-w-0">
-                  <span className="block truncate text-sm font-semibold text-white">
+                  <span className="block truncate text-sm font-semibold text-ink">
                     {t.name}
                   </span>
-                  <span className="block truncate text-[11px] text-[#6B7280]">
+                  <span className="block truncate text-[11px] text-ink-3">
                     {t.id} · {t.type}
                   </span>
                 </span>
@@ -118,30 +118,30 @@ export default function TargetSelect({ feed, onExit }) {
         >
           <div className="flex gap-2.5">
             <div className="relative flex-1">
-              <FiSearch className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-sm text-[#6B7280]" />
+              <FiSearch className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-sm text-ink-3" />
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search the catalog — M13, M104…"
                 aria-label="Search the catalog by id"
-                className={`w-full rounded-lg border bg-white/5 py-2.5 pl-10 pr-3 font-mono text-sm text-white placeholder-[#6B7280] outline-none backdrop-blur-3xl transition-colors focus:border-orange-400/50 ${
+                className={`w-full border bg-surface-2 py-2.5 pl-10 pr-3 font-mono text-sm text-ink placeholder-ink-3 outline-none transition-colors focus:border-accent/50 ${
                   feed.pending && pendingChoice === "search"
-                    ? "border-orange-400/50"
-                    : "border-white/10"
+                    ? "border-accent/50"
+                    : "border-line"
                 }`}
               />
             </div>
             <button
               type="submit"
               disabled={!query.trim() || feed.pending}
-              className="rounded-xl border border-orange-400/40 bg-orange-500/15 px-4 py-2 text-sm font-semibold text-orange-300 transition-colors hover:bg-orange-500/25 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-400/60 disabled:cursor-not-allowed disabled:opacity-40"
+              className="border border-accent/40 bg-accent/15 px-4 py-2 text-sm font-semibold text-accent-hi transition-colors hover:bg-accent/25 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 disabled:cursor-not-allowed disabled:opacity-40"
             >
               {feed.pending ? "Locating…" : "Track"}
             </button>
           </div>
 
           {(hint || otherError) && (
-            <p className="mt-2.5 text-xs text-[#AAB4C5]" role="status">
+            <p className="mt-2.5 text-xs text-ink-2" role="status">
               {hint ?? otherError}
             </p>
           )}
@@ -156,7 +156,7 @@ export default function TargetSelect({ feed, onExit }) {
           <button
             type="button"
             onClick={onExit}
-            className="inline-flex items-center gap-1.5 text-xs text-[#6B7280] transition-colors hover:text-[#AAB4C5] focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-400/60"
+            className="inline-flex items-center gap-1.5 text-xs text-ink-3 transition-colors hover:text-ink-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
           >
             <FiX className="text-sm" />
             {feed.target ? "End alignment" : "Back to dashboard"}

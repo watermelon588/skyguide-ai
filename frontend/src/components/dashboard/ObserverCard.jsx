@@ -6,6 +6,7 @@ import {
   FiRefreshCw,
   FiAlertTriangle,
   FiCheck,
+  FiX,
 } from "react-icons/fi";
 import { useLocation } from "../../hooks/useLocation";
 import { useWeather } from "../../hooks/useWeather";
@@ -23,50 +24,100 @@ const SPRING = { type: "spring", stiffness: 400, damping: 32 };
 function Stat({ label, value }) {
   return (
     <div className="flex flex-col leading-tight">
-      <span className="text-[10px] uppercase tracking-wide text-[#6B7280]">
+      <span className="text-[10px] uppercase tracking-wide text-ink-3">
         {label}
       </span>
-      <span className="text-sm font-semibold text-white">{value}</span>
+      <span className="text-sm font-semibold tabular-nums text-ink">{value}</span>
     </div>
   );
 }
 
 /**
  * Presentation config for the Refresh GPS slot, per hook status.
+ *
+ * Labels stay SHORT: the button is a fixed-height capsule that must not wrap,
+ * so the actual diagnosis goes in the banner below (GpsProblem) where there is
+ * room to read it. Cramming errorMessage in here truncated the one sentence
+ * that told the user what to do.
  */
-function refreshStateConfig(status, errorMessage) {
+function refreshStateConfig(status) {
   switch (status) {
     case "requesting":
       return {
         icon: <FiRefreshCw className="animate-spin text-base" />,
-        label: "Refreshing GPS...",
-        tone: "border-white/10 bg-white/5 text-white",
+        label: "Locating...",
+        tone: "border-line bg-surface-3 text-ink",
       };
     case "success":
       return {
         icon: <FiCheck className="text-base" />,
         label: "Location Updated",
-        tone: "border-[#22C55E]/30 bg-[#22C55E]/15 text-[#22C55E]",
+        tone: "border-success/30 bg-success/15 text-success",
       };
     case "denied":
       return {
         icon: <FiAlertTriangle className="text-base" />,
-        label: "GPS Permission Required",
-        tone: "border-orange-400/30 bg-orange-500/15 text-orange-300",
+        label: "Permission Blocked",
+        tone: "border-warning/30 bg-warning/15 text-warning",
       };
     case "error":
       return {
         icon: <FiAlertTriangle className="text-base" />,
-        label: errorMessage || "GPS Update Failed",
-        tone: "border-orange-400/30 bg-orange-500/15 text-orange-300",
+        label: "GPS Failed",
+        tone: "border-danger/30 bg-danger/15 text-danger",
       };
     default:
       return {
         icon: <FiRefreshCw className="text-base" />,
         label: "Refresh GPS",
-        tone: "border-white/10 bg-white/5 text-white hover:bg-white/10",
+        tone: "border-line bg-surface-2 text-ink hover:bg-surface-3",
       };
   }
+}
+
+/**
+ * The GPS failure banner.
+ *
+ * Persists until the user retries, dismisses, or edits manually — a location
+ * failure is not a toast. The previous build auto-cleared it after 3.5s, which
+ * is why a broken refresh read as a button that simply did nothing.
+ */
+function GpsProblem({ status, message, onRetry, onManual, onDismiss }) {
+  const denied = status === "denied";
+  return (
+    <motion.div
+      initial={{ height: 0, opacity: 0 }}
+      animate={{ height: "auto", opacity: 1 }}
+      exit={{ height: 0, opacity: 0 }}
+      transition={{ type: "spring", bounce: 0, duration: 0.25 }}
+      className="w-full overflow-hidden"
+    >
+      <div
+        className={`flex flex-wrap items-center gap-x-3 gap-y-2 border-t px-5 py-3 text-sm ${
+          denied
+            ? "border-warning/30 bg-warning/10 text-warning"
+            : "border-danger/30 bg-danger/10 text-danger"
+        }`}
+        role="status"
+      >
+        <FiAlertTriangle className="shrink-0 text-base" />
+        <span className="min-w-0 flex-1 text-ink-2">{message}</span>
+        <div className="ml-auto flex shrink-0 gap-2">
+          <Button variant="secondary" size="sm" onClick={onManual}>
+            Set manually
+          </Button>
+          {!denied && (
+            <Button variant="secondary" size="sm" onClick={onRetry}>
+              Try again
+            </Button>
+          )}
+          <Button variant="ghost" size="icon" onClick={onDismiss} aria-label="Dismiss">
+            <FiX className="text-base" />
+          </Button>
+        </div>
+      </div>
+    </motion.div>
+  );
 }
 
 /**
@@ -122,13 +173,12 @@ export default function ObserverCard({ onEdit }) {
   // Spinner in the capsule only during the very first fetch (no cached data).
   const weatherLoadingFirst = weatherFetching && !weatherData;
 
-  // Auto-return the Refresh action to its idle label after showing feedback.
+  // Success is self-evident (the coordinates above just changed), so it fades
+  // on its own. Failures do NOT auto-clear — GpsProblem owns them until the
+  // user acts.
   useEffect(() => {
-    if (status !== "success" && status !== "denied" && status !== "error") {
-      return;
-    }
-    const ms = status === "success" ? 1800 : 3500;
-    const timer = setTimeout(() => reset(), ms);
+    if (status !== "success") return;
+    const timer = setTimeout(() => reset(), 1800);
     return () => clearTimeout(timer);
   }, [status, reset]);
 
@@ -136,9 +186,10 @@ export default function ObserverCard({ onEdit }) {
   const lng = longitude != null ? `${longitude.toFixed(4)}°` : "—";
   const coordKey = `${lat},${lng},${timezone},${elevation_m}`;
 
-  const refresh = refreshStateConfig(status, errorMessage);
+  const refresh = refreshStateConfig(status);
   // Idle is a normal button; feedback states are transient and non-interactive.
   const refreshDisabled = status === "requesting" || status === "success";
+  const gpsFailed = status === "denied" || status === "error";
 
   return (
     <motion.section
@@ -147,20 +198,19 @@ export default function ObserverCard({ onEdit }) {
       transition={{ duration: 0.3 }}
       className="
         flex w-full flex-col overflow-hidden
-        rounded-2xl border border-white/10 bg-white/5
-        shadow-2xl backdrop-blur-3xl transition-all
+        border border-line bg-surface-2 transition-colors
       "
     >
       {/* Summary row — the collapsed Observer bar (unchanged height). */}
       <div className={`${DASHBOARD_CARD_ROW} px-5 py-3`}>
       {/* Left: identity */}
       <CardIdentity
-        icon={<FaLocationDot className="text-lg text-orange-400" />}
+        icon={<FaLocationDot className="text-lg text-accent" />}
         title="Observer Location"
         subtitle={placeName ?? "Location name unavailable"}
         trailing={
-          <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] font-medium text-[#22C55E]">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#22C55E]" />
+          <span className="inline-flex shrink-0 items-center gap-1.5 border border-line bg-surface-3 px-2.5 py-1 text-[11px] font-medium text-success">
+            <span className="h-1.5 w-1.5 rounded-full bg-success" />
             Active
           </span>
         }
@@ -228,6 +278,23 @@ export default function ObserverCard({ onEdit }) {
       </div>
       {/* End summary row */}
 
+      {/* GPS failure — the diagnosis, with room to actually read it. */}
+      <AnimatePresence initial={false}>
+        {gpsFailed && (
+          <GpsProblem
+            key="gps-problem"
+            status={status}
+            message={errorMessage || "Couldn't read your location."}
+            onRetry={detectAndSaveLocation}
+            onManual={() => {
+              reset();
+              onEdit?.();
+            }}
+            onDismiss={reset}
+          />
+        )}
+      </AnimatePresence>
+
       {/* Weather accordion — expands inline (height + opacity), full card width.
           Normal flow, so the Sync Telescope card is simply pushed down. */}
       <AnimatePresence initial={false}>
@@ -240,13 +307,7 @@ export default function ObserverCard({ onEdit }) {
             transition={{ type: "spring", bounce: 0, duration: 0.25 }}
             className="w-full overflow-hidden"
           >
-            <div
-              className="border-t border-white/[0.08] px-5 py-4"
-              style={{
-                background: "rgba(20,22,30,0.95)",
-                backdropFilter: "blur(20px)",
-              }}
-            >
+            <div className="border-t border-line bg-surface-1 px-5 py-4">
               <WeatherPopover
                 data={weatherData}
                 isLoading={weatherLoading}

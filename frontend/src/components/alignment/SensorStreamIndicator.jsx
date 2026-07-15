@@ -34,17 +34,17 @@ export default function SensorStreamIndicator({
       </div>
 
       {streaming && display && (
-        <div className="mt-3 flex justify-center gap-4 font-mono text-xs text-white">
+        <div className="mt-3 flex justify-center gap-4 font-mono text-xs text-ink">
           <span>
-            <span className="text-[#6B7280]">HDG </span>
+            <span className="text-ink-3">HDG </span>
             {display.heading}°
           </span>
           <span>
-            <span className="text-[#6B7280]">PITCH </span>
+            <span className="text-ink-3">PITCH </span>
             {display.pitch}°
           </span>
           <span>
-            <span className="text-[#6B7280]">ROLL </span>
+            <span className="text-ink-3">ROLL </span>
             {display.roll}°
           </span>
         </div>
@@ -62,20 +62,20 @@ export default function SensorStreamIndicator({
 }
 
 const CHIP_STATE = {
-  pending: { label: "probing…", className: "text-[#6B7280]" },
-  available: { label: "active", className: "text-[#22C55E]" },
-  unavailable: { label: "unavailable", className: "text-[#EF4444]" },
+  pending: { label: "probing…", className: "text-ink-3" },
+  available: { label: "active", className: "text-success" },
+  unavailable: { label: "unavailable", className: "text-danger" },
   // Confidence tiers from the orientation model.
-  initializing: { label: "initializing", className: "text-[#6B7280]" },
-  low: { label: "low", className: "text-[#EF4444]" },
-  medium: { label: "medium", className: "text-orange-400" },
-  high: { label: "high", className: "text-[#22C55E]" },
+  initializing: { label: "initializing", className: "text-ink-3" },
+  low: { label: "low", className: "text-danger" },
+  medium: { label: "medium", className: "text-accent" },
+  high: { label: "high", className: "text-success" },
 };
 
 function SensorChip({ name, state }) {
   const view = CHIP_STATE[state] ?? CHIP_STATE.pending;
   return (
-    <span className="text-[11px] uppercase tracking-wide text-[#6B7280]">
+    <span className="text-[11px] uppercase tracking-wide text-ink-3">
       {name}{" "}
       <span className={`normal-case tracking-normal ${view.className}`}>
         {view.label}

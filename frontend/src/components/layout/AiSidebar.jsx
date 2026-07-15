@@ -32,7 +32,7 @@ export default function AiSidebar() {
         transition={SPRING}
         className="hidden h-screen shrink-0 overflow-hidden xl:block"
       >
-        <div className="h-full w-[400px] border-l border-white/10 bg-[#0b0e14]">
+        <div className="h-full w-[400px] border-l border-line bg-surface-1">
           <ChatWindow variant="docked" />
         </div>
       </motion.aside>
@@ -47,7 +47,7 @@ export default function AiSidebar() {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.25 }}
             onClick={closeChat}
-            className="fixed inset-0 z-[940] bg-black/50 backdrop-blur-sm xl:hidden"
+            className="fixed inset-0 z-[940] bg-black/60 xl:hidden"
           />
         )}
       </AnimatePresence>
@@ -57,7 +57,7 @@ export default function AiSidebar() {
         initial={false}
         animate={{ x: isOpen ? "0%" : "100%" }}
         transition={SPRING}
-        className="fixed right-0 top-0 z-[950] h-screen w-full border-l border-white/10 bg-[#0b0e14] sm:w-[400px] xl:hidden"
+        className="fixed right-0 top-0 z-[950] h-screen w-full border-l border-line bg-surface-1 sm:w-[400px] xl:hidden"
       >
         <ChatWindow variant="docked" />
       </motion.aside>

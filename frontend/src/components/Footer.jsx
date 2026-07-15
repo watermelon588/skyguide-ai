@@ -12,8 +12,8 @@ import {
 /**
  * Site footer — the quiet last act of the landing page.
  *
- * Design-system notes: glass only on the quote card, hairlines do the
- * structuring, orange appears exactly where something is interactive.
+ * Design-system notes (redesign v2.0): flat solid surfaces, hairlines do the
+ * structuring, electric blue appears exactly where something is interactive.
  * Brand glyphs stay on react-icons (Lucide ships no brand set); every other
  * icon is Lucide.
  */
@@ -21,7 +21,7 @@ import {
 const PLATFORM_LINKS = [
   { label: "Tonight's sky", to: "/tonight" },
   { label: "Dashboard", to: "/dashboard" },
-  { label: "Telescope alignment", to: "/align" },
+  { label: "Telescope alignment", to: "/alignment" },
   { label: "Sign in", to: "/login" },
 ];
 
@@ -48,14 +48,14 @@ export default function Footer() {
       data-reveal
       className="relative z-10 mx-auto w-full max-w-6xl px-6 pb-10 sm:px-12"
     >
-      <div className="border-t border-white/10 pt-14">
+      <div className="border-t border-line pt-14">
         <div className="grid gap-12 lg:grid-cols-[1.4fr_1fr_1fr_1.4fr]">
           {/* Brand */}
           <div>
-            <p className="text-2xl font-bold text-white">
-              SkyGuide <span className="text-[#FF8C1A]">AI</span>
+            <p className="text-2xl font-black uppercase tracking-tight text-ink">
+              SkyGuide <span className="text-accent">AI</span>
             </p>
-            <p className="mt-4 max-w-xs text-sm leading-relaxed text-[#AAB4C5]">
+            <p className="mt-4 max-w-xs text-sm leading-relaxed text-ink-2">
               A real-time celestial recommendation and telescope alignment
               platform — your location, your telescope, tonight's sky.
             </p>
@@ -65,7 +65,7 @@ export default function Footer() {
                   key={label}
                   aria-label={label}
                   title={label}
-                  className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-white/10 bg-white/5 text-base text-[#AAB4C5] transition-colors duration-300 hover:border-[#FF8C1A]/40 hover:text-[#FF8C1A]"
+                  className="flex h-9 w-9 cursor-pointer items-center justify-center border border-line bg-surface-2 text-base text-ink-2 transition-colors duration-300 hover:border-accent hover:text-accent"
                 >
                   <Icon />
                 </span>
@@ -75,7 +75,7 @@ export default function Footer() {
 
           {/* Platform */}
           <nav aria-label="Platform">
-            <h3 className="text-[11px] font-medium uppercase tracking-[0.25em] text-[#6B7280]">
+            <h3 className="text-[11px] font-medium uppercase tracking-[0.25em] text-ink-3">
               Platform
             </h3>
             <ul className="mt-5 space-y-3 text-sm">
@@ -83,7 +83,7 @@ export default function Footer() {
                 <li key={to}>
                   <Link
                     to={to}
-                    className="text-[#AAB4C5] transition-colors duration-300 hover:text-[#FF8C1A]"
+                    className="text-ink-2 transition-colors duration-300 hover:text-accent"
                   >
                     {label}
                   </Link>
@@ -94,7 +94,7 @@ export default function Footer() {
 
           {/* Overview */}
           <nav aria-label="Overview">
-            <h3 className="text-[11px] font-medium uppercase tracking-[0.25em] text-[#6B7280]">
+            <h3 className="text-[11px] font-medium uppercase tracking-[0.25em] text-ink-3">
               Overview
             </h3>
             <ul className="mt-5 space-y-3 text-sm">
@@ -102,7 +102,7 @@ export default function Footer() {
                 <li key={href}>
                   <a
                     href={href}
-                    className="text-[#AAB4C5] transition-colors duration-300 hover:text-[#FF8C1A]"
+                    className="text-ink-2 transition-colors duration-300 hover:text-accent"
                   >
                     {label}
                   </a>
@@ -112,18 +112,16 @@ export default function Footer() {
           </nav>
 
           {/* Quote */}
-          <blockquote className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-2xl backdrop-blur-3xl">
-            <p className="text-sm italic leading-relaxed text-[#AAB4C5]">
+          <blockquote className="border-l-2 border-accent bg-surface-2 p-6">
+            <p className="text-sm italic leading-relaxed text-ink-2">
               "Somewhere, something incredible is waiting to be known."
             </p>
-            <footer className="mt-3 text-xs text-[#FF8C1A]">
-              — Carl Sagan
-            </footer>
+            <footer className="mt-3 text-xs text-accent">— Carl Sagan</footer>
           </blockquote>
         </div>
 
         {/* Bottom bar */}
-        <div className="mt-14 flex flex-col items-center justify-between gap-4 border-t border-white/10 pt-6 text-xs text-[#6B7280] sm:flex-row">
+        <div className="mt-14 flex flex-col items-center justify-between gap-4 border-t border-line pt-6 text-xs text-ink-3 sm:flex-row">
           <p>© {new Date().getFullYear()} SkyGuide AI. All rights reserved.</p>
           <p>Geometry by Astropy · Skyfield · Astroquery</p>
           <motion.button
@@ -132,7 +130,7 @@ export default function Footer() {
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.97 }}
             aria-label="Back to top"
-            className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-[#AAB4C5] backdrop-blur-3xl transition-colors duration-300 hover:border-[#FF8C1A]/40 hover:text-[#FF8C1A]"
+            className="flex h-10 w-10 items-center justify-center border border-line bg-surface-2 text-ink-2 transition-colors duration-300 hover:border-accent hover:text-accent"
           >
             <ArrowUp size={18} />
           </motion.button>

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Crosshair, MapPin } from "lucide-react";
 
@@ -8,8 +8,6 @@ import ManualLocationModal from "../components/dashboard/ManualLocationModal";
 import ObserverCard from "../components/dashboard/ObserverCard";
 import TelescopeCard from "../components/dashboard/TelescopeCard";
 import SyncTelescopeCard from "../components/dashboard/SyncTelescopeCard";
-import OrientationPanelCard from "../components/dashboard/OrientationPanelCard";
-import AlignmentPanelCard from "../components/dashboard/AlignmentPanelCard";
 import WelcomeHeader from "../components/dashboard/WelcomeHeader";
 import TonightGlance from "../components/dashboard/TonightGlance";
 import PlannerCard from "../components/dashboard/PlannerCard";
@@ -21,21 +19,24 @@ import { useLocation } from "../hooks/useLocation";
 import { useTelescope } from "../hooks/useTelescope";
 import { useTonight } from "../hooks/useTonight";
 import { getObserverLocation } from "../utils/location";
-import { PairingProvider, usePairing } from "../context/PairingContext";
+import { usePairing } from "../context/PairingContext";
 
 /**
  * The observatory workspace — IA v2 (product directive, Session 20).
  *
  * Order: greeting → observer location → telescope → tonight at a glance →
- * Moon → all-sky chart → conditions → observation plan → pairing/alignment
- * operations. Setup lives on top because nothing below it computes without
- * a location; the ops cards live at the bottom because the guided observe
- * flow scrolls the user there when they're the missing step.
+ * Moon → all-sky chart → conditions → observation plan → pairing. Setup lives
+ * on top because nothing below it computes without a location.
+ *
+ * The Orientation and Alignment engines used to be cards at the bottom of this
+ * page; they now live on /alignment, which is a planning-vs-instrumentation
+ * split — the dashboard decides WHAT to observe, the workspace aims at it.
+ * Pairing stays here because the QR scan is a setup step.
  *
  * Guided observe flow: /dashboard?observe=<id> (from a Target Panel's
- * "Start observing") checks telescope → pairing → launch, highlighting and
- * scrolling to whichever section needs the user's attention, then auto-aims
- * the alignment engine and opens the overlay.
+ * "Start observing") checks telescope → pairing, highlighting and scrolling to
+ * whichever step is missing. Once the phone pairs, PairedRoutes hands off to
+ * /alignment?target=<id> and the engine aims itself.
  */
 
 const cell = {
@@ -50,11 +51,11 @@ const cell = {
 function SectionLabel({ children, hint }) {
   return (
     <div className="flex items-baseline gap-3 pt-2">
-      <h2 className="shrink-0 text-[11px] font-medium uppercase tracking-[0.3em] text-[#6B7280]">
+      <h2 className="shrink-0 text-[11px] font-medium uppercase tracking-[0.3em] text-ink-3">
         {children}
       </h2>
-      <span className="h-px flex-1 bg-white/10" />
-      {hint && <span className="shrink-0 text-[11px] text-[#6B7280]">{hint}</span>}
+      <span className="h-px flex-1 bg-line" />
+      {hint && <span className="shrink-0 text-[11px] text-ink-3">{hint}</span>}
     </div>
   );
 }
@@ -63,15 +64,21 @@ function SectionLabel({ children, hint }) {
 function LocationSetupCard({ onManual }) {
   const { status, detectAndSaveLocation } = useLocation();
   return (
-    <div className="flex flex-wrap items-center gap-4 rounded-2xl border border-[#FF8C1A]/25 bg-[#FF8C1A]/5 px-5 py-4 backdrop-blur-3xl">
-      <span className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#FF8C1A]/25 bg-[#FF8C1A]/10 text-[#FF8C1A]">
+    <div className="flex flex-wrap items-center gap-4 border border-accent/30 bg-accent/5 px-5 py-4">
+      <span className="flex h-10 w-10 items-center justify-center border border-accent/30 bg-accent/10 text-accent">
         <MapPin size={18} />
       </span>
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-bold text-white">Set your observing location</p>
-        <p className="text-xs text-[#AAB4C5]">
+        <p className="text-sm font-bold text-ink">Set your observing location</p>
+        <p className="text-xs text-ink-2">
           Everything below — rankings, chart, Moon, conditions — is computed
-          for your exact coordinates.
+          for your exact coordinates.{" "}
+          <Link
+            to="/guide"
+            className="font-medium text-accent transition-colors hover:text-accent-hi"
+          >
+            New here? Follow the guide.
+          </Link>
         </p>
       </div>
       <div className="flex shrink-0 gap-2">
@@ -91,13 +98,45 @@ function LocationSetupCard({ onManual }) {
   );
 }
 
+/**
+ * Shown once a phone is paired: the way back into the alignment workspace
+ * after the user has navigated away from it. The engines themselves are gone
+ * from this page — this is a signpost, not a control surface.
+ */
+function AlignmentLink() {
+  return (
+    <motion.section
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+      className="flex flex-wrap items-center gap-4 border border-line bg-surface-2 px-5 py-4"
+    >
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center border border-accent/30 bg-accent/10 text-accent">
+        <Crosshair size={18} />
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-bold text-ink">Alignment workspace</p>
+        <p className="text-xs text-ink-2">
+          Live orientation, the alignment engine and the visual guide.
+        </p>
+      </div>
+      <Link
+        to="/alignment"
+        className="shrink-0 bg-accent px-4 py-2 text-sm font-semibold text-ink transition-colors hover:bg-accent-hi"
+      >
+        Open alignment
+      </Link>
+    </motion.section>
+  );
+}
+
 /** Ring highlight for the section the observe flow needs attention on. */
 function FlowSlot({ active, children }) {
   return (
     <div
       className={
         active
-          ? "rounded-2xl ring-2 ring-[#FF8C1A]/70 ring-offset-2 ring-offset-[#090B12] transition-shadow"
+          ? "ring-2 ring-accent ring-offset-2 ring-offset-black transition-shadow"
           : undefined
       }
     >
@@ -106,15 +145,11 @@ function FlowSlot({ active, children }) {
   );
 }
 
-/**
- * Inner dashboard — must live under PairingProvider so the observe flow can
- * read pairing state and the alignment card can launch.
- */
-function DashboardInner() {
+export default function Dashboard() {
   const navigate = useNavigate();
   const { user, hasLocation } = useLocation();
   const { hasTelescope, isLoading: telescopeLoading } = useTelescope();
-  const pairing = usePairing();
+  const { pairing } = usePairing();
   const tonight = useTonight();
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -151,6 +186,16 @@ function DashboardInner() {
     el?.scrollIntoView({ behavior: "smooth", block: "center" });
   }, [flowStage]);
 
+  // Already paired when the observe flow arrives: there is nothing to set up,
+  // so skip the dashboard entirely and go straight to guidance. (The not-yet-
+  // paired case is handed off by PairedRoutes the moment the phone connects.)
+  useEffect(() => {
+    if (flowStage !== "launch") return;
+    navigate(`/alignment?target=${encodeURIComponent(observeId)}`, {
+      replace: true,
+    });
+  }, [flowStage, observeId, navigate]);
+
   const clearFlow = () => setSearchParams({}, { replace: true });
 
   return (
@@ -163,10 +208,10 @@ function DashboardInner() {
           <motion.div
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex flex-wrap items-center gap-3 rounded-2xl border border-[#FF8C1A]/30 bg-[#FF8C1A]/10 px-5 py-3"
+            className="flex flex-wrap items-center gap-3 border border-accent/30 bg-accent/10 px-5 py-3"
           >
-            <Crosshair size={16} className="shrink-0 text-[#FF8C1A]" />
-            <p className="min-w-0 flex-1 text-sm text-white">
+            <Crosshair size={16} className="shrink-0 text-accent" />
+            <p className="min-w-0 flex-1 text-sm text-ink">
               Preparing to observe{" "}
               <span className="font-bold">{observeId}</span> —{" "}
               {flowStage === "telescope" &&
@@ -178,7 +223,7 @@ function DashboardInner() {
             <button
               type="button"
               onClick={clearFlow}
-              className="shrink-0 text-xs text-[#AAB4C5] transition-colors hover:text-white"
+              className="shrink-0 text-xs text-ink-2 transition-colors hover:text-ink"
             >
               Cancel
             </button>
@@ -204,6 +249,21 @@ function DashboardInner() {
           </FlowSlot>
         </div>
 
+        {/* 3 · Operations — pairing only. The engines themselves live on
+            /alignment; this section just gets the phone attached and points
+            there. Works without a location, so it sits outside the gate below. */}
+        <SectionLabel hint="pair your phone · then align">
+          Telescope operations
+        </SectionLabel>
+        <div className="flex flex-col gap-4">
+          <div id="sync-card">
+            <FlowSlot active={flowStage === "sync"}>
+              <SyncTelescopeCard />
+            </FlowSlot>
+          </div>
+          {paired && <AlignmentLink />}
+        </div>
+
         {hasLocation && (
           <>
             {/* 3–6 · Tonight at a glance / Moon / chart / conditions. */}
@@ -224,7 +284,7 @@ function DashboardInner() {
                 {tonight.moon ? (
                   <MoonPanel moon={tonight.moon} />
                 ) : (
-                  <div className="h-full min-h-[200px] animate-pulse rounded-2xl border border-white/10 bg-white/5" />
+                  <div className="h-full min-h-[200px] animate-pulse border border-line bg-surface-2" />
                 )}
               </motion.div>
               <motion.div custom={2} variants={cell} initial="hidden" animate="show" className="min-w-0 xl:col-span-2">
@@ -242,7 +302,7 @@ function DashboardInner() {
                     conditions={tonight.conditions}
                   />
                 ) : (
-                  <div className="h-full min-h-[200px] animate-pulse rounded-2xl border border-white/10 bg-white/5" />
+                  <div className="h-full min-h-[200px] animate-pulse border border-line bg-surface-2" />
                 )}
               </motion.div>
               {/* 7 · The plan — every queued target links to its panel. */}
@@ -258,22 +318,6 @@ function DashboardInner() {
           </>
         )}
 
-        {/* 8 · Operations — pairing + alignment; the flow scrolls here. */}
-        <SectionLabel hint="pairing · sensors · guidance">
-          Telescope operations
-        </SectionLabel>
-        <div className="flex flex-col gap-4">
-          <div id="sync-card">
-            <FlowSlot active={flowStage === "sync"}>
-              <SyncTelescopeCard />
-            </FlowSlot>
-          </div>
-          <OrientationPanelCard />
-          <AlignmentPanelCard
-            launchTarget={flowStage === "launch" ? observeId : null}
-            onLaunched={clearFlow}
-          />
-        </div>
       </div>
 
       <LocationPermissionModal
@@ -289,13 +333,5 @@ function DashboardInner() {
         initial={manualInitial}
       />
     </>
-  );
-}
-
-export default function Dashboard() {
-  return (
-    <PairingProvider>
-      <DashboardInner />
-    </PairingProvider>
   );
 }

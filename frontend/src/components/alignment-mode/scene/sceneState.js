@@ -79,7 +79,7 @@ export function createSceneState() {
     cometAlpha: 0,
     fov: FOV_SEARCHING,
     pxPerDeg: 8,
-    closeness: 0, // ring white→orange mix
+    closeness: 0, // ring white→accent mix
     lockMix: 0, // ring →green mix
     ticksAlpha: 0,
     tickFill: 0,

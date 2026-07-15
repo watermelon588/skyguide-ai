@@ -18,6 +18,10 @@ const chatRoutes = require("./routes/chat.routes");
 const userRoutes = require("./routes/user.routes");
 const telescopeRoutes = require("./routes/telescope.routes");
 const observationRoutes = require("./routes/observation.routes");
+const observerRoutes = require("./routes/observer.routes");
+const communityRoutes = require("./routes/community.routes");
+const notificationRoutes = require("./routes/notification.routes");
+const digestJob = require("./jobs/digestJob");
 
 const app = express();
 
@@ -70,6 +74,9 @@ app.use("/api/chat", chatRoutes);
 app.use("/api/v1/users", userRoutes);
 app.use("/api/v1/telescope", telescopeRoutes);
 app.use("/api/v1/observations", observationRoutes);
+app.use("/api/v1/observers", observerRoutes);
+app.use("/api/v1/community", communityRoutes);
+app.use("/api/v1/notifications", notificationRoutes);
 
 
 app.get("/health", (req, res) => {
@@ -103,6 +110,15 @@ const startServer = async () => {
             );
             network.logNetworkConfig(PORT);
         });
+
+        // Scheduled jobs (digest emails). DISABLE_CRON=true for throwaway or
+        // secondary instances: they share the production database, so an
+        // unguarded scheduler would mail real observers from a test process.
+        if (process.env.DISABLE_CRON === "true") {
+            console.log("⏸  Scheduled jobs disabled (DISABLE_CRON=true)");
+        } else {
+            digestJob.start();
+        }
     } catch (err) {
         console.error("Server startup failed:", err);
         process.exit(1);

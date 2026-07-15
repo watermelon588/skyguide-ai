@@ -10,21 +10,21 @@ import CountUp from "./fx/CountUp";
 function MeterRow({ label, valueLabel, fraction, rating }) {
   const pct = Math.max(0, Math.min(1, fraction ?? 0)) * 100;
   return (
-    <div className="border-b border-white/5 pb-3">
+    <div className="border-b border-line pb-3">
       <div className="flex items-baseline justify-between text-sm">
-        <span className="text-[#6B7280]">{label}</span>
-        <span className="font-medium tabular-nums text-white">
+        <span className="text-ink-3">{label}</span>
+        <span className="font-medium tabular-nums text-ink">
           {valueLabel}
           {rating && (
-            <span className="ml-2 text-xs font-normal text-[#AAB4C5]">
+            <span className="ml-2 text-xs font-normal text-ink-2">
               {rating}
             </span>
           )}
         </span>
       </div>
-      <div className="mt-2 h-1 overflow-hidden rounded-full bg-white/10">
+      <div className="mt-2 h-1 overflow-hidden bg-surface-3">
         <div
-          className="h-full rounded-full bg-gradient-to-r from-[#FF6B00] to-[#FF8C1A] transition-[width] duration-700"
+          className="h-full bg-gradient-to-r from-accent to-accent-hi transition-[width] duration-700"
           style={{ width: `${pct}%` }}
         />
       </div>
@@ -86,20 +86,20 @@ export default function ConditionsPanel({ weather, conditions }) {
 
   return (
     <SpotlightCard data-reveal className="flex h-full flex-col p-7">
-      <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-[#FF8C1A]">
+      <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-accent">
         Observing Conditions
       </p>
 
       <div className="mt-5 flex items-center gap-5">
-        <p className="text-6xl font-bold text-white">
+        <p className="text-6xl font-black tabular-nums text-ink">
           <CountUp value={conditions.observing_score} />
-          <span className="text-xl font-medium text-[#6B7280]">/100</span>
+          <span className="text-xl font-medium text-ink-3">/100</span>
         </p>
         <div>
-          <p className="text-lg font-semibold text-white">
+          <p className="text-lg font-semibold text-ink">
             {conditions.observing_quality || "—"}
           </p>
-          <p className="text-xs text-[#AAB4C5]">engine-scored sky quality</p>
+          <p className="text-xs text-ink-2">engine-scored sky quality</p>
         </div>
       </div>
 
@@ -114,16 +114,16 @@ export default function ConditionsPanel({ weather, conditions }) {
           {verdicts.map(([label, value]) => (
             <span
               key={label}
-              className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-[#AAB4C5]"
+              className="border border-line bg-surface-2 px-3 py-1.5 text-xs text-ink-2"
             >
-              {label}: <span className="font-medium text-white">{value}</span>
+              {label}: <span className="font-medium text-ink">{value}</span>
             </span>
           ))}
         </div>
       )}
 
       {conditions.recommendation && (
-        <p className="mt-auto pt-4 text-sm italic leading-relaxed text-[#AAB4C5]">
+        <p className="mt-auto pt-4 text-sm italic leading-relaxed text-ink-2">
           “{conditions.recommendation}”
         </p>
       )}

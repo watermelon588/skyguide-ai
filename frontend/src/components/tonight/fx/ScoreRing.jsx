@@ -62,7 +62,7 @@ export default function ScoreRing({ score, size = 56, strokeWidth = 4 }) {
         />
       </svg>
       <span
-        className="absolute inset-0 flex items-center justify-center font-semibold tabular-nums text-white"
+        className="absolute inset-0 flex items-center justify-center font-semibold tabular-nums text-ink"
         style={{ fontSize: Math.max(11, size * 0.25) }}
       >
         {score ?? "—"}

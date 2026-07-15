@@ -9,15 +9,15 @@ import { memo } from "react";
  */
 function WeatherMetric({ icon, label, value }) {
   return (
-    <div className="flex items-center gap-2.5 rounded-lg border border-white/5 bg-white/[0.03] px-2.5 py-2">
-      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-white/5 text-orange-400">
+    <div className="flex items-center gap-2.5 border border-line bg-surface-3 px-2.5 py-2">
+      <span className="flex h-7 w-7 shrink-0 items-center justify-center bg-surface-2 text-accent">
         {icon}
       </span>
       <div className="min-w-0 leading-tight">
-        <p className="text-[10px] uppercase tracking-wide text-[#6B7280]">
+        <p className="text-[10px] uppercase tracking-wide text-ink-3">
           {label}
         </p>
-        <p className="truncate text-sm font-semibold text-white">{value}</p>
+        <p className="truncate text-sm font-semibold text-ink">{value}</p>
       </div>
     </div>
   );

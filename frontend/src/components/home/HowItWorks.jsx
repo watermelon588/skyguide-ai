@@ -1,4 +1,5 @@
 import CountUp from "../tonight/fx/CountUp";
+import AngularText from "../fx/AngularText";
 
 /**
  * Three-step narrative plus a proof band of counting numbers. Steps rise in
@@ -31,31 +32,32 @@ export default function HowItWorks() {
   return (
     <section
       id="how-it-works"
-      className="mx-auto w-full max-w-6xl scroll-mt-24 px-6 sm:px-12"
+      className="mx-auto w-full max-w-7xl scroll-mt-24 px-6 sm:px-12"
     >
       <div data-reveal className="mb-12 max-w-2xl">
-        <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-[#FF8C1A]">
+        <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-accent">
           How it works
         </p>
-        <h2 className="mt-2 text-3xl font-bold text-white sm:text-4xl">
-          Three steps to first light
-        </h2>
+        <AngularText
+          text="Three steps to first light"
+          className="mt-3 text-4xl font-black uppercase leading-[0.95] tracking-tight text-ink sm:text-5xl"
+        />
       </div>
 
       <ol data-reveal-group className="relative space-y-10">
         {/* Connecting rail */}
         <span
           aria-hidden="true"
-          className="absolute left-[23px] top-3 hidden h-[calc(100%-24px)] w-px bg-gradient-to-b from-[#FF8C1A]/50 via-white/10 to-transparent sm:block"
+          className="absolute left-[23px] top-3 hidden h-[calc(100%-24px)] w-px bg-gradient-to-b from-accent via-line to-transparent sm:block"
         />
         {STEPS.map((step, index) => (
           <li key={step.title} data-reveal className="relative flex gap-6">
-            <span className="relative z-10 flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-[#FF8C1A]/30 bg-[#0B0F16] text-lg font-bold text-[#FF8C1A]">
+            <span className="relative z-10 flex h-12 w-12 shrink-0 items-center justify-center border border-accent bg-black text-lg font-black tabular-nums text-accent">
               {index + 1}
             </span>
             <div className="pt-1">
-              <h3 className="text-xl font-semibold text-white">{step.title}</h3>
-              <p className="mt-2 max-w-xl leading-relaxed text-[#AAB4C5]">
+              <h3 className="text-xl font-bold text-ink">{step.title}</h3>
+              <p className="mt-2 max-w-xl leading-relaxed text-ink-2">
                 {step.body}
               </p>
             </div>
@@ -65,14 +67,16 @@ export default function HowItWorks() {
 
       <div
         data-reveal
-        className="mt-16 grid grid-cols-2 gap-6 rounded-2xl border border-white/10 bg-white/5 p-8 shadow-2xl backdrop-blur-3xl md:grid-cols-4"
+        className="mt-16 grid grid-cols-2 gap-px border border-line bg-line md:grid-cols-4"
       >
         {PROOF.map((item) => (
-          <div key={item.label} className="text-center">
-            <p className="text-3xl font-bold text-white sm:text-4xl">
+          <div key={item.label} className="bg-surface-2 p-8 text-center">
+            <p className="text-4xl font-black tabular-nums text-accent sm:text-5xl">
               <CountUp value={item.value} suffix={item.suffix} />
             </p>
-            <p className="mt-1 text-xs text-[#AAB4C5]">{item.label}</p>
+            <p className="mt-2 text-xs uppercase tracking-[0.1em] text-ink-2">
+              {item.label}
+            </p>
           </div>
         ))}
       </div>

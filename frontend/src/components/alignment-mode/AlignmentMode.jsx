@@ -6,56 +6,25 @@ import AlignmentCanvas from "./AlignmentCanvas";
 import GuidanceChrome from "./GuidanceChrome";
 import EdgeStateLayer from "./EdgeStateLayer";
 import TargetSelect from "./TargetSelect";
-import { glyphKind } from "./scene/draw";
-import {
-  guidanceCopy,
-  stateAnnouncement,
-  UNREFERENCED_BANNER,
-} from "./copy";
+import { useGuidanceScene } from "./useGuidanceScene";
+import { UNREFERENCED_BANNER } from "./copy";
 
 /**
  * Alignment Mode — the immersive full-screen alignment experience.
  *
- * Rendered via portal to document.body but mounted INSIDE the Dashboard's
- * PairingProvider tree (context flows through portals), so the pairing
- * socket stays alive. It is deliberately NOT a route: navigating away from
- * /dashboard would tear the provider down and unpair the phone.
+ * Still used by the DEV-only /align-lab simulator. The product surface is now
+ * the /alignment workspace (AlignmentWorkspace page), whose guide column
+ * paints the same scene inside a two-column layout instead of taking over the
+ * viewport; both consume useGuidanceScene, so phase/edge/copy can't diverge.
  *
- * Purely a consumer: all guidance values arrive pre-computed from the
- * backend alignment engine via useAlignmentFeed (passed in as `feed`);
- * this component only derives PRESENTATION state (phase, edge cards, copy)
- * and writes the canvas's modeRef. Zero science.
+ * Rendered via portal to document.body, but context flows through portals, so
+ * it stays inside whatever PairingProvider mounted it.
  *
- * z-[960]: above the AiSidebar drawer (950) and every dashboard modal
- * (40/50), by design below nothing that matters while it is open.
+ * Purely a consumer: all guidance values arrive pre-computed from the backend
+ * alignment engine via useAlignmentFeed (passed in as `feed`). Zero science.
+ *
+ * z-[960]: above the AiSidebar drawer (950) and every dashboard modal (40/50).
  */
-
-// Edge-card priority — one card at a time, most actionable first.
-function deriveEdge({ feed, orientation, keepBelow }) {
-  if (orientation?.status?.reason === "permission_denied") {
-    return "permission_denied";
-  }
-  if (feed.state === "lost" || feed.stale) {
-    return orientation?.status?.reason === "background"
-      ? "stream_background"
-      : "stream_lost";
-  }
-  const belowHorizon =
-    feed.state === "below_horizon" ||
-    (feed.update ? !feed.update.above_horizon : false);
-  if (belowHorizon && !keepBelow) return "below_horizon";
-  return null;
-}
-
-/**
- * Lock-moment side effects, centralized as the future audio/haptics
- * extension point: native apps add sound + richer haptics here.
- */
-function fireLockMoment() {
-  if (typeof navigator !== "undefined" && navigator.vibrate) {
-    navigator.vibrate(30);
-  }
-}
 
 /**
  * Public wrapper: the portal lives OUTSIDE AnimatePresence so exit
@@ -82,10 +51,8 @@ export default function AlignmentMode({ open, feed, orientation, hasObserver, on
 
 function AlignmentModeShell({ feed, orientation, hasObserver, onExit }) {
   const containerRef = useRef(null);
-  const modeRef = useRef({ guidance: false, dim: 1 });
 
   const [showSelect, setShowSelect] = useState(false);
-  const [keepBelow, setKeepBelow] = useState(false);
   const [showTelemetry, setShowTelemetry] = useState(false);
   const [reduceMotion, setReduceMotion] = useState(
     () =>
@@ -93,105 +60,28 @@ function AlignmentModeShell({ feed, orientation, hasObserver, onExit }) {
       window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches,
   );
 
-  const targetInfo = feed.target?.target ?? null;
-  const targetName = targetInfo?.name ?? "the target";
-
-  // ---- phase ladder ------------------------------------------------------
-  const phase = !hasObserver
-    ? "gate"
-    : !feed.paired
-      ? "blocked"
-      : showSelect || !feed.target
-        ? "select"
-        : "guidance";
-
-  const unreferenced =
-    orientation?.model?.calibration?.source === "none" ||
-    orientation?.model?.calibration?.status === "unreferenced" ||
-    (feed.update?.confidence != null && feed.update.confidence <= 30);
-
-  const edge =
-    phase === "guidance" ? deriveEdge({ feed, orientation, keepBelow }) : null;
-
-  const belowHorizonActive =
-    phase === "guidance" &&
-    (feed.state === "below_horizon" ||
-      (feed.update ? !feed.update.above_horizon : false));
-
-  const frozen =
-    phase === "blocked" ||
-    edge === "stream_lost" ||
-    edge === "stream_background" ||
-    edge === "permission_denied";
-
-  // ---- canvas mode (read by the rAF loop via ref — never re-renders it) ---
-  useEffect(() => {
-    modeRef.current = {
-      guidance: phase === "guidance",
-      frozen,
-      dim: edge || phase === "gate" || phase === "blocked" ? 0.45 : 1,
-      unreferenced: phase === "guidance" && unreferenced,
-      belowHorizon: belowHorizonActive,
-      reducedMotion: reduceMotion,
-      targetKind: glyphKind(targetInfo?.object_type),
-    };
+  const {
+    phase,
+    edge,
+    modeRef,
+    locked,
+    unreferenced,
+    copyLine,
+    announced,
+    targetInfo,
+    targetChanged,
+    keepBelowHorizon,
+  } = useGuidanceScene({
+    feed,
+    orientation,
+    hasObserver,
+    showSelect,
+    reduceMotion,
   });
 
-  // ---- copy + announcements ----------------------------------------------
-  const locked = feed.state === "locked";
-  const inHoldZone =
-    !locked &&
-    feed.state === "nearly_aligned" &&
-    feed.update?.angular_error != null &&
-    feed.update.angular_error <= 1;
-
-  const copyLine =
-    phase === "guidance" && !edge
-      ? guidanceCopy({
-          state: feed.state,
-          update: feed.update,
-          targetName,
-          // React-side approximation; the canvas holds the geometric truth.
-          targetVisible: feed.state != null && feed.state !== "searching",
-          inHoldZone,
-          unreferenced,
-          lowConfidence:
-            feed.update?.confidence != null && feed.update.confidence < 45,
-          verbose: reduceMotion,
-        })
-      : "";
-
-  // Announcements are "state from previous renders" (React's render-phase
-  // adjustment pattern) — recomputed only on state-machine transitions, so
-  // screen readers hear transitions, never the 4Hz packet commits.
-  const [announced, setAnnounced] = useState({ state: null, polite: "", assertive: "" });
-  if (phase === "guidance" && feed.state && feed.state !== announced.state) {
-    setAnnounced({
-      state: feed.state,
-      polite:
-        feed.state === "locked"
-          ? announced.polite
-          : stateAnnouncement(feed.state, feed.update, targetName, unreferenced),
-      assertive:
-        feed.state === "locked"
-          ? stateAnnouncement("locked", feed.update, targetName)
-          : "",
-    });
-  }
-
-  // Haptic side effect on the lock transition only.
-  useEffect(() => {
-    if (locked) fireLockMoment();
-  }, [locked]);
-
-  // New target: close the switcher, forget the below-horizon dismissal.
-  const targetKey = feed.target?.at ?? null;
-  const [seenTargetKey, setSeenTargetKey] = useState(targetKey);
-  if (targetKey !== seenTargetKey) {
-    setSeenTargetKey(targetKey);
-    setShowSelect(false);
-    setKeepBelow(false);
-  }
+  // A new target also closes the switcher — the overlay's own concern, so it
+  // stays here rather than in the shared hook.
+  if (targetChanged && showSelect) setShowSelect(false);
 
   // ---- overlay hygiene ------------------------------------------------------
   // Mount-only: scroll lock, initial focus, focus restore.
@@ -253,8 +143,8 @@ function AlignmentModeShell({ feed, orientation, hasObserver, onExit }) {
   }, [edge, onExit]);
 
   const handleEdgeSecondary = useCallback(() => {
-    if (edge === "below_horizon") setKeepBelow(true);
-  }, [edge]);
+    if (edge === "below_horizon") keepBelowHorizon();
+  }, [edge, keepBelowHorizon]);
 
   const handleSelectExit = useCallback(() => {
     if (feed.target) feed.clearTarget();
@@ -323,7 +213,7 @@ function AlignmentModeShell({ feed, orientation, hasObserver, onExit }) {
             type="button"
             onClick={onExit}
             aria-label="Exit Alignment Mode"
-            className="absolute left-4 top-4 flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-[#AAB4C5] backdrop-blur-3xl transition-colors hover:bg-white/10 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-400/60"
+            className="absolute left-4 top-4 flex h-11 w-11 items-center justify-center border border-line bg-surface-2 text-ink-2 transition-colors hover:bg-surface-3 hover:text-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
           >
             <FiX className="text-xl" />
           </button>

@@ -36,3 +36,25 @@ exports.protect = async (req, res, next) => {
         });
     }
 };
+
+/**
+ * Populate req.user when a valid session cookie is present, but never reject.
+ * For endpoints whose response DEPENDS on who's asking yet are also reachable
+ * anonymously — e.g. a public profile that stays hidden for "observers-only"
+ * visibility unless a signed-in observer is viewing.
+ */
+exports.optionalAuth = async (req, _res, next) => {
+    try {
+        const token = req.cookies?.jwt;
+        if (token) {
+            const decoded = jwt.verify(token, process.env.JWT_SECRET);
+            const currentUser = await User.findById(decoded.id);
+            if (currentUser && currentUser.isActive) {
+                req.user = currentUser;
+            }
+        }
+    } catch {
+        // A bad/expired cookie just means "anonymous" here, not an error.
+    }
+    next();
+};

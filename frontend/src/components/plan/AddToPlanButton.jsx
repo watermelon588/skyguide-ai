@@ -42,10 +42,10 @@ export default function AddToPlanButton({
         aria-label={
           onPlan ? `${catalogId} is on your plan` : `Add ${catalogId} to plan`
         }
-        className={`flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold transition-colors duration-300 ${
+        className={`flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-semibold transition-colors duration-300 ${
           onPlan
-            ? "cursor-default border border-[#22C55E]/30 bg-[#22C55E]/10 text-[#22C55E]"
-            : "bg-[#FF8C1A] text-[#090B10] hover:bg-[#FF6B00] disabled:opacity-60"
+            ? "cursor-default border border-success/30 bg-success/10 text-success"
+            : "bg-accent text-ink hover:bg-accent-hi disabled:opacity-60"
         } ${className}`}
       >
         {onPlan ? <Check size={15} /> : <Plus size={15} />}
@@ -63,10 +63,10 @@ export default function AddToPlanButton({
       aria-label={
         onPlan ? `${catalogId} is on your plan` : `Add ${catalogId} to plan`
       }
-      className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border transition-colors duration-300 ${
+      className={`flex h-7 w-7 shrink-0 items-center justify-center border transition-colors duration-300 ${
         onPlan
-          ? "cursor-default border-[#22C55E]/30 bg-[#22C55E]/10 text-[#22C55E]"
-          : "border-white/10 bg-white/5 text-[#AAB4C5] hover:border-[#FF8C1A]/40 hover:text-[#FF8C1A]"
+          ? "cursor-default border-success/30 bg-success/10 text-success"
+          : "border-line bg-surface-2 text-ink-2 hover:border-accent hover:text-accent"
       } ${className}`}
     >
       {onPlan ? <Check size={13} /> : <Plus size={13} />}

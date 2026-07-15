@@ -3,16 +3,16 @@ import { computeDerived } from "../../utils/telescopeCalculations";
 /** One derived-value pill. `soon` renders a muted "Coming Soon" placeholder. */
 function SpecPill({ label, value, soon }) {
   return (
-    <div className="rounded-lg border border-white/5 bg-white/[0.03] px-3 py-2">
-      <p className="text-[10px] uppercase tracking-wide text-[#6B7280]">
+    <div className="border border-line bg-surface-3 px-3 py-2">
+      <p className="text-[10px] uppercase tracking-wide text-ink-3">
         {label}
       </p>
       {soon ? (
-        <p className="mt-0.5 text-[11px] font-medium text-[#4B5563]">
+        <p className="mt-0.5 text-[11px] font-medium text-ink-4">
           Coming Soon
         </p>
       ) : (
-        <p className="mt-0.5 text-sm font-semibold text-white">
+        <p className="mt-0.5 text-sm font-semibold tabular-nums text-ink">
           {value ?? "—"}
         </p>
       )}
@@ -33,7 +33,7 @@ export default function TelescopeSpecs({ telescope }) {
 
   return (
     <div>
-      <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-[#6B7280]">
+      <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-ink-3">
         Derived Specifications
       </p>
       <div className="grid grid-cols-2 gap-2">

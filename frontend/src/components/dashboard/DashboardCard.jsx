@@ -4,14 +4,14 @@ import { cn } from "@/lib/utils";
  * Shared dashboard-card layout primitives.
  *
  * Observer Location, Telescope, and Sync Telescope are all the same horizontal
- * glass bar: identity on the left, content in the middle, right-aligned action.
+ * flat bar: identity on the left, content in the middle, right-aligned action.
  * Centralising the shell / row / identity here keeps their height, spacing,
  * typography, and vertical rhythm identical — only the content differs.
  */
 
-/** Visual container: glass surface + border + compact padding. */
+/** Visual container: flat solid surface + hairline border + compact padding. */
 export const DASHBOARD_CARD_SHELL =
-  "w-full rounded-2xl border border-white/10 bg-white/5 px-5 py-3 shadow-2xl backdrop-blur-3xl transition-all";
+  "w-full border border-line bg-surface-2 px-5 py-3 transition-colors";
 
 /** Horizontal, wrap-friendly, vertically-centered content row. */
 export const DASHBOARD_CARD_ROW =
@@ -27,7 +27,7 @@ export const DASHBOARD_CARD_MOTION = {
   transition: { duration: 0.3 },
 };
 
-const DEFAULT_ICON_TONE = "border-orange-400/20 bg-orange-500/15";
+const DEFAULT_ICON_TONE = "border-accent/30 bg-accent/15";
 
 /**
  * Left identity block: 40px icon tile + title + subtitle, with an optional
@@ -62,12 +62,12 @@ export function CardIdentity({
         {icon}
       </div>
       <div className="min-w-0 leading-tight">
-        <p className="truncate text-sm font-bold text-white">{title}</p>
+        <p className="truncate text-sm font-bold text-ink">{title}</p>
         {subtitle != null &&
           (typeof subtitle === "string" ? (
-            <p className="truncate text-xs text-[#AAB4C5]">{subtitle}</p>
+            <p className="truncate text-xs text-ink-2">{subtitle}</p>
           ) : (
-            <div className="text-xs text-[#AAB4C5]">{subtitle}</div>
+            <div className="text-xs text-ink-2">{subtitle}</div>
           ))}
       </div>
       {trailing}

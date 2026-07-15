@@ -31,3 +31,27 @@ export const getMe = async () => {
   });
   return response.data;
 };
+
+/**
+ * Email verification by 6-digit code. Both calls are authenticated — sign-up
+ * signs you in immediately, so verification happens from inside the app rather
+ * than through an emailed link.
+ */
+export const sendVerificationCode = async () => {
+  const response = await axios.post(
+    `${API}/api/v1/auth/send-verification-code`,
+    {},
+    { withCredentials: true },
+  );
+  return response.data;
+};
+
+/** @param {string} code the 6 digits from the email */
+export const verifyCode = async (code) => {
+  const response = await axios.post(
+    `${API}/api/v1/auth/verify-code`,
+    { code },
+    { withCredentials: true },
+  );
+  return response.data;
+};

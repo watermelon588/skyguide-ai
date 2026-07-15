@@ -1,34 +1,88 @@
 @import "tailwindcss";
+@import "./styles/fonts.css";
+
+/* ============================================================================
+   SkyGuide AI — Design tokens  ·  "Bento / Electric Blue"
+   Dark canvas · electric-blue accent · radius 0 · no glassmorphism · Satoshi.
+   Single source of truth for color/shape/type primitives (see DESIGN_SYSTEM.md).
+   ========================================================================== */
 
 :root {
-  /* Default theme - Dark (based on image) */
-  --bg-main: #1e1e1e;
-  --bg-glass: rgba(30, 30, 30, 0.7);
-  --text-main: #ffffff;
-  --text-secondary: #9e9e9e;
-  --border-color: rgba(148, 121, 255, 0.3);
-  --accent-primary: #9479ff;
-  --accent-secondary: #7b59ff;
-  --glass-blur: 10px;
+  /* -------- Canvas & surfaces (solid — no glass) -------- */
+  --bg:          #000000;  /* page canvas — pure black */
+  --surface-1:   #0a0a0b;  /* sections */
+  --surface-2:   #111214;  /* bento tiles */
+  --surface-3:   #17181b;  /* raised / hover */
+  --line:        #232427;  /* hairline borders */
+  --line-2:      #2e2f33;  /* stronger dividers */
+
+  /* -------- Accent (electric blue) -------- */
+  --accent:      #0049cd;  /* primary action · interactive · focus */
+  --accent-hi:   #1e63ff;  /* hover · bright emphasis */
+
+  /* -------- Ink (GROOVYCLO grays) -------- */
+  --ink:         #f6f6f6;  /* primary text */
+  --ink-2:       #dadada;  /* secondary */
+  --ink-3:       #9d9d9c;  /* muted / meta */
+  --ink-4:       #6b6c70;  /* disabled */
+
+  /* -------- Status -------- */
+  --success:     #22c55e;
+  --danger:      #ef4444;
+  --warning:     #facc15;
+
+  /* -------- Type -------- */
+  --font-sans:   "Satoshi Variable", "Geist Variable", system-ui, sans-serif;
+
+  /* -------- Shape (flat, hard edges) -------- */
+  --radius:      0px;
+
+  /* -------- Motion -------- */
+  --dur-micro:   0.25s;
+  --dur-base:    0.30s;
+  --dur-page:    0.35s;
+  --dur-large:   0.40s;
 }
 
+/* Bridge tokens into Tailwind's utility layer so `bg-bg`, `text-ink`,
+   `border-line`, `text-accent`, `bg-surface-2`, etc. are first-class. */
 @theme inline {
-  --color-bg-main: var(--bg-main);
-  --color-bg-glass: var(--bg-glass);
-  --color-text-main: var(--text-main);
-  --color-text-secondary: var(--text-secondary);
-  --color-accent-primary: var(--accent-primary);
-  --color-accent-secondary: var(--accent-secondary);
+  --color-bg:         var(--bg);
+  --color-surface-1:  var(--surface-1);
+  --color-surface-2:  var(--surface-2);
+  --color-surface-3:  var(--surface-3);
+  --color-line:       var(--line);
+  --color-line-2:     var(--line-2);
+
+  --color-accent:     var(--accent);
+  --color-accent-hi:  var(--accent-hi);
+
+  --color-ink:        var(--ink);
+  --color-ink-2:      var(--ink-2);
+  --color-ink-3:      var(--ink-3);
+  --color-ink-4:      var(--ink-4);
+
+  --color-success:    var(--success);
+  --color-danger:     var(--danger);
+  --color-warning:    var(--warning);
+
+  --font-sans:        var(--font-sans);
 }
 
-/* Dark mode - base styles */
+/* ---- Base ---- */
+* {
+  border-radius: 0 !important; /* radius-0 is a hard rule across the whole app */
+}
+
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  background-color: var(--bg-main);
-  color: var(--text-main);
-  overflow-x: hidden;
   min-height: 100vh;
+  font-family: var(--font-sans);
+  background-color: var(--bg);
+  color: var(--ink);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 #root {
@@ -36,22 +90,40 @@ body {
   width: 100%;
 }
 
-/* Reusable utility: hide the scrollbar while keeping scroll behaviour intact.
-   Applied to specific scroll containers (telescope modal, search results,
-   dropdowns). Scrollbars stay visible everywhere else. */
-.no-scrollbar {
+/* Scrollbars are hidden app-wide — they read as OS chrome bolted onto an
+   otherwise flat, hairline-only interface. Scrolling itself is untouched:
+   wheel, trackpad, touch, keyboard and scrollIntoView all behave normally.
+   Applied to every element (not just body) so inner scroll containers —
+   modals, dropdowns, chat history, the catalog table — match. */
+*,
+*::before,
+*::after {
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none; /* legacy Edge / IE */
 }
 
-.no-scrollbar::-webkit-scrollbar {
+*::-webkit-scrollbar {
   display: none; /* Chrome, Safari, other WebKit/Blink */
   width: 0;
   height: 0;
 }
 
+/* Kept as an explicit opt-in for new scroll containers. Now a no-op against
+   the global rule above, but left in place so the existing call sites still
+   document intent and survive any future scoping of that rule. */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
 /* Remove the native up/down spinners from number inputs app-wide, keeping
-   keyboard + wheel input intact. Matches the premium dark aesthetic. */
+   keyboard + wheel input intact. Matches the flat dark aesthetic. */
 input[type="number"]::-webkit-outer-spin-button,
 input[type="number"]::-webkit-inner-spin-button {
   -webkit-appearance: none;

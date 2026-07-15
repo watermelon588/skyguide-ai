@@ -117,7 +117,10 @@ export default function AuthTest() {
       <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
       <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
 
-      <div className="relative w-full max-w-xl bg-slate-900/80 backdrop-blur-xl border border-slate-800 rounded-2xl shadow-2xl p-8 space-y-8">
+      {/* Dev console — deliberately OUTSIDE the product design system (see
+          DESIGN_SYSTEM.md); only de-glassed so the app-wide "no backdrop-blur"
+          rule holds. */}
+      <div className="relative w-full max-w-xl bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-8 space-y-8">
         
         {/* Title Header */}
         <div className="text-center space-y-2">

@@ -55,7 +55,7 @@ export default function LocationPermissionModal({
         <>
           {/* Backdrop */}
           <motion.div
-            className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm"
+            className="fixed inset-0 z-40 bg-black/60"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -76,23 +76,20 @@ export default function LocationPermissionModal({
               className="
                 w-full
                 max-w-sm
-                rounded-2xl
                 border
-                border-white/10
-                bg-white/5
-                backdrop-blur-3xl
+                border-line
+                bg-surface-1
                 px-8
                 py-6
-                shadow-2xl
               "
             >
               {/* Icon */}
-              <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full border border-orange-400/20 bg-orange-500/15">
-                <FaLocationDot className="text-4xl text-orange-400" />
+              <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full border border-accent/30 bg-accent/15">
+                <FaLocationDot className="text-4xl text-accent" />
               </div>
 
               {/* Heading */}
-              <h2 className="mt-6 text-center text-2xl font-bold text-white">
+              <h2 className="mt-6 text-center text-2xl font-black uppercase tracking-tight text-ink">
                 {status === "idle" && "Enable Location Access"}
                 {status === "requesting" && "Fetching Your Location"}
                 {status === "success" && "Location Saved"}
@@ -100,7 +97,7 @@ export default function LocationPermissionModal({
                 {status === "error" && "Something Went Wrong"}
               </h2>
 
-              <p className="mt-4 text-center text-sm leading-6 text-[#AAB4C5]">
+              <p className="mt-4 text-center text-sm leading-6 text-ink-2">
                 {status === "idle" &&
                   "SkyGuide AI uses your location to recommend the best celestial targets visible tonight."}
                 {status === "requesting" &&

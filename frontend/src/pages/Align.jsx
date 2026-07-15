@@ -31,12 +31,12 @@ export default function Align() {
   );
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#090B12] px-6 text-white">
+    <div className="flex min-h-screen items-center justify-center bg-bg px-6 text-ink">
       <motion.div
         initial={{ opacity: 0, y: 24, scale: 0.96 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ duration: 0.35 }}
-        className="w-full max-w-sm rounded-2xl border border-white/10 bg-white/5 px-7 py-8 shadow-2xl backdrop-blur-3xl"
+        className="w-full max-w-sm border border-line bg-surface-2 px-7 py-8"
       >
         {validFormat ? (
           <AlignPairingProvider roomId={room} pairingToken={token}>
@@ -62,11 +62,11 @@ function AlignPairingView({ room }) {
       <PairingStatus status={pairing.status} error={pairing.error} />
 
       {pairing.status === "connected" && (
-        <div className="mt-6 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-center">
-          <p className="text-[10px] uppercase tracking-wide text-[#6B7280]">
+        <div className="mt-6 border border-line bg-surface-3 px-3 py-2 text-center">
+          <p className="text-[10px] uppercase tracking-[0.2em] text-ink-3">
             Room
           </p>
-          <p className="mt-0.5 truncate font-mono text-xs text-[#AAB4C5]">
+          <p className="mt-0.5 truncate font-mono text-xs text-ink-2">
             {room}
           </p>
         </div>
@@ -93,11 +93,13 @@ function AlignPairingView({ room }) {
 function InvalidSessionView() {
   return (
     <div className="text-center">
-      <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-[#EF4444]/30 bg-[#EF4444]/10">
-        <FiAlertTriangle className="text-2xl text-[#EF4444]" />
+      <div className="mx-auto flex h-16 w-16 items-center justify-center border border-danger/30 bg-danger/10">
+        <FiAlertTriangle className="text-2xl text-danger" />
       </div>
-      <h1 className="mt-6 text-xl font-bold">Invalid Session</h1>
-      <p className="mt-4 text-sm leading-6 text-[#AAB4C5]">
+      <h1 className="mt-6 text-xl font-bold uppercase tracking-tight text-ink">
+        Invalid Session
+      </h1>
+      <p className="mt-4 text-sm leading-6 text-ink-2">
         This link is missing a valid room or token. Please rescan the QR code
         from your SkyGuide dashboard.
       </p>

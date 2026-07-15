@@ -10,10 +10,10 @@ import Button from "../ui/Button";
 function Stat({ label, value }) {
   return (
     <div className="flex flex-col leading-tight">
-      <span className="text-[10px] uppercase tracking-wide text-[#6B7280]">
+      <span className="text-[10px] uppercase tracking-wide text-ink-3">
         {label}
       </span>
-      <span className="text-sm font-semibold text-white">{value}</span>
+      <span className="text-sm font-semibold text-ink">{value}</span>
     </div>
   );
 }
@@ -46,22 +46,21 @@ export default function ConnectedDeviceCard() {
       transition={{ duration: 0.3 }}
       className="
         flex w-full flex-wrap items-center gap-x-6 gap-y-4
-        rounded-2xl border border-[#22C55E]/20 bg-white/5 px-5 py-3
-        shadow-2xl backdrop-blur-3xl transition-all
+        border border-success/25 bg-surface-2 px-5 py-3 transition-colors
       "
     >
       {/* Left: identity */}
       <div className="flex min-w-0 items-center gap-3">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[#22C55E]/30 bg-[#22C55E]/15">
-          <FiSmartphone className="text-lg text-[#22C55E]" />
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center border border-success/30 bg-success/15">
+          <FiSmartphone className="text-lg text-success" />
         </div>
         <div className="min-w-0 leading-tight">
-          <p className="text-sm font-bold text-white">Telescope Connected</p>
-          <p className="truncate text-xs text-[#AAB4C5]">Ready for Alignment</p>
+          <p className="text-sm font-bold text-ink">Telescope Connected</p>
+          <p className="truncate text-xs text-ink-2">Ready for Alignment</p>
         </div>
 
-        <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] font-medium text-[#22C55E]">
-          <span className="h-1.5 w-1.5 rounded-full bg-[#22C55E]" />
+        <span className="inline-flex shrink-0 items-center gap-1.5 border border-line bg-surface-3 px-2.5 py-1 text-[11px] font-medium text-success">
+          <span className="h-1.5 w-1.5 rounded-full bg-success" />
           Connected
         </span>
       </div>
@@ -80,7 +79,7 @@ export default function ConnectedDeviceCard() {
         <Stat label="Connected" value={formatTime(phone.connectedAt)} />
         <Stat
           label="Status"
-          value={<span className="text-[#22C55E]">Session Active</span>}
+          value={<span className="text-success">Session Active</span>}
         />
       </div>
 

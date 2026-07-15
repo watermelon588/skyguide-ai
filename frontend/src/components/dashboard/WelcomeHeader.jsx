@@ -96,13 +96,13 @@ export default function WelcomeHeader() {
       <div className="min-w-0">
         <motion.p
           variants={item}
-          className="text-[11px] font-medium uppercase tracking-[0.3em] text-[#FF8C1A]"
+          className="text-[11px] font-medium uppercase tracking-[0.3em] text-accent"
         >
           {dateLine} · Observatory
         </motion.p>
         <motion.h1
           variants={item}
-          className="mt-2 truncate text-3xl font-bold text-white sm:text-4xl"
+          className="mt-2 truncate text-3xl font-black uppercase tracking-tight text-ink sm:text-4xl"
         >
           {greetingFor(new Date().getHours())},{" "}
           <span className="capitalize">{user?.username || "observer"}</span>
@@ -111,9 +111,9 @@ export default function WelcomeHeader() {
           {chips.map(({ Icon, label }, i) => (
             <span
               key={i}
-              className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-[#AAB4C5] backdrop-blur-3xl transition-colors duration-300 hover:border-white/20 hover:text-white"
+              className="flex items-center gap-2 border border-line bg-surface-2 px-3 py-1.5 text-xs text-ink-2 transition-colors duration-300 hover:border-accent hover:text-ink"
             >
-              <Icon size={13} className="shrink-0 text-[#FF8C1A]" />
+              <Icon size={13} className="shrink-0 text-accent" />
               <span className="truncate">{label}</span>
             </span>
           ))}
@@ -126,7 +126,7 @@ export default function WelcomeHeader() {
           whileHover={{ scale: 1.03 }}
           whileTap={{ scale: 0.97 }}
           onClick={() => navigate("/tonight")}
-          className="flex items-center gap-2 rounded-xl bg-[#FF8C1A] px-5 py-2.5 text-sm font-semibold text-[#090B10] transition-colors duration-300 hover:bg-[#FF6B00]"
+          className="flex items-center gap-2 bg-accent px-5 py-2.5 text-sm font-semibold text-ink transition-colors duration-300 hover:bg-accent-hi"
         >
           <Sparkles size={15} />
           Tonight's sky
@@ -135,8 +135,8 @@ export default function WelcomeHeader() {
           type="button"
           whileHover={{ scale: 1.03 }}
           whileTap={{ scale: 0.97 }}
-          onClick={() => navigate("/align")}
-          className="rounded-xl border border-white/10 bg-white/5 px-5 py-2.5 text-sm font-semibold text-white backdrop-blur-3xl transition-colors duration-300 hover:bg-white/10"
+          onClick={() => navigate("/alignment")}
+          className="border border-line bg-surface-2 px-5 py-2.5 text-sm font-semibold text-ink transition-colors duration-300 hover:bg-surface-3"
         >
           Alignment
         </motion.button>

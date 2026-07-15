@@ -6,7 +6,7 @@ import { TELESCOPE_TYPES, MOUNT_TYPES } from "../../data/demoTelescopes";
 function Field({ label, value, onChange, type = "text", placeholder, unit }) {
   return (
     <label className="flex flex-col gap-1.5">
-      <span className="text-[11px] font-medium uppercase tracking-wide text-[#6B7280]">
+      <span className="text-[11px] font-medium uppercase tracking-wide text-ink-3">
         {label}
       </span>
       <div className="relative">
@@ -16,10 +16,10 @@ function Field({ label, value, onChange, type = "text", placeholder, unit }) {
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
-          className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-[#6B7280] transition-colors focus:border-orange-500 focus:outline-none"
+          className="w-full border border-line bg-surface-2 px-3 py-2 text-sm text-ink placeholder:text-ink-3 transition-colors focus:border-accent focus:outline-none"
         />
         {unit && (
-          <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[#6B7280]">
+          <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-ink-3">
             {unit}
           </span>
         )}
@@ -62,7 +62,7 @@ export default function TelescopeForm({ draft, onChange }) {
       </div>
 
       {/* Capabilities */}
-      <div className="space-y-3 rounded-xl border border-white/5 bg-white/[0.02] px-4 py-3">
+      <div className="space-y-3 border border-line bg-surface-3 px-4 py-3">
         <Toggle label="Tracking" hint="Motorised object tracking" checked={!!draft.tracking} onChange={set("tracking")} />
         <Toggle label="GoTo" hint="Computerised object finding" checked={!!draft.goto} onChange={set("goto")} />
         <Toggle label="Camera Support" hint="Prime-focus astrophotography" checked={!!draft.cameraSupport} onChange={set("cameraSupport")} />
@@ -71,7 +71,7 @@ export default function TelescopeForm({ draft, onChange }) {
       <Field label="Weight (optional)" type="number" value={draft.weight_kg} onChange={set("weight_kg")} placeholder="6.6" unit="kg" />
 
       <label className="flex flex-col gap-1.5">
-        <span className="text-[11px] font-medium uppercase tracking-wide text-[#6B7280]">
+        <span className="text-[11px] font-medium uppercase tracking-wide text-ink-3">
           Notes (optional)
         </span>
         <textarea
@@ -79,7 +79,7 @@ export default function TelescopeForm({ draft, onChange }) {
           value={draft.notes}
           onChange={(e) => onChange({ notes: e.target.value })}
           placeholder="Eyepieces, quirks, collimation notes…"
-          className="w-full resize-none rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-[#6B7280] transition-colors focus:border-orange-500 focus:outline-none"
+          className="w-full resize-none border border-line bg-surface-2 px-3 py-2 text-sm text-ink placeholder:text-ink-3 transition-colors focus:border-accent focus:outline-none"
         />
       </label>
     </div>

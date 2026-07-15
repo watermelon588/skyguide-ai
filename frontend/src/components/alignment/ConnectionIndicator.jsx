@@ -1,9 +1,9 @@
 const TONES = {
-  connected: { dot: "bg-[#22C55E]", text: "text-[#22C55E]", ping: true },
-  waiting: { dot: "bg-orange-400", text: "text-[#AAB4C5]", ping: true },
-  connecting: { dot: "bg-orange-400", text: "text-[#AAB4C5]", ping: true },
-  error: { dot: "bg-[#EF4444]", text: "text-[#EF4444]", ping: false },
-  idle: { dot: "bg-[#6B7280]", text: "text-[#6B7280]", ping: false },
+  connected: { dot: "bg-success", text: "text-success", ping: true },
+  waiting: { dot: "bg-accent", text: "text-ink-2", ping: true },
+  connecting: { dot: "bg-accent", text: "text-ink-2", ping: true },
+  error: { dot: "bg-danger", text: "text-danger", ping: false },
+  idle: { dot: "bg-ink-4", text: "text-ink-3", ping: false },
 };
 
 /**

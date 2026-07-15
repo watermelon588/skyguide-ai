@@ -10,13 +10,31 @@ import ChatWidget from "./components/chatbot/ChatWidget";
 import ChatWindow from "./components/chatbot/ChatWindow";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AppLayout from "./layouts/AppLayout";
+import PairedRoutes from "./layouts/PairedRoutes";
 import NetworkStatus from "./components/dev/NetworkStatus";
 
 // Authenticated app pages render inside AppLayout (which provides its own
 // integrated AI sidebar + launcher). Every other page keeps the legacy
 // floating overlay chat so the Landing page is unchanged.
-const APP_PATHS = ["/dashboard"];
-const HIDE_CHAT_ON = ["/login", "/signup", "/align", "/align-lab", "/tonight"];
+const APP_PATHS = [
+  "/dashboard",
+  "/alignment",
+  "/profile",
+  "/community",
+  "/community/chat",
+];
+const HIDE_CHAT_ON = [
+  "/login",
+  "/signup",
+  "/forgot-password",
+  "/reset-password",
+  "/verify-email",
+  "/align",
+  "/align-lab",
+  "/tonight",
+  "/observers",
+  "/guide",
+];
 
 // Dev-only Alignment Mode simulator. The dead branch is eliminated from
 // production builds, so the lab never ships.
@@ -31,6 +49,12 @@ const Tonight = lazy(() => import("./pages/Tonight"));
 const TargetPanel = lazy(() => import("./pages/TargetPanel"));
 const HomePage = lazy(() => import("./pages/HomePage"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
+const AlignmentWorkspace = lazy(() => import("./pages/AlignmentWorkspace"));
+const Profile = lazy(() => import("./pages/Profile"));
+const Community = lazy(() => import("./pages/Community"));
+const CommunityChat = lazy(() => import("./pages/CommunityChat"));
+const PublicProfile = lazy(() => import("./pages/PublicProfile"));
+const Guide = lazy(() => import("./pages/Guide"));
 
 function App() {
   const location = useLocation();
@@ -60,37 +84,102 @@ function App() {
           }
         />
         <Route path="/login" element={<LoginPage />} />
+
+        {/* Every authenticated page shares ONE pairing session (PairedRoutes).
+            That is what lets /alignment be a route: the phone stays paired
+            while the user moves between the dashboard, tonight and back. */}
         <Route
-          path="/dashboard"
           element={
             <ProtectedRoute>
+              <PairedRoutes />
+            </ProtectedRoute>
+          }
+        >
+          <Route
+            path="/dashboard"
+            element={
               <AppLayout>
                 <Suspense fallback={null}>
                   <Dashboard />
                 </Suspense>
               </AppLayout>
-            </ProtectedRoute>
-          }
-        />
-        {/* Immersive full-screen experience — outside AppLayout on purpose. */}
-        <Route
-          path="/tonight"
-          element={
-            <ProtectedRoute>
+            }
+          />
+          {/* The alignment workspace — telemetry + guidance, two columns. */}
+          <Route
+            path="/alignment"
+            element={
+              <AppLayout>
+                <Suspense fallback={null}>
+                  <AlignmentWorkspace />
+                </Suspense>
+              </AppLayout>
+            }
+          />
+          {/* Immersive full-screen experience — outside AppLayout on purpose. */}
+          <Route
+            path="/tonight"
+            element={
               <Suspense fallback={null}>
                 <Tonight />
               </Suspense>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/tonight/:id"
-          element={
-            <ProtectedRoute>
+            }
+          />
+          <Route
+            path="/tonight/:id"
+            element={
               <Suspense fallback={null}>
                 <TargetPanel />
               </Suspense>
-            </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <AppLayout>
+                <Suspense fallback={null}>
+                  <Profile />
+                </Suspense>
+              </AppLayout>
+            }
+          />
+          <Route
+            path="/community"
+            element={
+              <AppLayout>
+                <Suspense fallback={null}>
+                  <Community />
+                </Suspense>
+              </AppLayout>
+            }
+          />
+          <Route
+            path="/community/chat"
+            element={
+              <AppLayout>
+                <Suspense fallback={null}>
+                  <CommunityChat />
+                </Suspense>
+              </AppLayout>
+            }
+          />
+        </Route>
+        {/* Public observer profile — standalone, visibility-gated server-side. */}
+        <Route
+          path="/observers/:username"
+          element={
+            <Suspense fallback={null}>
+              <PublicProfile />
+            </Suspense>
+          }
+        />
+        {/* First Light Guide — public product tour + logged-in checklist. */}
+        <Route
+          path="/guide"
+          element={
+            <Suspense fallback={null}>
+              <Guide />
+            </Suspense>
           }
         />
         <Route path="/align" element={<Align />} />

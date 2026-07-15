@@ -7,12 +7,16 @@
  *
  * Palette discipline (from the design spec):
  *   white  = structure (the Iris ring, ticks, dust)
- *   orange = exclusively the thing you're chasing (target, comet, bloom)
+ *   accent = exclusively the thing you're chasing (target, comet, bloom)
  *   green  = exclusively lock
+ *
+ * The accent is the BRIGHT blue (#1E63FF), not the base #0049CD: these sprites
+ * are luminous, composited with `lighter` on a near-black canvas, and the base
+ * blue is too dark to read as a glow there.
  */
 
 const TAU = Math.PI * 2;
-const ORANGE = [255, 140, 26]; // #FF8C1A
+const ACCENT = [30, 99, 255]; // #1E63FF (bright accent — see palette note)
 const GREEN = [34, 197, 94]; // #22C55E
 const WHITE = [255, 255, 255];
 
@@ -94,14 +98,14 @@ export function createRenderer(canvas) {
   function buildSprites() {
     sprites = {
       bloom: radialSprite(256, [
-        [0, rgba(ORANGE, 0.55)],
-        [0.4, rgba(ORANGE, 0.18)],
-        [1, rgba(ORANGE, 0)],
+        [0, rgba(ACCENT, 0.55)],
+        [0.4, rgba(ACCENT, 0.18)],
+        [1, rgba(ACCENT, 0)],
       ]),
       halo: radialSprite(128, [
-        [0, rgba(ORANGE, 0.8)],
-        [0.35, rgba(ORANGE, 0.25)],
-        [1, rgba(ORANGE, 0)],
+        [0, rgba(ACCENT, 0.8)],
+        [0.35, rgba(ACCENT, 0.25)],
+        [1, rgba(ACCENT, 0)],
       ]),
       core: radialSprite(32, [
         [0, "rgba(255,255,255,1)"],
@@ -109,9 +113,9 @@ export function createRenderer(canvas) {
         [1, "rgba(255,240,220,0)"],
       ]),
       blob: radialSprite(160, [
-        [0, rgba(ORANGE, 0.30)],
+        [0, rgba(ACCENT, 0.30)],
         [0.5, rgba([255, 170, 90], 0.12)],
-        [1, rgba(ORANGE, 0)],
+        [1, rgba(ACCENT, 0)],
       ]),
       greenHalo: radialSprite(128, [
         [0, rgba(GREEN, 0.7)],
@@ -312,7 +316,7 @@ export function createRenderer(canvas) {
       r *= 1 + 0.06 * (1 - e);
     }
 
-    const ringColor = mix(mix(WHITE, ORANGE, S.closeness), GREEN, S.lockMix);
+    const ringColor = mix(mix(WHITE, ACCENT, S.closeness), GREEN, S.lockMix);
     const baseAlpha =
       (0.85 + 0.04 * S.beat + (pulse >= 0 ? 0.15 * (1 - pulse) : 0)) *
       S.dim *
@@ -346,17 +350,17 @@ export function createRenderer(canvas) {
         const a0 = head - 12 - (30 / segs) * (i + 1);
         const a1 = head - 12 - (30 / segs) * i + 1;
         ringArc(cx, cy, r, a0, a1,
-          rgba(ORANGE, S.cometAlpha * breathe * S.dim * 0.55 * (1 - i / segs)), 2.5, false);
+          rgba(ACCENT, S.cometAlpha * breathe * S.dim * 0.55 * (1 - i / segs)), 2.5, false);
       }
       ringArc(cx, cy, r, head - 12, head,
-        rgba(ORANGE, S.cometAlpha * breathe * S.dim), 2.5, false);
+        rgba(ACCENT, S.cometAlpha * breathe * S.dim), 2.5, false);
       ctx.lineCap = "butt";
     }
 
     // 60 hairline ticks — the Face-ID enrollment ring. Fill runs clockwise
     // from 12 o'clock during the lock hold.
     if (S.ticksAlpha > 0.02) {
-      const litColor = mix(ORANGE, GREEN, S.lockMix);
+      const litColor = mix(ACCENT, GREEN, S.lockMix);
       for (let i = 0; i < 60; i++) {
         // Staggered materialization: later ticks lag the alpha ramp.
         const a = Math.max(0, Math.min(1, S.ticksAlpha * 1.5 - i * 0.008));

@@ -45,19 +45,19 @@ export default function TelescopeSearch({ onSelect, selectedId }) {
     <div className="flex min-h-0 flex-col">
       {/* Search box */}
       <div className="relative">
-        <FiSearch className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-base text-[#6B7280]" />
+        <FiSearch className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-base text-ink-3" />
         <input
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search telescope model..."
-          className="w-full rounded-lg border border-white/10 bg-white/5 py-2.5 pl-10 pr-9 text-sm text-white placeholder:text-[#6B7280] transition-colors focus:border-orange-500 focus:outline-none"
+          className="w-full border border-line bg-surface-2 py-2.5 pl-10 pr-9 text-sm text-ink placeholder:text-ink-3 transition-colors focus:border-accent focus:outline-none"
         />
         {query && (
           <button
             type="button"
             onClick={() => setQuery("")}
-            className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-md p-1 text-[#6B7280] transition-colors hover:bg-white/5 hover:text-white"
+            className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-ink-3 transition-colors hover:bg-surface-3 hover:text-ink"
             aria-label="Clear search"
           >
             <FiX className="text-sm" />
@@ -68,7 +68,7 @@ export default function TelescopeSearch({ onSelect, selectedId }) {
       {/* Results */}
       <div className="no-scrollbar mt-3 max-h-64 min-h-0 space-y-1.5 overflow-y-auto pr-1">
         {results.length === 0 ? (
-          <p className="py-6 text-center text-sm text-[#6B7280]">
+          <p className="py-6 text-center text-sm text-ink-3">
             No telescopes match “{query}”. Add a custom one below.
           </p>
         ) : (
@@ -85,20 +85,20 @@ export default function TelescopeSearch({ onSelect, selectedId }) {
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.15 }}
                   onClick={() => onSelect(t)}
-                  className={`flex w-full items-center gap-3 rounded-lg border px-3 py-2 text-left transition-colors ${
+                  className={`flex w-full items-center gap-3 border px-3 py-2 text-left transition-colors ${
                     active
-                      ? "border-orange-400/40 bg-orange-500/10"
-                      : "border-white/5 bg-white/[0.03] hover:border-white/10 hover:bg-white/[0.06]"
+                      ? "border-accent/40 bg-accent/10"
+                      : "border-line bg-surface-3 hover:border-accent hover:bg-surface-3"
                   }`}
                 >
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/5 bg-white/5 text-orange-400">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center border border-line bg-surface-2 text-accent">
                     <TbTelescope className="text-sm" />
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-sm font-semibold text-white">
+                    <span className="block truncate text-sm font-semibold text-ink">
                       {t.brand} {t.model}
                     </span>
-                    <span className="block truncate text-[11px] text-[#6B7280]">
+                    <span className="block truncate text-[11px] text-ink-3">
                       {t.type} · {t.aperture_mm} mm ·{" "}
                       {formatFocalRatio(t.aperture_mm, t.focal_length_mm)}
                     </span>

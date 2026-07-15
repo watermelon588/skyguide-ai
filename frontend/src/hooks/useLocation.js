@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { useAuth } from "../context/AuthContext";
-import { getCurrentLocation } from "./useGeolocation";
+import { getCurrentLocation, GEO_ERROR } from "./useGeolocation";
 import { updateLocation as updateLocationService } from "../services/user.service";
 import { hasLocation as hasLocationUtil } from "../utils/location";
 
@@ -71,15 +71,16 @@ export function useLocation() {
     try {
       position = await getCurrentLocation();
     } catch (err) {
-      // GeolocationPositionError.PERMISSION_DENIED === 1
-      if (err && err.code === 1) {
+      // useGeolocation guarantees a coded error with a message worth showing;
+      // "denied" gets its own status because it's the one the user can fix.
+      if (err?.code === GEO_ERROR.PERMISSION_DENIED) {
         setStatus("denied");
       } else {
         setStatus("error");
-        setErrorMessage(
-          err?.message ?? "Unable to read your location from the browser.",
-        );
       }
+      setErrorMessage(
+        err?.message ?? "Unable to read your location from the browser.",
+      );
       return false;
     }
 
