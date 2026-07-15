@@ -6,6 +6,7 @@ import {
   FiRefreshCw,
   FiAlertTriangle,
   FiCheck,
+  FiX,
 } from "react-icons/fi";
 import { useLocation } from "../../hooks/useLocation";
 import { useWeather } from "../../hooks/useWeather";
@@ -33,13 +34,18 @@ function Stat({ label, value }) {
 
 /**
  * Presentation config for the Refresh GPS slot, per hook status.
+ *
+ * Labels stay SHORT: the button is a fixed-height capsule that must not wrap,
+ * so the actual diagnosis goes in the banner below (GpsProblem) where there is
+ * room to read it. Cramming errorMessage in here truncated the one sentence
+ * that told the user what to do.
  */
-function refreshStateConfig(status, errorMessage) {
+function refreshStateConfig(status) {
   switch (status) {
     case "requesting":
       return {
         icon: <FiRefreshCw className="animate-spin text-base" />,
-        label: "Refreshing GPS...",
+        label: "Locating...",
         tone: "border-line bg-surface-3 text-ink",
       };
     case "success":
@@ -51,13 +57,13 @@ function refreshStateConfig(status, errorMessage) {
     case "denied":
       return {
         icon: <FiAlertTriangle className="text-base" />,
-        label: "GPS Permission Required",
+        label: "Permission Blocked",
         tone: "border-warning/30 bg-warning/15 text-warning",
       };
     case "error":
       return {
         icon: <FiAlertTriangle className="text-base" />,
-        label: errorMessage || "GPS Update Failed",
+        label: "GPS Failed",
         tone: "border-danger/30 bg-danger/15 text-danger",
       };
     default:
@@ -67,6 +73,51 @@ function refreshStateConfig(status, errorMessage) {
         tone: "border-line bg-surface-2 text-ink hover:bg-surface-3",
       };
   }
+}
+
+/**
+ * The GPS failure banner.
+ *
+ * Persists until the user retries, dismisses, or edits manually — a location
+ * failure is not a toast. The previous build auto-cleared it after 3.5s, which
+ * is why a broken refresh read as a button that simply did nothing.
+ */
+function GpsProblem({ status, message, onRetry, onManual, onDismiss }) {
+  const denied = status === "denied";
+  return (
+    <motion.div
+      initial={{ height: 0, opacity: 0 }}
+      animate={{ height: "auto", opacity: 1 }}
+      exit={{ height: 0, opacity: 0 }}
+      transition={{ type: "spring", bounce: 0, duration: 0.25 }}
+      className="w-full overflow-hidden"
+    >
+      <div
+        className={`flex flex-wrap items-center gap-x-3 gap-y-2 border-t px-5 py-3 text-sm ${
+          denied
+            ? "border-warning/30 bg-warning/10 text-warning"
+            : "border-danger/30 bg-danger/10 text-danger"
+        }`}
+        role="status"
+      >
+        <FiAlertTriangle className="shrink-0 text-base" />
+        <span className="min-w-0 flex-1 text-ink-2">{message}</span>
+        <div className="ml-auto flex shrink-0 gap-2">
+          <Button variant="secondary" size="sm" onClick={onManual}>
+            Set manually
+          </Button>
+          {!denied && (
+            <Button variant="secondary" size="sm" onClick={onRetry}>
+              Try again
+            </Button>
+          )}
+          <Button variant="ghost" size="icon" onClick={onDismiss} aria-label="Dismiss">
+            <FiX className="text-base" />
+          </Button>
+        </div>
+      </div>
+    </motion.div>
+  );
 }
 
 /**
@@ -122,13 +173,12 @@ export default function ObserverCard({ onEdit }) {
   // Spinner in the capsule only during the very first fetch (no cached data).
   const weatherLoadingFirst = weatherFetching && !weatherData;
 
-  // Auto-return the Refresh action to its idle label after showing feedback.
+  // Success is self-evident (the coordinates above just changed), so it fades
+  // on its own. Failures do NOT auto-clear — GpsProblem owns them until the
+  // user acts.
   useEffect(() => {
-    if (status !== "success" && status !== "denied" && status !== "error") {
-      return;
-    }
-    const ms = status === "success" ? 1800 : 3500;
-    const timer = setTimeout(() => reset(), ms);
+    if (status !== "success") return;
+    const timer = setTimeout(() => reset(), 1800);
     return () => clearTimeout(timer);
   }, [status, reset]);
 
@@ -136,9 +186,10 @@ export default function ObserverCard({ onEdit }) {
   const lng = longitude != null ? `${longitude.toFixed(4)}°` : "—";
   const coordKey = `${lat},${lng},${timezone},${elevation_m}`;
 
-  const refresh = refreshStateConfig(status, errorMessage);
+  const refresh = refreshStateConfig(status);
   // Idle is a normal button; feedback states are transient and non-interactive.
   const refreshDisabled = status === "requesting" || status === "success";
+  const gpsFailed = status === "denied" || status === "error";
 
   return (
     <motion.section
@@ -226,6 +277,23 @@ export default function ObserverCard({ onEdit }) {
       </div>
       </div>
       {/* End summary row */}
+
+      {/* GPS failure — the diagnosis, with room to actually read it. */}
+      <AnimatePresence initial={false}>
+        {gpsFailed && (
+          <GpsProblem
+            key="gps-problem"
+            status={status}
+            message={errorMessage || "Couldn't read your location."}
+            onRetry={detectAndSaveLocation}
+            onManual={() => {
+              reset();
+              onEdit?.();
+            }}
+            onDismiss={reset}
+          />
+        )}
+      </AnimatePresence>
 
       {/* Weather accordion — expands inline (height + opacity), full card width.
           Normal flow, so the Sync Telescope card is simply pushed down. */}

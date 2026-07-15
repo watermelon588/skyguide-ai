@@ -99,7 +99,7 @@ if (env.DEV) {
   // eslint-disable-next-line no-console
   console.info(
     `%c[SkyGuide] Network Mode: ${info.mode.toUpperCase()}`,
-    "color:#FF8C1A;font-weight:bold",
+    "color:#0049CD;font-weight:bold",
     `\n  Frontend: ${info.frontendUrl}` +
       `\n  API:      ${info.apiUrl}` +
       `\n  Socket:   ${info.socketUrl}` +

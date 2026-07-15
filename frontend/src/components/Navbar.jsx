@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 
 import { useAuth } from "../context/AuthContext";
 import Avatar from "./profile/Avatar";
+import NotificationBell from "./notifications/NotificationBell";
 
 export const Navbar = () => {
   const navigate = useNavigate();
@@ -47,6 +48,9 @@ export const Navbar = () => {
             onClick={() => navigate("/guide")}
           >
             Guide
+          </li>
+          <li>
+            <NotificationBell />
           </li>
           <li>
             <button

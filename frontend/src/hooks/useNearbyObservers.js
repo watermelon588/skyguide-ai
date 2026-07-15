@@ -22,6 +22,8 @@ export function useNearbyObservers(radiusKm) {
     observers: data?.observers ?? [],
     gate: data?.gate ?? null, // "private" | "no-location" | null
     count: data?.count ?? 0,
+    /** The viewer's own geohash-cell centre — where the map opens. */
+    center: data?.center ?? null,
     isLoading: query.isLoading,
     isFetching: query.isFetching,
     isError: query.isError,

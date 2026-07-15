@@ -5,6 +5,7 @@ import { Crosshair } from "lucide-react";
 import ScoreRing from "../tonight/fx/ScoreRing";
 import AddToPlanButton from "../plan/AddToPlanButton";
 import { typeMeta } from "../tonight/vocabulary";
+import { usePairing } from "../../context/PairingContext";
 
 /**
  * Target Panel hero — the object's identity plus its two actions
@@ -13,13 +14,27 @@ import { typeMeta } from "../tonight/vocabulary";
  * Media policy per the design system: real imagery drops in through
  * `media.hero_image`/`thumbnail` when the catalog gains assets; until then
  * the fallback is an honest type-glyph gradient, never stock placeholder art.
- * Start Observing hands off to the dashboard's guided flow
- * (`/dashboard?observe=<id>`), which walks telescope → pairing → alignment.
+ *
+ * Start Observing takes the SHORTEST path to guidance. If the phone is already
+ * paired there is no setup left to do, so it goes straight to /alignment with
+ * the target pre-set — one click from "this looks interesting" to a telescope
+ * being guided, with nobody typing a catalog id. Otherwise it falls back to the
+ * dashboard's guided flow (`/dashboard?observe=<id>`), which walks telescope →
+ * pairing and then hands off here anyway.
  */
 export default function TargetHero({ target }) {
   const navigate = useNavigate();
+  const { pairing } = usePairing();
   const meta = typeMeta(target.object_type);
   const image = target.hero_image || target.thumbnail || null;
+
+  const paired = pairing.status === "connected";
+  const startObserving = () =>
+    navigate(
+      paired
+        ? `/alignment?target=${encodeURIComponent(target.catalog_id)}`
+        : `/dashboard?observe=${encodeURIComponent(target.catalog_id)}`,
+    );
 
   return (
     <section className="overflow-hidden border border-line bg-surface-2">
@@ -74,13 +89,13 @@ export default function TargetHero({ target }) {
             whileHover={target.visible ? { scale: 1.03 } : undefined}
             whileTap={target.visible ? { scale: 0.97 } : undefined}
             disabled={!target.visible}
-            onClick={() =>
-              navigate(`/dashboard?observe=${target.catalog_id}`)
-            }
+            onClick={startObserving}
             title={
-              target.visible
-                ? "Guided telescope alignment onto this target"
-                : "Below your horizon right now — try when it rises"
+              !target.visible
+                ? "Below your horizon right now — try when it rises"
+                : paired
+                  ? "Start guiding your telescope to this target now"
+                  : "Guided telescope alignment onto this target"
             }
             className="flex items-center gap-2 bg-accent px-6 py-2.5 text-sm font-semibold text-ink transition-colors duration-300 hover:bg-accent-hi disabled:cursor-not-allowed disabled:opacity-40"
           >

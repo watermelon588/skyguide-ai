@@ -1,11 +1,14 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Check, ExternalLink } from "lucide-react";
+import { Check, ExternalLink, LogOut, ShieldCheck } from "lucide-react";
 
 import AvatarUploader from "../components/profile/AvatarUploader";
 import StatsBand from "../components/profile/StatsBand";
+import VerifyEmailPanel from "../components/auth/VerifyEmailPanel";
+import NotificationPrefs from "../components/notifications/NotificationPrefs";
 import { useProfile } from "../hooks/useProfile";
+import { useAuth } from "../context/AuthContext";
 
 /**
  * /profile — the observer's own, editable profile.
@@ -27,9 +30,17 @@ const inputClass =
 export default function Profile() {
   const { profile, isLoading, isError, update, setAvatar, clearAvatar } =
     useProfile();
+  const { user, logoutUser } = useAuth();
+  const navigate = useNavigate();
 
   const [form, setForm] = useState(null);
   const [saved, setSaved] = useState(false);
+  const [showVerify, setShowVerify] = useState(false);
+
+  const onLogout = async () => {
+    await logoutUser();
+    navigate("/");
+  };
 
   // Hydrate the editable form once the profile first arrives — the
   // adjust-state-on-render pattern (no effect, no cascade).
@@ -97,6 +108,42 @@ export default function Profile() {
       </div>
 
       <div className="space-y-4">
+        {/* Email verification — deferred from sign-up, finished here. */}
+        {user && !user.isVerified && !showVerify && (
+          <section className="flex flex-wrap items-center justify-between gap-4 border border-warning/40 bg-warning/10 px-5 py-4">
+            <div>
+              <p className="text-sm font-semibold text-ink">
+                Your email isn't verified yet
+              </p>
+              <p className="text-xs text-ink-2">
+                Verify {profile.email} to secure your account.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowVerify(true)}
+              className="shrink-0 bg-accent px-4 py-2 text-sm font-semibold text-ink transition-colors hover:bg-accent-hi"
+            >
+              Verify now
+            </button>
+          </section>
+        )}
+
+        {user && !user.isVerified && showVerify && (
+          <VerifyEmailPanel
+            email={profile.email}
+            onVerified={() => setShowVerify(false)}
+            onSkip={() => setShowVerify(false)}
+          />
+        )}
+
+        {user?.isVerified && (
+          <p className="flex items-center gap-2 border border-line bg-surface-2 px-5 py-3 text-sm text-ink-2">
+            <ShieldCheck size={15} className="text-success" />
+            Email verified
+          </p>
+        )}
+
         {/* Avatar */}
         <section className="border border-line bg-surface-2 p-6">
           <AvatarUploader
@@ -199,6 +246,9 @@ export default function Profile() {
           </label>
         </section>
 
+        {/* Notifications */}
+        <NotificationPrefs timezone={user?.location?.timezone} />
+
         {/* Observing résumé */}
         <section className="border border-line bg-surface-2 p-6">
           <p className="mb-4 text-[11px] font-medium uppercase tracking-[0.3em] text-accent">
@@ -225,6 +275,24 @@ export default function Profile() {
             {update.isPending ? "Saving…" : "Save changes"}
           </motion.button>
         </div>
+
+        {/* Account — sits last, away from the save button so signing out is
+            never a mis-click away from saving. */}
+        <section className="flex flex-wrap items-center justify-between gap-4 border border-line bg-surface-2 px-6 py-5">
+          <div>
+            <p className="text-sm font-semibold text-ink">Sign out</p>
+            <p className="text-xs text-ink-3">
+              You'll need your password to sign back in.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onLogout}
+            className="flex shrink-0 items-center gap-2 border border-danger/40 bg-danger/10 px-4 py-2 text-sm font-semibold text-danger transition-colors hover:bg-danger/20"
+          >
+            <LogOut size={14} /> Log out
+          </button>
+        </section>
       </div>
     </div>
   );

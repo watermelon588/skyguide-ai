@@ -64,13 +64,13 @@ export default function MarkObservedChip({ catalogId, className = "" }) {
           ? `${catalogId} logged as observed`
           : `Mark ${catalogId} as observed`
       }
-      className={`pointer-events-auto flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-semibold backdrop-blur-3xl transition-colors duration-300 ${
+      className={`pointer-events-auto flex items-center gap-2 border px-4 py-2 text-sm font-semibold transition-colors duration-300 ${
         state === "done"
-          ? "cursor-default border-[#22C55E]/40 bg-[#22C55E]/15 text-[#22C55E]"
-          : "border-white/10 bg-white/5 text-white hover:bg-white/10"
+          ? "cursor-default border-success/40 bg-success/15 text-success"
+          : "border-line bg-surface-2 text-ink hover:bg-surface-3"
       } ${className}`}
     >
-      <Check size={14} className={state === "done" ? "" : "text-[#22C55E]"} />
+      <Check size={14} className={state === "done" ? "" : "text-success"} />
       {state === "done"
         ? "Logged"
         : state === "saving"

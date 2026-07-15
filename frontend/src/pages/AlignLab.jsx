@@ -243,7 +243,7 @@ export default function AlignLab() {
   );
 
   return (
-    <div className="min-h-screen bg-[#05070A] text-white">
+    <div className="min-h-screen bg-[#05070A] text-ink">
       <AlignmentMode
         open={open}
         feed={feed}
@@ -254,7 +254,7 @@ export default function AlignLab() {
 
       {!open && (
         <div className="flex min-h-screen flex-col items-center justify-center gap-4">
-          <p className="text-sm text-[#AAB4C5]">Alignment Mode lab (dev only)</p>
+          <p className="text-sm text-ink-2">Alignment Mode lab (dev only)</p>
           <Button onClick={() => setOpen(true)}>Relaunch Alignment Mode</Button>
         </div>
       )}
@@ -262,9 +262,9 @@ export default function AlignLab() {
       {/* Sim controls float above the overlay */}
       <details
         open
-        className="fixed bottom-3 left-3 z-[970] w-[260px] rounded-xl border border-white/10 bg-[#0B0D12]/90 p-3 text-xs shadow-2xl backdrop-blur-xl"
+        className="fixed bottom-3 left-3 z-[970] w-[260px] border border-line bg-[#0B0D12]/90 p-3 text-xs shadow-2xl"
       >
-        <summary className="cursor-pointer select-none font-semibold text-[#AAB4C5]">
+        <summary className="cursor-pointer select-none font-semibold text-ink-2">
           Sim controls · arrows/WASD slew
         </summary>
         <div className="mt-3 grid grid-cols-2 gap-2">
@@ -286,8 +286,8 @@ function LabToggle({ label, value, onChange }) {
       onClick={() => onChange(!value)}
       className={`rounded-lg border px-2 py-1.5 text-left transition-colors ${
         value
-          ? "border-orange-400/50 bg-orange-500/15 text-orange-300"
-          : "border-white/10 bg-white/5 text-[#AAB4C5] hover:bg-white/10"
+          ? "border-accent/50 bg-accent/15 text-accent-hi"
+          : "border-line bg-surface-2 text-ink-2 hover:bg-surface-3"
       }`}
     >
       {label}

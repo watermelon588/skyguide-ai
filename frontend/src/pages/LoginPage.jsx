@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { ArrowLeft } from "lucide-react";
 
 import { useAuth } from "../context/AuthContext";
+import VerifyEmailPanel from "../components/auth/VerifyEmailPanel";
 import loginImage from "../assets/bg/9.jpg";
 
 /**
@@ -29,6 +30,10 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [showError, setShowError] = useState(false);
 
+  // After sign-up the observer is ALREADY signed in; this step is an optional
+  // offer to verify now rather than a gate. `null` = show the normal form.
+  const [verifyStep, setVerifyStep] = useState(null); // { email, emailSent }
+
   const handleChange = (e) => {
     setFormData((prev) => ({
       ...prev,
@@ -44,18 +49,24 @@ export default function LoginPage() {
 
     try {
       if (currentState === "Sign up") {
-        await registerUser({
+        // Registration now signs the observer in outright, so instead of
+        // redirecting we offer the verification step — which they can skip.
+        const result = await registerUser({
           username: formData.username,
           email: formData.email,
           password: formData.password,
         });
-      } else {
-        await loginUser({
+        setVerifyStep({
           email: formData.email,
-          password: formData.password,
+          emailSent: result?.emailSent !== false,
         });
+        return;
       }
-      // Redirect
+
+      await loginUser({
+        email: formData.email,
+        password: formData.password,
+      });
       navigate("/dashboard");
     } catch (err) {
       setError(err.response?.data?.message || "Something went wrong.");
@@ -144,6 +155,35 @@ export default function LoginPage() {
             SkyGuide <span className="text-accent">AI</span>
           </p>
 
+          {/* Post-sign-up: already authenticated, just offering verification. */}
+          {verifyStep ? (
+            <>
+              <h1 className="mt-2 text-4xl font-black uppercase tracking-tight text-ink">
+                You're in
+              </h1>
+              <p className="mt-2 text-sm text-ink-3">
+                Your account is ready. Verify your email now, or do it later
+                from your profile.
+              </p>
+
+              <div className="mt-6">
+                <VerifyEmailPanel
+                  email={verifyStep.email}
+                  codeAlreadySent={verifyStep.emailSent}
+                  onVerified={() => navigate("/dashboard")}
+                  onSkip={() => navigate("/dashboard")}
+                />
+              </div>
+
+              {!verifyStep.emailSent && (
+                <p className="mt-4 text-xs text-ink-3">
+                  We couldn't send the email just now — you can skip this and
+                  verify later from your profile.
+                </p>
+              )}
+            </>
+          ) : (
+            <>
           {/* Heading */}
           <h1 className="mt-2 text-4xl font-black uppercase tracking-tight text-ink">
             {isSignup ? "Create account" : "Sign in"}
@@ -239,6 +279,8 @@ export default function LoginPage() {
               {isSignup ? "Sign in" : "Sign up"}
             </button>
           </p>
+            </>
+          )}
         </motion.div>
       </div>
     </div>

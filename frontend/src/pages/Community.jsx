@@ -1,17 +1,26 @@
-import { useState } from "react";
+import { lazy, Suspense, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { Users, MapPin, Lock, Compass } from "lucide-react";
+import { Users, MapPin, Lock, Compass, MessageSquare } from "lucide-react";
 
 import RadiusSelector from "../components/community/RadiusSelector";
 import ObserverCard from "../components/community/ObserverCard";
+import PingInbox from "../components/community/PingInbox";
 import { useNearbyObservers } from "../hooks/useNearbyObservers";
+import { usePings } from "../hooks/usePings";
+import { useRooms } from "../hooks/useRooms";
+
+// MapLibre is ~250 KB of engine nobody needs until they reach this page, and
+// the grid below is the real content — so the map arrives separately.
+const ObserverMap = lazy(() => import("../components/community/ObserverMap"));
 
 /**
  * /community — Observers Nearby (Feature 6a).
  *
- * Discovery only: a distance-banded grid of public observers within the chosen
- * radius. Renders inside AppLayout (inherits the app navbar). All privacy is
- * enforced server-side; this page only reflects the `gate` it's handed.
+ * Discovery: a map of public observers within the chosen radius, plus the
+ * distance-banded grid beneath it. Renders inside AppLayout (inherits the app
+ * navbar). All privacy is enforced server-side; this page only reflects the
+ * `gate` it's handed, and plots the coarse cell centres the API returns — it
+ * never sees a real coordinate.
  */
 
 /** Shared shell for the non-grid states, so they sit consistently on the page. */
@@ -29,8 +38,36 @@ function StateCard({ icon: Icon, title, children }) {
 
 export default function Community() {
   const [radius, setRadius] = useState(50);
-  const { observers, gate, count, isLoading, isFetching, isError } =
+  const { observers, gate, count, center, isLoading, isFetching, isError } =
     useNearbyObservers(radius);
+  const { incoming, outgoing, send, respond } = usePings();
+  const { rooms } = useRooms();
+
+  // Clicking a map pin scrolls to the first observer sharing that cell — the
+  // pin is a group, and the card is where the actual actions live.
+  const gridRef = useRef(null);
+  const focusFromMap = (group) => {
+    const first = group[0];
+    if (!first) return;
+    const el = gridRef.current?.querySelector(
+      `[data-observer="${CSS.escape(first.username)}"]`,
+    );
+    el?.scrollIntoView({ behavior: "smooth", block: "center" });
+  };
+
+  // Which observers already have an open request or a live conversation — so
+  // the tile shows "Requested"/"Connected" instead of offering Ping again.
+  const requested = new Set(outgoing.map((p) => p.user.username));
+  const connected = new Set(
+    rooms.filter((r) => r.kind === "direct").map((r) => r.username),
+  );
+
+  const pingStateFor = (username) => {
+    if (connected.has(username)) return "connected";
+    if (requested.has(username)) return "pending";
+    if (send.isPending && send.variables?.username === username) return "sending";
+    return "idle";
+  };
 
   return (
     <div className="mx-auto w-full max-w-5xl px-6 py-8">
@@ -48,10 +85,28 @@ export default function Community() {
             Astronomers sharing your sky — distances are approximate for privacy.
           </p>
         </div>
-        <RadiusSelector
-          value={radius}
-          onChange={setRadius}
-          disabled={isLoading}
+        <div className="flex items-center gap-3">
+          <Link
+            to="/community/chat"
+            className="flex items-center gap-2 border border-line bg-surface-2 px-4 py-2 text-sm text-ink-2 transition-colors hover:bg-surface-3 hover:text-ink"
+          >
+            <MessageSquare size={14} /> Rooms
+          </Link>
+          <RadiusSelector
+            value={radius}
+            onChange={setRadius}
+            disabled={isLoading}
+          />
+        </div>
+      </div>
+
+      {/* Chat requests waiting on this observer */}
+      <div className="mt-6">
+        <PingInbox
+          incoming={incoming}
+          outgoing={outgoing}
+          busy={respond.isPending}
+          onRespond={(id, action) => respond.mutate({ id, action })}
         />
       </div>
 
@@ -108,9 +163,40 @@ export default function Community() {
               {count} {count === 1 ? "observer" : "observers"} within {radius} km
               {isFetching && " · updating…"}
             </p>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {send.isError && (
+              <p className="mb-4 border border-danger/30 bg-danger/10 px-4 py-2.5 text-sm text-danger">
+                {send.error?.response?.data?.message ||
+                  "Couldn't send that request — try again."}
+              </p>
+            )}
+            {/* The map — observers plotted on their coarse cell centres. */}
+            <Suspense
+              fallback={
+                <div className="mb-6 h-[420px] animate-pulse border border-line bg-surface-2" />
+              }
+            >
+              <div className="mb-6">
+                <ObserverMap
+                  observers={observers}
+                  center={center}
+                  radiusKm={radius}
+                  onSelect={focusFromMap}
+                />
+              </div>
+            </Suspense>
+
+            <div
+              ref={gridRef}
+              className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
+            >
               {observers.map((observer) => (
-                <ObserverCard key={observer.username} observer={observer} />
+                <div key={observer.username} data-observer={observer.username}>
+                  <ObserverCard
+                    observer={observer}
+                    pingState={pingStateFor(observer.username)}
+                    onPing={(username) => send.mutate({ username })}
+                  />
+                </div>
               ))}
             </div>
           </>

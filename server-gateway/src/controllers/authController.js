@@ -4,7 +4,7 @@ const sendEmail = require("../utils/email");
 const crypto = require("crypto");
 
 // Helper function to bundle JWT token creation and browser cookie options configuration
-const sendTokenCookie = (user, statusCode, res) => {
+const sendTokenCookie = (user, statusCode, res, extra = {}) => {
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
         expiresIn: "7d",
     });
@@ -23,8 +23,47 @@ const sendTokenCookie = (user, statusCode, res) => {
 
     res.status(statusCode).cookie("jwt", token, cookieOptions).json({
         success: true,
-        data: { user },
+        data: { user, ...extra },
     });
+};
+
+/**
+ * Email the observer their 6-digit verification code.
+ *
+ * BEST-EFFORT by design: never let a mail failure break the caller. Sign-up in
+ * particular must not 500 after the account already exists — that used to
+ * strand people with a real account they couldn't get into. The code is always
+ * re-requestable from the app, so a dropped email is recoverable; a failed
+ * sign-up is not.
+ *
+ * Returns true when the mail actually went out.
+ */
+const deliverVerificationCode = async (user, code) => {
+    // Without SMTP configured there is no other way to finish verification
+    // locally, so surface the code to the server console in development only.
+    if (process.env.NODE_ENV !== "production") {
+        console.log(`[dev] verification code for ${user.email}: ${code}`);
+    }
+
+    try {
+        await sendEmail({
+            email: user.email,
+            subject: "Your SkyGuide AI verification code",
+            message: `Welcome to SkyGuide AI!
+
+Your verification code is:
+
+    ${code}
+
+Enter it in the app to verify your email. The code expires in 10 minutes.
+
+If you didn't create this account, you can ignore this email.`,
+        });
+        return true;
+    } catch (error) {
+        console.error("Verification email failed to send:", error.message);
+        return false;
+    }
 };
 
 exports.register = async (req, res, next) => {
@@ -49,36 +88,19 @@ exports.register = async (req, res, next) => {
             location,
         });
 
-        const verificationToken =
-            user.createVerificationToken();
+        const code = user.createVerificationCode();
 
         await user.save({
             validateBeforeSave: false,
         });
 
-        const verificationURL =
-            `${req.protocol}://${req.get(
-                "host"
-            )}/api/v1/auth/verify-email/${verificationToken}`;
+        const emailSent = await deliverVerificationCode(user, code);
 
-        await sendEmail({
-            email: user.email,
-            subject: "Verify Your Email",
-            message: `Welcome to SkyGuide AI!
-
-                        Please verify your email by clicking:
-
-                        ${verificationURL}
-
-                        This link expires in 10 minutes.
-                        `,
-        });
-
-        res.status(201).json({
-            success: true,
-            message:
-                "Registration successful. Please verify your email.",
-        });
+        // Sign the new observer IN immediately. Verification is deferred: an
+        // account you can't use until you've read an email is a dead end, and
+        // this endpoint previously returned no cookie at all — which is why the
+        // very next /auth/me call answered "not authenticated".
+        sendTokenCookie(user, 201, res, { emailSent });
     } catch (error) {
         next(error);
     }
@@ -98,7 +120,12 @@ exports.login = async (req, res, next) => {
         // Explicitly select password field since it is omitted by default in the schema
         const user = await User.findOne({ email }).select("+password");
 
-        if (!user) {
+        // Verify the PASSWORD before revealing anything about the account.
+        // These checks used to run in the opposite order, which let anyone probe
+        // whether an address was registered (and whether it was verified) with
+        // no valid credentials at all. One generic 401 covers both "no such
+        // user" and "wrong password".
+        if (!user || !(await user.comparePassword(password))) {
             return res.status(401).json({
                 success: false,
                 message: "Invalid email or password.",
@@ -112,19 +139,10 @@ exports.login = async (req, res, next) => {
             });
         }
 
-        if (!user.isVerified) {
-            return res.status(403).json({
-                success: false,
-                message: "Please verify your email first.",
-            });
-        }
-
-        if (!user || !(await user.comparePassword(password))) {
-            return res.status(401).json({
-                success: false,
-                message: "Invalid email or password.",
-            });
-        }
+        // NOTE: an unverified email deliberately does NOT block sign-in.
+        // Verification is a deferred prompt inside the app, not a gate at the
+        // door — locking someone out of the account they just created (and can
+        // only unlock via an email that may never arrive) is a dead end.
 
         // Update login timestamp tracking
         user.lastLogin = new Date();
@@ -136,51 +154,122 @@ exports.login = async (req, res, next) => {
     }
 };
 
-exports.verifyEmail =
-    async (req, res, next) => {
-        try {
-            const hashedToken =
-                crypto
-                    .createHash("sha256")
-                    .update(req.params.token)
-                    .digest("hex");
+/**
+ * POST /api/v1/auth/verify-code  { code }   (authenticated)
+ *
+ * Redeem the 6-digit code. Scoped to the SIGNED-IN user rather than looking the
+ * code up globally: a bare 6-digit lookup across all users would let an
+ * attacker brute-force *somebody's* code (1M codes vs. every pending account),
+ * whereas this only ever checks the code belonging to the caller.
+ */
+exports.verifyCode = async (req, res, next) => {
+    try {
+        const code = String(req.body.code ?? "").trim();
 
-            const user =
-                await User.findOne({
-                    verificationToken:
-                        hashedToken,
-                    verificationTokenExpires: {
-                        $gt: Date.now(),
-                    },
-                });
-
-            if (!user) {
-                return res.status(400).json({
-                    success: false,
-                    message:
-                        "Invalid or expired verification token.",
-                });
-            }
-
-            user.isVerified = true;
-            user.verificationToken =
-                undefined;
-            user.verificationTokenExpires =
-                undefined;
-
-            await user.save({
-                validateBeforeSave: false,
+        if (!/^\d{6}$/.test(code)) {
+            return res.status(400).json({
+                success: false,
+                message: "Enter the 6-digit code from your email.",
             });
-
-            res.status(200).json({
-                success: true,
-                message:
-                    "Email verified successfully.",
-            });
-        } catch (error) {
-            next(error);
         }
-    };
+
+        const user = await User.findById(req.user._id);
+
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: "User not found.",
+            });
+        }
+
+        if (user.isVerified) {
+            // Idempotent: verifying twice is a success, not an error.
+            return res.status(200).json({
+                success: true,
+                message: "Email already verified.",
+                data: { user },
+            });
+        }
+
+        const hashedCode = crypto
+            .createHash("sha256")
+            .update(code)
+            .digest("hex");
+
+        const valid =
+            user.verificationToken === hashedCode &&
+            user.verificationTokenExpires &&
+            user.verificationTokenExpires.getTime() > Date.now();
+
+        if (!valid) {
+            return res.status(400).json({
+                success: false,
+                message: "That code is invalid or has expired. Request a new one.",
+            });
+        }
+
+        user.isVerified = true;
+        user.verificationToken = undefined;
+        user.verificationTokenExpires = undefined;
+
+        await user.save({ validateBeforeSave: false });
+
+        res.status(200).json({
+            success: true,
+            message: "Email verified.",
+            data: { user },
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+/**
+ * POST /api/v1/auth/send-verification-code   (authenticated)
+ *
+ * Issue a fresh code for the signed-in observer. Unlike sign-up, a mail failure
+ * IS reported here — the user explicitly asked for a code, so silently
+ * pretending it sent would leave them waiting on nothing.
+ */
+exports.sendVerificationCode = async (req, res, next) => {
+    try {
+        const user = await User.findById(req.user._id);
+
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: "User not found.",
+            });
+        }
+
+        if (user.isVerified) {
+            return res.status(400).json({
+                success: false,
+                message: "Your email is already verified.",
+            });
+        }
+
+        const code = user.createVerificationCode();
+        await user.save({ validateBeforeSave: false });
+
+        const emailSent = await deliverVerificationCode(user, code);
+
+        if (!emailSent) {
+            return res.status(502).json({
+                success: false,
+                message:
+                    "We couldn't send the email just now. Please try again in a moment.",
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: `Verification code sent to ${user.email}.`,
+        });
+    } catch (error) {
+        next(error);
+    }
+};
 
 exports.forgotPassword =
     async (req, res, next) => {
@@ -281,63 +370,6 @@ exports.resetPassword =
         }
     };
 
-exports.resendVerification =
-    async (req, res, next) => {
-        try {
-            const { email } = req.body;
-
-            const user = await User.findOne({
-                email,
-            });
-
-            if (!user) {
-                return res.status(404).json({
-                    success: false,
-                    message: "User not found.",
-                });
-            }
-
-            if (user.isVerified) {
-                return res.status(400).json({
-                    success: false,
-                    message:
-                        "Email is already verified.",
-                });
-            }
-
-            const verificationToken =
-                user.createVerificationToken();
-
-            await user.save({
-                validateBeforeSave: false,
-            });
-
-            const verificationURL =
-                `${req.protocol}://${req.get(
-                    "host"
-                )}/api/v1/auth/verify-email/${verificationToken}`;
-
-            await sendEmail({
-                email: user.email,
-                subject:
-                    "Verify your SkyGuide AI account",
-                message:
-                    `Please verify your email by clicking:
-
-${verificationURL}
-
-This link expires in 10 minutes.`,
-            });
-
-            res.status(200).json({
-                success: true,
-                message:
-                    "Verification email sent successfully.",
-            });
-        } catch (error) {
-            next(error);
-        }
-    };
 exports.logout = (req, res) => {
     // Overwrite the cookie token instantly with an expired setting
     res.cookie("jwt", "loggedout", {

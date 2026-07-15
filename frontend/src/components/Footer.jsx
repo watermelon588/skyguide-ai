@@ -21,7 +21,7 @@ import {
 const PLATFORM_LINKS = [
   { label: "Tonight's sky", to: "/tonight" },
   { label: "Dashboard", to: "/dashboard" },
-  { label: "Telescope alignment", to: "/align" },
+  { label: "Telescope alignment", to: "/alignment" },
   { label: "Sign in", to: "/login" },
 ];
 

@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { getMe, login, logout, register } from "../services/auth.service";
 
+
 const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
@@ -22,20 +23,20 @@ export function AuthProvider({ children }) {
     checkAuth();
   }, []);
 
+  // Both endpoints set the session cookie AND return the user, so the user is
+  // read straight from that response. The old code threw away the response and
+  // issued a second /auth/me — which is what surfaced "not authenticated" on
+  // sign-up, because register used to set no cookie at all.
   const loginUser = async (credentials) => {
-    await login(credentials);
-
-    const response = await getMe();
-
-    setUser(response.user);
+    const response = await login(credentials);
+    setUser(response.data.user);
+    return response.data;
   };
 
   const registerUser = async (data) => {
-    await register(data);
-
-    const response = await getMe();
-
-    setUser(response.user);
+    const response = await register(data);
+    setUser(response.data.user);
+    return response.data; // { user, emailSent }
   };
 
   const logoutUser = async () => {

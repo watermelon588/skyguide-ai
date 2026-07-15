@@ -90,16 +90,34 @@ body {
   width: 100%;
 }
 
-/* Reusable utility: hide the scrollbar while keeping scroll behaviour intact.
-   Applied to specific scroll containers (telescope modal, search results,
-   dropdowns). Scrollbars stay visible everywhere else. */
-.no-scrollbar {
+/* Scrollbars are hidden app-wide — they read as OS chrome bolted onto an
+   otherwise flat, hairline-only interface. Scrolling itself is untouched:
+   wheel, trackpad, touch, keyboard and scrollIntoView all behave normally.
+   Applied to every element (not just body) so inner scroll containers —
+   modals, dropdowns, chat history, the catalog table — match. */
+*,
+*::before,
+*::after {
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none; /* legacy Edge / IE */
 }
 
-.no-scrollbar::-webkit-scrollbar {
+*::-webkit-scrollbar {
   display: none; /* Chrome, Safari, other WebKit/Blink */
+  width: 0;
+  height: 0;
+}
+
+/* Kept as an explicit opt-in for new scroll containers. Now a no-op against
+   the global rule above, but left in place so the existing call sites still
+   document intent and survive any future scoping of that rule. */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
   width: 0;
   height: 0;
 }

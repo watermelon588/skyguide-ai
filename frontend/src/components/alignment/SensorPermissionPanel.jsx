@@ -26,7 +26,7 @@ export default function SensorPermissionPanel() {
   if (stream.permission === "checking") return null;
 
   return (
-    <div className="mt-6 border-t border-white/10 pt-5">
+    <div className="mt-6 border-t border-line pt-5">
       <AnimatePresence mode="wait">
         <motion.div
           key={stream.permission}
@@ -60,8 +60,8 @@ function PanelBody({ stream }) {
   if (permission === "needs_permission" || permission === "requesting") {
     return (
       <div className="text-center">
-        <FiCompass className="mx-auto text-xl text-orange-400" />
-        <p className="mt-3 text-xs leading-5 text-[#AAB4C5]">
+        <FiCompass className="mx-auto text-xl text-accent" />
+        <p className="mt-3 text-xs leading-5 text-ink-2">
           Allow motion access to stream your phone's orientation to the
           dashboard in realtime.
         </p>
@@ -81,8 +81,8 @@ function PanelBody({ stream }) {
   if (permission === "denied") {
     return (
       <div className="text-center">
-        <FiAlertTriangle className="mx-auto text-xl text-[#EF4444]" />
-        <p className="mt-3 text-xs leading-5 text-[#AAB4C5]">
+        <FiAlertTriangle className="mx-auto text-xl text-danger" />
+        <p className="mt-3 text-xs leading-5 text-ink-2">
           Motion access was denied. On iOS, allow it under Settings → Safari →
           Motion &amp; Orientation Access, then try again.
         </p>
@@ -100,7 +100,7 @@ function PanelBody({ stream }) {
 
   if (permission === "insecure_context") {
     return (
-      <TerminalNote icon={<FiLock className="text-xl text-orange-400" />}>
+      <TerminalNote icon={<FiLock className="text-xl text-accent" />}>
         Motion sensors require a secure (HTTPS) connection. Switch the app to
         tunnel mode and rescan the QR code.
       </TerminalNote>
@@ -109,7 +109,7 @@ function PanelBody({ stream }) {
 
   // unsupported
   return (
-    <TerminalNote icon={<FiSlash className="text-xl text-[#6B7280]" />}>
+    <TerminalNote icon={<FiSlash className="text-xl text-ink-3" />}>
       This browser doesn't expose motion sensors. Open this link on a phone
       with a modern mobile browser.
     </TerminalNote>
@@ -120,7 +120,7 @@ function TerminalNote({ icon, children }) {
   return (
     <div className="text-center">
       <span className="mx-auto inline-block">{icon}</span>
-      <p className="mt-3 text-xs leading-5 text-[#AAB4C5]">{children}</p>
+      <p className="mt-3 text-xs leading-5 text-ink-2">{children}</p>
     </div>
   );
 }

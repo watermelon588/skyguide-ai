@@ -1,5 +1,26 @@
 const User = require("../models/Users");
-const { reverseGeocode } = require("../utils/geocode");
+const { reverseGeocode, searchPlaces } = require("../utils/geocode");
+const geohash = require("../utils/geohash");
+
+/**
+ * Place lookup for the observer-location picker.
+ *
+ * Thin by design: all the work is in utils/geocode. Auth-gated even though the
+ * data is public, so the gateway isn't an open proxy onto Nominatim (whose
+ * usage policy we'd be answering for).
+ */
+exports.searchLocations = async (req, res, next) => {
+    try {
+        const results = await searchPlaces(req.query.q);
+        res.status(200).json({
+            success: true,
+            count: results.length,
+            results,
+        });
+    } catch (error) {
+        next(error);
+    }
+};
 
 exports.updateLocation = async (req, res, next) => {
     try {
@@ -30,6 +51,9 @@ exports.updateLocation = async (req, res, next) => {
                     state: place.state,
                     country: place.country,
                 },
+                // Regional chat-room cell (~39 km). Moving far enough moves the
+                // observer to a new room on their next save.
+                geohash4: geohash.encode(latitude, longitude),
             },
             {
                 new: true,

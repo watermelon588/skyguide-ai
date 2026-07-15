@@ -15,7 +15,7 @@ export default function CountdownTimer({ minutes, seconds, urgent = false }) {
   return (
     <span
       className={`font-mono text-sm font-semibold tabular-nums ${
-        urgent ? "text-[#EF4444]" : "text-white"
+        urgent ? "text-danger" : "text-ink"
       }`}
     >
       {mm}:{ss}

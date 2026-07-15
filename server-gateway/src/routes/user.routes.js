@@ -3,7 +3,10 @@ const express = require("express");
 const router = express.Router();
 
 const { protect } = require("../middleware/authMiddleware");
-const { updateLocation } = require("../controllers/userController");
+const {
+  updateLocation,
+  searchLocations,
+} = require("../controllers/userController");
 const {
   getMyProfile,
   updateMyProfile,
@@ -12,6 +15,8 @@ const {
 } = require("../controllers/profileController");
 
 router.patch("/location", protect, updateLocation);
+// Backs the location picker's type-ahead — pick a place, don't type lat/long.
+router.get("/location/search", protect, searchLocations);
 
 // --- Own profile (Feature 4) ---
 router.get("/me/profile", protect, getMyProfile);

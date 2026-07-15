@@ -135,7 +135,7 @@ export default function WelcomeHeader() {
           type="button"
           whileHover={{ scale: 1.03 }}
           whileTap={{ scale: 0.97 }}
-          onClick={() => navigate("/align")}
+          onClick={() => navigate("/alignment")}
           className="border border-line bg-surface-2 px-5 py-2.5 text-sm font-semibold text-ink transition-colors duration-300 hover:bg-surface-3"
         >
           Alignment

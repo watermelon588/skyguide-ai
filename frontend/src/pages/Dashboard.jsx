@@ -8,8 +8,6 @@ import ManualLocationModal from "../components/dashboard/ManualLocationModal";
 import ObserverCard from "../components/dashboard/ObserverCard";
 import TelescopeCard from "../components/dashboard/TelescopeCard";
 import SyncTelescopeCard from "../components/dashboard/SyncTelescopeCard";
-import OrientationPanelCard from "../components/dashboard/OrientationPanelCard";
-import AlignmentPanelCard from "../components/dashboard/AlignmentPanelCard";
 import WelcomeHeader from "../components/dashboard/WelcomeHeader";
 import TonightGlance from "../components/dashboard/TonightGlance";
 import PlannerCard from "../components/dashboard/PlannerCard";
@@ -21,21 +19,24 @@ import { useLocation } from "../hooks/useLocation";
 import { useTelescope } from "../hooks/useTelescope";
 import { useTonight } from "../hooks/useTonight";
 import { getObserverLocation } from "../utils/location";
-import { PairingProvider, usePairing } from "../context/PairingContext";
+import { usePairing } from "../context/PairingContext";
 
 /**
  * The observatory workspace — IA v2 (product directive, Session 20).
  *
  * Order: greeting → observer location → telescope → tonight at a glance →
- * Moon → all-sky chart → conditions → observation plan → pairing/alignment
- * operations. Setup lives on top because nothing below it computes without
- * a location; the ops cards live at the bottom because the guided observe
- * flow scrolls the user there when they're the missing step.
+ * Moon → all-sky chart → conditions → observation plan → pairing. Setup lives
+ * on top because nothing below it computes without a location.
+ *
+ * The Orientation and Alignment engines used to be cards at the bottom of this
+ * page; they now live on /alignment, which is a planning-vs-instrumentation
+ * split — the dashboard decides WHAT to observe, the workspace aims at it.
+ * Pairing stays here because the QR scan is a setup step.
  *
  * Guided observe flow: /dashboard?observe=<id> (from a Target Panel's
- * "Start observing") checks telescope → pairing → launch, highlighting and
- * scrolling to whichever section needs the user's attention, then auto-aims
- * the alignment engine and opens the overlay.
+ * "Start observing") checks telescope → pairing, highlighting and scrolling to
+ * whichever step is missing. Once the phone pairs, PairedRoutes hands off to
+ * /alignment?target=<id> and the engine aims itself.
  */
 
 const cell = {
@@ -97,6 +98,38 @@ function LocationSetupCard({ onManual }) {
   );
 }
 
+/**
+ * Shown once a phone is paired: the way back into the alignment workspace
+ * after the user has navigated away from it. The engines themselves are gone
+ * from this page — this is a signpost, not a control surface.
+ */
+function AlignmentLink() {
+  return (
+    <motion.section
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+      className="flex flex-wrap items-center gap-4 border border-line bg-surface-2 px-5 py-4"
+    >
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center border border-accent/30 bg-accent/10 text-accent">
+        <Crosshair size={18} />
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-bold text-ink">Alignment workspace</p>
+        <p className="text-xs text-ink-2">
+          Live orientation, the alignment engine and the visual guide.
+        </p>
+      </div>
+      <Link
+        to="/alignment"
+        className="shrink-0 bg-accent px-4 py-2 text-sm font-semibold text-ink transition-colors hover:bg-accent-hi"
+      >
+        Open alignment
+      </Link>
+    </motion.section>
+  );
+}
+
 /** Ring highlight for the section the observe flow needs attention on. */
 function FlowSlot({ active, children }) {
   return (
@@ -112,15 +145,11 @@ function FlowSlot({ active, children }) {
   );
 }
 
-/**
- * Inner dashboard — must live under PairingProvider so the observe flow can
- * read pairing state and the alignment card can launch.
- */
-function DashboardInner() {
+export default function Dashboard() {
   const navigate = useNavigate();
   const { user, hasLocation } = useLocation();
   const { hasTelescope, isLoading: telescopeLoading } = useTelescope();
-  const pairing = usePairing();
+  const { pairing } = usePairing();
   const tonight = useTonight();
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -156,6 +185,16 @@ function DashboardInner() {
     );
     el?.scrollIntoView({ behavior: "smooth", block: "center" });
   }, [flowStage]);
+
+  // Already paired when the observe flow arrives: there is nothing to set up,
+  // so skip the dashboard entirely and go straight to guidance. (The not-yet-
+  // paired case is handed off by PairedRoutes the moment the phone connects.)
+  useEffect(() => {
+    if (flowStage !== "launch") return;
+    navigate(`/alignment?target=${encodeURIComponent(observeId)}`, {
+      replace: true,
+    });
+  }, [flowStage, observeId, navigate]);
 
   const clearFlow = () => setSearchParams({}, { replace: true });
 
@@ -210,10 +249,10 @@ function DashboardInner() {
           </FlowSlot>
         </div>
 
-        {/* 3 · Operations — pairing + sensors + alignment. Promoted to the top
-            section so telescope sync sits with setup; the observe flow scrolls
-            here. Works without a location, so it lives outside the gate below. */}
-        <SectionLabel hint="pairing · sensors · guidance">
+        {/* 3 · Operations — pairing only. The engines themselves live on
+            /alignment; this section just gets the phone attached and points
+            there. Works without a location, so it sits outside the gate below. */}
+        <SectionLabel hint="pair your phone · then align">
           Telescope operations
         </SectionLabel>
         <div className="flex flex-col gap-4">
@@ -222,11 +261,7 @@ function DashboardInner() {
               <SyncTelescopeCard />
             </FlowSlot>
           </div>
-          <OrientationPanelCard />
-          <AlignmentPanelCard
-            launchTarget={flowStage === "launch" ? observeId : null}
-            onLaunched={clearFlow}
-          />
+          {paired && <AlignmentLink />}
         </div>
 
         {hasLocation && (
@@ -298,13 +333,5 @@ function DashboardInner() {
         initial={manualInitial}
       />
     </>
-  );
-}
-
-export default function Dashboard() {
-  return (
-    <PairingProvider>
-      <DashboardInner />
-    </PairingProvider>
   );
 }

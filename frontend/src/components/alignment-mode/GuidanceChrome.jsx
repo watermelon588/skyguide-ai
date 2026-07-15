@@ -33,7 +33,7 @@ function GuidanceChrome({
         type="button"
         onClick={onExit}
         aria-label="Exit Alignment Mode"
-        className="pointer-events-auto absolute left-4 top-4 flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-[#AAB4C5] backdrop-blur-3xl transition-colors hover:bg-white/10 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-400/60"
+        className="pointer-events-auto absolute left-4 top-4 flex h-11 w-11 items-center justify-center border border-line bg-surface-2 text-ink-2 transition-colors hover:bg-surface-3 hover:text-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
       >
         <FiX className="text-xl" />
       </button>
@@ -45,10 +45,10 @@ function GuidanceChrome({
         aria-label="Reduce motion"
         aria-pressed={reduceMotion}
         title="Reduce motion"
-        className={`pointer-events-auto absolute right-4 top-4 flex h-11 w-11 items-center justify-center rounded-xl border backdrop-blur-3xl transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-400/60 ${
+        className={`pointer-events-auto absolute right-4 top-4 flex h-11 w-11 items-center justify-center border transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 ${
           reduceMotion
-            ? "border-orange-400/40 bg-orange-500/15 text-orange-300"
-            : "border-white/10 bg-white/5 text-[#AAB4C5] hover:bg-white/10 hover:text-white"
+            ? "border-accent/40 bg-accent/15 text-accent-hi"
+            : "border-line bg-surface-2 text-ink-2 hover:bg-surface-3 hover:text-ink"
         }`}
       >
         <FiActivity className="text-lg" />
@@ -62,16 +62,16 @@ function GuidanceChrome({
             onClick={onSwitchTarget}
             onDoubleClick={onToggleTelemetry}
             title="Tap to switch target · double-tap for telemetry"
-            className="pointer-events-auto flex max-w-full items-center gap-2.5 rounded-2xl border border-white/10 bg-white/5 px-4 py-2 backdrop-blur-3xl transition-colors hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-400/60"
+            className="pointer-events-auto flex max-w-full items-center gap-2.5 border border-line bg-surface-2 px-4 py-2 transition-colors hover:bg-surface-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
           >
-            <span className="text-orange-400">
+            <span className="text-accent">
               <TargetGlyph objectType={target.object_type} className="h-4.5 w-4.5" />
             </span>
-            <span className="truncate text-sm font-semibold text-white">
+            <span className="truncate text-sm font-semibold text-ink">
               {target.name}
             </span>
             {target.catalog_id && (
-              <span className="shrink-0 font-mono text-[11px] text-[#6B7280]">
+              <span className="shrink-0 font-mono text-[11px] text-ink-3">
                 {target.catalog_id}
               </span>
             )}
@@ -82,7 +82,7 @@ function GuidanceChrome({
                   animate={{ scale: 1, opacity: 1 }}
                   exit={{ scale: 0, opacity: 0 }}
                   transition={{ duration: 0.25 }}
-                  className="h-2 w-2 shrink-0 rounded-full bg-[#22C55E]"
+                  className="h-2 w-2 shrink-0 bg-success"
                 />
               )}
             </AnimatePresence>
@@ -95,7 +95,7 @@ function GuidanceChrome({
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -6 }}
                 transition={{ duration: 0.3 }}
-                className="max-w-md rounded-lg border border-orange-400/20 bg-orange-500/10 px-3 py-1.5 text-center text-xs text-orange-300"
+                className="max-w-md border border-accent/30 bg-accent/10 px-3 py-1.5 text-center text-xs text-accent-hi"
               >
                 {banner}
               </motion.p>
@@ -118,7 +118,7 @@ function GuidanceChrome({
               exit={{ opacity: 0, y: -6 }}
               transition={{ duration: 0.25 }}
               className={`text-center text-xl font-medium ${
-                locked ? "text-[#22C55E]" : "text-white/90"
+                locked ? "text-success" : "text-ink/90"
               }`}
             >
               {copyLine}
@@ -139,7 +139,7 @@ function GuidanceChrome({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute bottom-3 right-4 font-mono text-[10px] text-[#6B7280]"
+            className="absolute bottom-3 right-4 font-mono text-[10px] text-ink-3"
           >
             {telemetry.angular != null ? `${telemetry.angular.toFixed(2)}°` : "—"}
             {" · "}

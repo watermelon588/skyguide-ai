@@ -191,6 +191,29 @@ const UserSchema = new mongoose.Schema(
       country: { type: String, default: null },
     },
 
+    // Geohash-4 cell (~39 km) of the observing location — the observer's
+    // regional chat room. Denormalized from location.coordinates on save so
+    // "who else is in my room" is an indexed lookup rather than a geo query.
+    // Null until a location is set; backfilled lazily by communityService.
+    geohash4: {
+      type: String,
+      default: null,
+      index: true,
+    },
+
+    // Notification settings (Feature 7). `digestHourLocal` is an hour in the
+    // observer's OWN timezone (location.timezone) — the digest cron converts,
+    // so 17:00 means 17:00 where they actually observe.
+    notificationPrefs: {
+      digest: { type: Boolean, default: true },
+      digestHourLocal: { type: Number, min: 0, max: 23, default: 17 },
+      greatNight: { type: Boolean, default: false },
+      issAlerts: { type: Boolean, default: false },
+      // Master switch for EMAIL delivery. In-app notifications are always
+      // written — turning this off silences the inbox, not the app.
+      email: { type: Boolean, default: true },
+    },
+
     telescopeProfile: {
       type: [TelescopeSchema],
       default: []
@@ -226,23 +249,34 @@ UserSchema.methods.comparePassword = async function (
     this.password
   );
 };
-// verification token user method
-
-UserSchema.methods.createVerificationToken =
+/**
+ * Issue a 6-digit email-verification code (OTP).
+ *
+ * Replaces the old emailed URL+token: a link had to point somewhere, and a link
+ * to the API rendered raw JSON while a link to the frontend forced a tab
+ * switch. A code the user types keeps the whole flow on the page they're
+ * already on.
+ *
+ * Only the HASH is stored — the plaintext code is returned once, for the email,
+ * and is never recoverable from the database. `randomInt` is the CSPRNG, not
+ * Math.random: a guessable OTP is a bypass of the whole check.
+ */
+UserSchema.methods.createVerificationCode =
   function () {
-    const token =
-      crypto.randomBytes(32).toString("hex");
+    const code = String(
+      crypto.randomInt(0, 1000000)
+    ).padStart(6, "0");
 
     this.verificationToken =
       crypto
         .createHash("sha256")
-        .update(token)
+        .update(code)
         .digest("hex");
 
     this.verificationTokenExpires =
       Date.now() + 10 * 60 * 1000;
 
-    return token;
+    return code;
   };
 
 // password reset token 

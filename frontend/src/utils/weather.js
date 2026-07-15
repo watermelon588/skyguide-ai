@@ -24,10 +24,10 @@ const QUALITY_STYLES = {
     dot: "bg-emerald-400",
   },
   "Very Good": {
-    text: "text-[#22C55E]",
-    bg: "bg-[#22C55E]/15",
-    border: "border-[#22C55E]/30",
-    dot: "bg-[#22C55E]",
+    text: "text-success",
+    bg: "bg-success/15",
+    border: "border-success/30",
+    dot: "bg-success",
   },
   Good: {
     text: "text-sky-300",
