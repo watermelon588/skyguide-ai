@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useChat } from "../../context/ChatContext";
 import { sendMessage } from "../../services/chat.service";
+import { useAppSnapshot } from "../../hooks/useAppSnapshot";
+import ActionButton from "./ActionButton";
 import { assets } from "../../assets/assets.js";
 import Button from "../ui/Button";
 import "../../styles/chatwindow.css";
@@ -25,6 +27,7 @@ export default function ChatWindow({ variant = "overlay" }) {
   } = useChat();
 
   const [input, setInput] = useState("");
+  const buildSnapshot = useAppSnapshot();
 
   const messagesEndRef = useRef(null);
 
@@ -54,9 +57,14 @@ export default function ChatWindow({ variant = "overlay" }) {
         },
       ];
 
-      const reply = await sendMessage(conversation);
+      // Astro sees what the user sees: a compact snapshot of the live app
+      // state rides along with every message.
+      const { reply, actions } = await sendMessage(
+        conversation,
+        buildSnapshot(),
+      );
 
-      addAssistantMessage(reply);
+      addAssistantMessage(reply, actions);
     } catch {
       addAssistantMessage("⚠️ Sorry, I couldn't reach mission control.");
     } finally {
@@ -107,8 +115,8 @@ export default function ChatWindow({ variant = "overlay" }) {
         {messages.map((message, index) => (
           <div
             key={index}
-            className={`flex ${
-              message.role === "user" ? "justify-end" : "justify-start"
+            className={`flex flex-col ${
+              message.role === "user" ? "items-end" : "items-start"
             }`}
           >
             <div
@@ -120,6 +128,14 @@ export default function ChatWindow({ variant = "overlay" }) {
             >
               {message.content}
             </div>
+            {/* Validated actions become buttons under the assistant bubble. */}
+            {message.role === "assistant" && message.actions?.length > 0 && (
+              <div className="mt-2 flex max-w-[80%] flex-wrap gap-2">
+                {message.actions.map((action, i) => (
+                  <ActionButton key={`${index}-${i}`} action={action} />
+                ))}
+              </div>
+            )}
           </div>
         ))}
 

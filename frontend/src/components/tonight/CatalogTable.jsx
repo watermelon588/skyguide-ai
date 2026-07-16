@@ -1,4 +1,6 @@
 import { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
+import { ArrowRight } from "lucide-react";
 
 import AddToPlanButton from "../plan/AddToPlanButton";
 import {
@@ -13,10 +15,11 @@ import {
 } from "./vocabulary";
 
 /**
- * The Deep-Sky Ledger — the full catalog as a dense, filterable, sortable
- * research table. Live geometry (score, alt/az) is merged in for objects
- * above the horizon; the rest can be shown with the "below horizon" toggle.
- * Clicking a row opens the object dossier.
+ * The Deep-Sky Ledger — tonight's top-ranked targets as a dense, filterable,
+ * sortable table with live geometry (score, alt/az, set times). This is the
+ * night's best hundred, not the whole catalog: the full ~13k-object dataset
+ * lives on the Explore page, linked from the header. Clicking a row opens the
+ * object dossier.
  */
 
 const COLUMNS = [
@@ -45,14 +48,13 @@ function compare(a, b, key, direction) {
   return direction === "asc" ? result : -result;
 }
 
-export default function CatalogTable({ targets, belowHorizon, onSelect }) {
+export default function CatalogTable({ targets, onSelect }) {
   const [query, setQuery] = useState("");
   const [type, setType] = useState("all");
-  const [showBelow, setShowBelow] = useState(false);
   const [sort, setSort] = useState({ key: "visibility_score", direction: "desc" });
 
   const rows = useMemo(() => {
-    const pool = showBelow ? [...targets, ...belowHorizon] : targets;
+    const pool = targets;
     const q = query.trim().toLowerCase();
     const filtered = pool.filter((row) => {
       if (type !== "all" && typeKey(row.object_type) !== type) return false;
@@ -62,7 +64,7 @@ export default function CatalogTable({ targets, belowHorizon, onSelect }) {
         .some((field) => field.toLowerCase().includes(q));
     });
     return [...filtered].sort((a, b) => compare(a, b, sort.key, sort.direction));
-  }, [targets, belowHorizon, query, type, showBelow, sort]);
+  }, [targets, query, type, sort]);
 
   const onHeaderClick = (column) => {
     if (!column.sortable) return;
@@ -81,12 +83,16 @@ export default function CatalogTable({ targets, belowHorizon, onSelect }) {
             The Deep-Sky Ledger
           </p>
           <h2 className="mt-2 text-3xl font-bold text-ink sm:text-4xl">
-            Full catalog, live geometry
+            Tonight's top targets, live
           </h2>
         </div>
-        <p className="text-xs text-ink-3">
-          {rows.length} object{rows.length === 1 ? "" : "s"} shown
-        </p>
+        <Link
+          to="/explore"
+          className="group inline-flex items-center gap-2 border border-line bg-surface-2 px-4 py-2.5 text-sm font-medium text-ink transition-colors hover:border-accent hover:text-accent"
+        >
+          Explore all 13,000+ objects
+          <ArrowRight size={15} className="transition-transform group-hover:translate-x-0.5" />
+        </Link>
       </div>
 
       {/* Controls */}
@@ -116,15 +122,9 @@ export default function CatalogTable({ targets, belowHorizon, onSelect }) {
             ),
           )}
         </div>
-        <label className="ml-auto flex cursor-pointer items-center gap-2 text-xs text-ink-2">
-          <input
-            type="checkbox"
-            checked={showBelow}
-            onChange={(e) => setShowBelow(e.target.checked)}
-            className="h-3.5 w-3.5 accent-[#0049CD]"
-          />
-          Include below-horizon
-        </label>
+        <p className="ml-auto text-xs text-ink-3">
+          {rows.length} shown · <Link to="/explore" className="text-accent hover:underline">browse all →</Link>
+        </p>
       </div>
 
       {/* Table */}

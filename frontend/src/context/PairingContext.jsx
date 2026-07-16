@@ -308,3 +308,12 @@ export function usePairing() {
   }
   return ctx;
 }
+
+/**
+ * Non-throwing variant for components that render both inside and outside
+ * the provider (the chat assistant lives on the landing page too). Returns
+ * null when no provider is above — callers treat that as "not paired".
+ */
+export function usePairingMaybe() {
+  return useContext(PairingContext);
+}

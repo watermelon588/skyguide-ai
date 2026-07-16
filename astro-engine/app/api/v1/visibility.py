@@ -31,6 +31,8 @@ async def _observable(payload: VisibilityRequest) -> dict:
         object_type=payload.type,
         catalog=payload.catalog,
         constellation=payload.constellation,
+        max_magnitude=payload.max_magnitude,
+        limit=payload.limit,
     )
 
 

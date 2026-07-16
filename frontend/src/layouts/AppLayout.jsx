@@ -21,7 +21,11 @@ export default function AppLayout({ children }) {
       </MainContent>
 
       <AiSidebar />
-      <ChatWidget />
+      {/* Desktop-only floating launcher; the AiSidebar overlay still opens from
+          the navbar's "Ask Astro" on phones. */}
+      <div className="hidden lg:block">
+        <ChatWidget />
+      </div>
     </div>
   );
 }

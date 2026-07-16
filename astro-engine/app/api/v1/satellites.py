@@ -5,6 +5,10 @@
 Predicts passes of a station (ISS by default) above the observer within a
 look-ahead window. TLEs come from Celestrak with an on-disk cache; see
 ``satellite_service`` for the freshness policy.
+
+Passes are annotated with ``visible`` (station sunlit + sky dark); pass
+``visible_only`` to get just those. The default is the raw geometry, invisible
+daytime passes included.
 """
 
 from fastapi import APIRouter
@@ -26,8 +30,10 @@ async def passes(payload: SatellitePassRequest) -> SatellitePassResponse:
         time=parse_time(payload.time),
         hours=payload.hours,
         satellite=payload.satellite,
+        visible_only=payload.visible_only,
     )
+    qualifier = "visible pass(es)" if data["visible_only"] else "pass(es)"
     return SatellitePassResponse(
-        message=f"{data['count']} pass(es) of {data['satellite']} in the next {data['window_hours']}h.",
+        message=f"{data['count']} {qualifier} of {data['satellite']} in the next {data['window_hours']}h.",
         data=data,
     )

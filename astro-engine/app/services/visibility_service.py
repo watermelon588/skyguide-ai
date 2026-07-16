@@ -31,7 +31,7 @@ from astropy.time import Time
 
 from app.core.logging import get_logger
 from app.services import catalog_service, coordinate_service, observer_service
-from app.utils.time_utils import iso_utc, local_hhmm, resolve_timezone
+from app.utils.time_utils import iso_utc, local_hhmm_batch, resolve_timezone
 
 logger = get_logger(__name__)
 
@@ -163,24 +163,36 @@ async def compute_observable(
     object_type: str | None = None,
     catalog: str | None = None,
     constellation: str | None = None,
+    max_magnitude: float | None = None,
+    limit: int | None = None,
 ) -> dict:
     """Return observer metadata, a Moon summary, and the ranked list of visible
     objects — each carrying live geometry (alt/az/HA), airmass, lunar
-    interference, and its next rise/transit/set times.
+    interference, next rise/transit/set times, and its display fields
+    (magnitude, size, difficulty, description, thumbnail).
 
     An object is 'visible' when its altitude is above the horizon (> 0 deg) and
     at or above ``minimum_altitude``/``minimum_score``. Objects below the horizon
     are discarded. An empty result is a success, not an error.
+
+    Scaling (the catalog is ~13k objects, not the original 110):
+        ``max_magnitude`` filters the candidate pool at the database level, so
+        only objects worth an observer's time are transformed and returned —
+        both a speed win and a relevance one (the top of the list stops being
+        anonymous mag-15 galaxies that happen to sit near the zenith).
+        ``limit`` caps the ranked result. Neither is applied by default, but
+        every UI/digest caller passes them; the plan-urgency alert leaves
+        ``limit`` open because it looks objects up by id.
     """
     t = time if time is not None else Time.now()
 
     location = observer_service.build_observer(latitude, longitude, elevation)
     logger.info("Observer Created -> lat=%.4f lon=%.4f elev=%.1fm", latitude, longitude, elevation)
 
-    # Load candidate objects (DB-level filters applied here).
-    docs, _ = await catalog_service.get_all_objects(
-        page=1,
-        limit=100_000,
+    # Lean, magnitude-filtered candidate load (see catalog_service). Projected to
+    # scoring + display fields only.
+    docs = await catalog_service.load_visibility_candidates(
+        max_magnitude=max_magnitude,
         catalog=catalog,
         object_type=object_type,
         constellation=constellation,
@@ -220,6 +232,13 @@ async def compute_observable(
     )
     events = coordinate_service.rise_transit_set_batch(ra, dec, location, t)
     tzinfo = resolve_timezone(timezone)
+
+    # Format all rise/transit/set times in ONE vectorised conversion each, not
+    # per object inside the loop — the per-element Time->datetime conversion was
+    # the endpoint's dominant cost at catalog scale.
+    transit_local = local_hhmm_batch(events["transit"], tzinfo)
+    set_local = local_hhmm_batch(events["set"], tzinfo)
+    rise_local = local_hhmm_batch(events["rise"], tzinfo)
     logger.info("Visibility Calculated -> %d objects", len(docs))
 
     visible: list[dict] = []
@@ -246,6 +265,13 @@ async def compute_observable(
             "name": doc.get("name"),
             "object_type": doc.get("object_type"),
             "constellation": doc.get("constellation"),
+            # Display fields, carried through so /tonight needs no second catalog
+            # fetch to merge (it can't — the catalog is 13k objects now).
+            "magnitude": magnitude,
+            "angular_size_arcmin": size,
+            "difficulty": doc.get("classification", {}).get("difficulty"),
+            "short_description": doc.get("content", {}).get("short_description"),
+            "thumbnail": doc.get("media", {}).get("thumbnail"),
             "altitude_deg": round(alt, 2),
             "azimuth_deg": round(float(azimuths[i]), 2),
             "hour_angle_hours": round(float(ha_hours[i]), 2),
@@ -257,9 +283,9 @@ async def compute_observable(
             # Next events (local HH:MM in the observer's timezone). A visible
             # object's "rise" is tomorrow's — "set"/"transit" are the useful ones.
             "circumpolar": circumpolar,
-            "transit": local_hhmm(events["transit"][i], tzinfo),
-            "set": None if circumpolar else local_hhmm(events["set"][i], tzinfo),
-            "rise": None if circumpolar else local_hhmm(events["rise"][i], tzinfo),
+            "transit": transit_local[i],
+            "set": None if circumpolar else set_local[i],
+            "rise": None if circumpolar else rise_local[i],
             "hours_until_set": (
                 None if circumpolar else round(float(events["hours_to_set"][i]), 1)
             ),
@@ -269,6 +295,11 @@ async def compute_observable(
         })
 
     visible.sort(key=_rank_key)
+    # Cap AFTER ranking so a limited result is genuinely the best N, not the
+    # first N the database happened to return.
+    total_visible = len(visible)
+    if limit is not None and limit >= 0:
+        visible = visible[:limit]
     for obj in visible:
         obj.pop("_magnitude", None)
         obj.pop("_size", None)
@@ -281,8 +312,8 @@ async def compute_observable(
     }
 
     logger.info(
-        "Visible Objects -> %d (moon alt=%.1f illum=%.0f%%)",
-        len(visible), moon["altitude_deg"], moon["illumination_fraction"] * 100,
+        "Visible Objects -> %d of %d up (moon alt=%.1f illum=%.0f%%)",
+        len(visible), total_visible, moon["altitude_deg"], moon["illumination_fraction"] * 100,
     )
     if visible:
         top = visible[0]

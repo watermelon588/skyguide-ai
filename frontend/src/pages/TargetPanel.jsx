@@ -4,6 +4,7 @@ import Starfield from "../components/tonight/Starfield";
 import SpotlightCard from "../components/tonight/fx/SpotlightCard";
 import TargetHero from "../components/target/TargetHero";
 import VisibilityStrip from "../components/target/VisibilityStrip";
+import SimilarObjects from "../components/target/SimilarObjects";
 import { useTargetDetail } from "../hooks/useTargetDetail";
 import {
   formatDec,
@@ -37,7 +38,7 @@ function Shell({ children }) {
           Dashboard
         </Link>
       </nav>
-      <main className="relative z-10 mx-auto flex w-full max-w-5xl flex-col gap-5 px-6 pb-24">
+      <main className="relative z-10 mx-auto flex w-full max-w-6xl flex-col gap-5 px-6 pb-24">
         {children}
       </main>
     </div>
@@ -123,16 +124,30 @@ export default function TargetPanel() {
       <TargetHero target={target} />
       <VisibilityStrip target={target} />
 
-      <div className="grid gap-5 lg:grid-cols-[1.5fr_1fr]">
-        {/* Story: description + tips */}
+      {/* Two panels: the object's story on the left, a navigable rail on the
+          right (data sheet, related objects to hop to, what's coming). */}
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)]">
+        {/* --- Main: description + tips --- */}
         <SpotlightCard className="p-6">
           <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-accent">
             The object
           </p>
           {target.description ? (
-            <p className="mt-3 leading-relaxed text-ink-2">
-              {target.description}
-            </p>
+            <>
+              <p className="mt-3 leading-relaxed text-ink-2">
+                {target.description}
+              </p>
+              {target.attribution && (
+                <a
+                  href={target.attribution}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-2 inline-block text-[11px] text-ink-3 transition-colors hover:text-accent"
+                >
+                  Description via Wikipedia (CC BY-SA) →
+                </a>
+              )}
+            </>
           ) : (
             <p className="mt-3 text-sm text-ink-3">
               No description in the catalog yet.
@@ -155,14 +170,13 @@ export default function TargetPanel() {
               </ul>
             </>
           )}
-        </SpotlightCard>
 
-        {/* Data sheet */}
-        <SpotlightCard className="p-6">
-          <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-accent">
+          {/* Data sheet lives under the story on the wide side — compact but
+              still comfortably readable at this width. */}
+          <p className="mt-8 text-[11px] font-medium uppercase tracking-[0.3em] text-accent">
             Data sheet
           </p>
-          <dl className="mt-4 space-y-1.5">
+          <dl className="mt-4 grid gap-x-8 gap-y-1.5 sm:grid-cols-2">
             {facts.map(([label, value]) => (
               <div
                 key={label}
@@ -176,12 +190,41 @@ export default function TargetPanel() {
             ))}
           </dl>
         </SpotlightCard>
-      </div>
 
-      <p className="text-center text-xs text-ink-3">
-        Coming to this panel: AI analysis, why-observe-tonight, and your
-        observation history with this object.
-      </p>
+        {/* --- Rail: hop to related objects + what's coming --- */}
+        <aside className="flex flex-col gap-5 lg:sticky lg:top-5 lg:h-fit">
+          <SpotlightCard className="p-5">
+            <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-accent">
+              Related objects
+            </p>
+            <p className="mt-1 mb-4 text-xs text-ink-3">
+              Same type or nearby in {target.constellation || "the sky"} — jump
+              straight across.
+            </p>
+            <SimilarObjects target={target} />
+          </SpotlightCard>
+
+          <SpotlightCard className="p-5">
+            <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-ink-3">
+              Coming to this panel
+            </p>
+            <ul className="mt-3 space-y-2.5 text-sm text-ink-2">
+              <li className="flex items-start gap-2.5">
+                <span className="mt-1.5 h-1.5 w-1.5 shrink-0 bg-accent/50" />
+                AI analysis of this object for your setup
+              </li>
+              <li className="flex items-start gap-2.5">
+                <span className="mt-1.5 h-1.5 w-1.5 shrink-0 bg-accent/50" />
+                Why it's worth observing tonight
+              </li>
+              <li className="flex items-start gap-2.5">
+                <span className="mt-1.5 h-1.5 w-1.5 shrink-0 bg-accent/50" />
+                Your observation history with it
+              </li>
+            </ul>
+          </SpotlightCard>
+        </aside>
+      </div>
     </Shell>
   );
 }

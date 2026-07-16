@@ -31,11 +31,17 @@ class Content(BaseModel):
     ai_description: str | None = None
     observation_tips: list[str] = Field(default_factory=list)
     recommended_telescopes: list[str] = Field(default_factory=list)
+    # When the description was taken from Wikipedia (CC BY-SA), the page URL —
+    # both for attribution and for a "read more" link on the target panel.
+    attribution: str | None = None
 
 
 class Media(BaseModel):
     thumbnail: str | None = None
     hero_image: str | None = None
+    # Image provenance: "Wikimedia Commons" for real photos, "DSS2 (CDS)" for the
+    # survey cutouts. Absent on objects that have no imagery.
+    credit: str | None = None
 
 
 class CelestialObject(BaseModel):

@@ -42,7 +42,14 @@ exports.markAllRead = async (req, res, next) => {
   }
 };
 
-const BOOLEANS = ["digest", "greatNight", "issAlerts", "email"];
+const BOOLEANS = [
+  "digest",
+  "greatNight",
+  "issAlerts",
+  "planUrgency",
+  "moonEvents",
+  "email",
+];
 
 // PATCH /api/v1/notifications/preferences
 exports.updatePreferences = async (req, res, next) => {

@@ -39,6 +39,11 @@ async def list_objects(
     type: str | None = Query(None, description="Filter by object type, e.g. 'Galaxy'"),
     constellation: str | None = Query(None, description="Filter by constellation, e.g. 'Orion'"),
     q: str | None = Query(None, description="Search name / alias / catalog id"),
+    sort: str = Query(
+        "catalog_id",
+        pattern="^(catalog_id|magnitude)$",
+        description="Ordering: 'catalog_id' (default) or 'magnitude' (brightest first)",
+    ),
 ) -> CatalogListResponse:
     objects, total = await catalog_service.get_all_objects(
         page=page,
@@ -47,6 +52,7 @@ async def list_objects(
         object_type=type,
         constellation=constellation,
         q=q,
+        sort=sort,
     )
     return CatalogListResponse(
         message="Catalog objects retrieved successfully.",
@@ -64,6 +70,15 @@ async def search(
         message=f"Found {len(results)} object(s) matching '{q}'.",
         data={"query": q, "count": len(results), "objects": results},
     )
+
+
+@router.get("/stats", response_model=SuccessResponse, summary="Catalog statistics")
+async def stats() -> SuccessResponse:
+    """Aggregate counts (by catalog/type/constellation/magnitude) for the
+    Explore page's charts. Declared before ``/{catalog_id}`` so the literal
+    'stats' path is not captured as an object id."""
+    data = await catalog_service.get_catalog_stats()
+    return SuccessResponse(message="Catalog statistics.", data=data)
 
 
 @router.get("/{catalog_id}", response_model=CatalogObjectResponse, summary="Get object by id")

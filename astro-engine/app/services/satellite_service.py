@@ -4,18 +4,28 @@ Skyfield (SGP4) propagates station TLEs from Celestrak and finds every pass
 above a minimum altitude inside a look-ahead window. Passes are the classic
 rise → culminate → set triples, reported in the observer's local time.
 
+A pass being *geometrically* above the horizon is not the same as a pass being
+*visible*: the station shines by reflected sunlight, so it can only be seen when
+it is still in sunlight while the ground below has fallen dark. Every pass is
+therefore annotated with ``sunlit``, ``observer_dark`` and ``visible`` — a
+midday overhead pass is real geometry and a waste of a coat, and the caller
+must be able to tell the two apart.
+
 Network policy: the ONLY network dependency is the TLE download, which is
 cached on disk (``settings.TLE_CACHE_PATH``). A fresh cache is used silently;
 a stale cache is still used (with a warning) when Celestrak is unreachable —
 TLEs a few days old shift ISS pass times by seconds, not minutes. No cache
 and no network is a clean 503. Everything else is offline (Skyfield's builtin
-timescale — no deltat download).
+timescale, Astropy's builtin solar ephemeris — no downloads).
 """
 
 import time as _time
 from pathlib import Path
 
+import astropy.units as u
 import httpx
+import numpy as np
+from astropy.coordinates import AltAz, EarthLocation, get_body
 from astropy.time import Time
 from skyfield.api import EarthSatellite, load, wgs84
 
@@ -30,6 +40,12 @@ logger = get_logger(__name__)
 MIN_PASS_ALTITUDE_DEG = 10.0
 #: Longest allowed look-ahead — TLE accuracy decays beyond a few days.
 MAX_WINDOW_HOURS = 72
+#: The sky must be at least this dark for a pass to stand out. Civil twilight is
+#: the honest boundary: the ISS is bright (mag -3 at best), so it emerges well
+#: before full astronomical darkness.
+OBSERVER_DARK_SUN_ALT_DEG = -6.0
+#: Equatorial radius (km, WGS84) — the shadow cylinder's radius.
+EARTH_RADIUS_KM = 6378.137
 
 _timescale = load.timescale(builtin=True)
 
@@ -98,6 +114,62 @@ def _match_satellite(
     )
 
 
+def _sun_unit_vector(t: Time) -> np.ndarray:
+    """Unit vector from the Earth's centre toward the Sun, in GCRS."""
+    sun = get_body("sun", t).cartesian.xyz.to_value(u.km)
+    vector = np.asarray(sun, dtype=float)
+    return vector / np.linalg.norm(vector)
+
+
+def _is_sunlit(position_km: np.ndarray, sun_unit: np.ndarray) -> bool:
+    """Is a satellite at ``position_km`` (GCRS) out of the Earth's shadow?
+
+    A cylindrical shadow model: project the satellite onto the Earth–Sun axis;
+    it is eclipsed only when it lies on the anti-sunward side AND within one
+    Earth radius of that axis.
+
+    This ignores the penumbra and the Sun's angular size, which blur the
+    terminator by a few seconds of pass time — irrelevant next to the minutes-long
+    passes this is used to judge, and far cheaper than a full shadow model.
+    """
+    along_axis = float(np.dot(position_km, sun_unit))
+    if along_axis >= 0.0:
+        return True  # sunward hemisphere — never in shadow
+    perpendicular = float(np.linalg.norm(position_km - along_axis * sun_unit))
+    return perpendicular > EARTH_RADIUS_KM
+
+
+def _sun_altitude_deg(location: EarthLocation, t: Time) -> float:
+    """The Sun's altitude at the observer (degrees; negative = below horizon)."""
+    altaz = get_body("sun", t, location).transform_to(
+        AltAz(obstime=t, location=location)
+    )
+    return float(altaz.alt.deg)
+
+
+def _assess_visibility(
+    sat: EarthSatellite, location: EarthLocation, peak_utc: str
+) -> dict:
+    """Whether a pass is actually *seeable*, judged at its peak.
+
+    Peak is the representative instant: it is when the station is highest and
+    brightest, and it is the moment someone told "look up at 21:14" would look.
+    A pass that slides into the Earth's shadow on the way down is still a real
+    sighting, so peak — not "sunlit throughout" — is the right test.
+    """
+    t = Time(peak_utc.rstrip("Z"), scale="utc")
+    position_km = np.asarray(sat.at(_timescale.from_astropy(t)).position.km, dtype=float)
+
+    sunlit = _is_sunlit(position_km, _sun_unit_vector(t))
+    observer_dark = _sun_altitude_deg(location, t) <= OBSERVER_DARK_SUN_ALT_DEG
+
+    return {
+        "sunlit": sunlit,
+        "observer_dark": observer_dark,
+        "visible": sunlit and observer_dark,
+    }
+
+
 async def compute_passes(
     latitude: float,
     longitude: float,
@@ -106,9 +178,15 @@ async def compute_passes(
     time: Time | None = None,
     hours: int = 24,
     satellite: str = "ISS",
+    visible_only: bool = False,
 ) -> dict:
     """Every pass of ``satellite`` above MIN_PASS_ALTITUDE_DEG within
     ``hours``, as rise/culminate/set events with peak altitude and duration.
+
+    Each pass carries ``sunlit`` / ``observer_dark`` / ``visible``. Set
+    ``visible_only`` to drop the ones nobody could see; the default returns the
+    full geometry, because "the ISS is overhead but invisible" is a legitimate
+    thing for a caller to know.
     """
     hours = max(1, min(int(hours), MAX_WINDOW_HOURS))
     start = time if time is not None else Time.now()
@@ -117,6 +195,9 @@ async def compute_passes(
     sat = _match_satellite(satellites, satellite)
 
     observer = wgs84.latlon(latitude, longitude, elevation_m=elevation)
+    location = EarthLocation(
+        lat=latitude * u.deg, lon=longitude * u.deg, height=elevation * u.m
+    )
     t0 = _timescale.from_astropy(start)
     t1 = _timescale.from_astropy(start + hours / 24.0)
 
@@ -151,18 +232,29 @@ async def compute_passes(
                     float((set_t - rise_t).sec) / 60.0, 1
                 )
                 current["max_altitude_deg"] = current["peak"]["altitude_deg"]
+                current.update(
+                    _assess_visibility(sat, location, current["peak"]["utc"])
+                )
                 passes.append(current)
             current = None
 
+    found = len(passes)
+    visible = sum(1 for p in passes if p["visible"])
+    if visible_only:
+        passes = [p for p in passes if p["visible"]]
+
     logger.info(
-        "Passes Calculated -> %s: %d pass(es) in %dh for lat=%.4f lon=%.4f",
-        sat.name, len(passes), hours, latitude, longitude,
+        "Passes Calculated -> %s: %d pass(es) in %dh for lat=%.4f lon=%.4f "
+        "| %d visible%s",
+        sat.name, found, hours, latitude, longitude, visible,
+        " (returning those only)" if visible_only else "",
     )
 
     return {
         "satellite": sat.name,
         "window_hours": hours,
         "minimum_altitude_deg": MIN_PASS_ALTITUDE_DEG,
+        "visible_only": visible_only,
         "count": len(passes),
         "passes": passes,
     }

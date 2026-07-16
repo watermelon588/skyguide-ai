@@ -1,11 +1,13 @@
-import { useNavigate } from "react-router-dom";
+import { useState } from "react";
 import { motion } from "framer-motion";
-import { Crosshair } from "lucide-react";
+import { Crosshair, Expand } from "lucide-react";
 
 import ScoreRing from "../tonight/fx/ScoreRing";
 import AddToPlanButton from "../plan/AddToPlanButton";
+import ImageLightbox from "./ImageLightbox";
 import { typeMeta } from "../tonight/vocabulary";
 import { usePairing } from "../../context/PairingContext";
+import { useObserveTarget } from "../../hooks/useObserveTarget";
 
 /**
  * Target Panel hero — the object's identity plus its two actions
@@ -15,37 +17,42 @@ import { usePairing } from "../../context/PairingContext";
  * `media.hero_image`/`thumbnail` when the catalog gains assets; until then
  * the fallback is an honest type-glyph gradient, never stock placeholder art.
  *
- * Start Observing takes the SHORTEST path to guidance. If the phone is already
- * paired there is no setup left to do, so it goes straight to /alignment with
- * the target pre-set — one click from "this looks interesting" to a telescope
- * being guided, with nobody typing a catalog id. Otherwise it falls back to the
- * dashboard's guided flow (`/dashboard?observe=<id>`), which walks telescope →
- * pairing and then hands off here anyway.
+ * Start Observing routes through useObserveTarget — the shared "shortest path
+ * to guidance" (paired -> /alignment pre-aimed; otherwise the dashboard's
+ * guided flow). One click, nobody types a catalog id.
  */
 export default function TargetHero({ target }) {
-  const navigate = useNavigate();
   const { pairing } = usePairing();
+  const observeTarget = useObserveTarget();
   const meta = typeMeta(target.object_type);
   const image = target.hero_image || target.thumbnail || null;
+  const [zoomed, setZoomed] = useState(false);
 
   const paired = pairing.status === "connected";
-  const startObserving = () =>
-    navigate(
-      paired
-        ? `/alignment?target=${encodeURIComponent(target.catalog_id)}`
-        : `/dashboard?observe=${encodeURIComponent(target.catalog_id)}`,
-    );
+  const startObserving = () => observeTarget(target.catalog_id);
 
   return (
     <section className="overflow-hidden border border-line bg-surface-2">
       {/* Visual band */}
       <div className="relative flex h-56 items-center justify-center overflow-hidden sm:h-72">
         {image ? (
-          <img
-            src={image}
-            alt={target.name || target.catalog_id}
-            className="absolute inset-0 h-full w-full object-cover"
-          />
+          <button
+            type="button"
+            onClick={() => setZoomed(true)}
+            aria-label="Expand image"
+            className="group absolute inset-0 h-full w-full cursor-zoom-in"
+          >
+            <img
+              src={image}
+              alt={target.name || target.catalog_id}
+              decoding="async"
+              className="absolute inset-0 h-full w-full object-cover"
+            />
+            {/* Expand affordance — appears on hover, always tappable on touch. */}
+            <span className="absolute right-2 top-2 flex h-9 w-9 items-center justify-center border border-line bg-surface-2/80 text-ink-2 opacity-0 transition-opacity group-hover:opacity-100 sm:opacity-70">
+              <Expand size={16} />
+            </span>
+          </button>
         ) : (
           <>
             <div className="absolute inset-0 bg-gradient-to-br from-surface-3 via-surface-1 to-bg" />
@@ -57,8 +64,21 @@ export default function TargetHero({ target }) {
             </span>
           </>
         )}
-        <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-surface-1 to-transparent" />
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-surface-1 to-transparent" />
+        {image && target.imageCredit && (
+          <span className="pointer-events-none absolute bottom-1.5 right-2 text-[10px] text-ink-3/80">
+            {target.imageCredit}
+          </span>
+        )}
       </div>
+
+      <ImageLightbox
+        src={image}
+        alt={target.name || target.catalog_id}
+        credit={target.imageCredit}
+        open={zoomed}
+        onClose={() => setZoomed(false)}
+      />
 
       {/* Identity + actions */}
       <div className="flex flex-wrap items-end justify-between gap-6 p-6 sm:p-8">

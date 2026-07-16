@@ -95,7 +95,7 @@ export default function TonightHero({
 
       <h1
         aria-label={TITLE}
-        className="select-none text-[clamp(4.5rem,16vw,13rem)] font-bold leading-[0.95] tracking-tight text-ink"
+        className="select-none text-[clamp(3rem,9vw,7rem)] font-bold leading-[0.95] tracking-tight text-ink"
       >
         {TITLE.split("").map((char, i) => (
           <span key={i} className="inline-block overflow-hidden align-bottom">

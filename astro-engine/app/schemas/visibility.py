@@ -21,6 +21,19 @@ class VisibilityRequest(BaseModel):
     type: str | None = Field(None, description="Filter by object type, e.g. 'Galaxy'")
     catalog: str | None = Field(None, description="Filter by catalog, e.g. 'Messier'")
     constellation: str | None = Field(None, description="Filter by constellation, e.g. 'Orion'")
+    max_magnitude: float | None = Field(
+        None, ge=-2, le=25,
+        description=(
+            "Only objects at least this bright (visual magnitude). Filters the "
+            "candidate pool before scoring — recommended for the ~13k catalog so "
+            "the result is bright, observable targets rather than the faint tail. "
+            "Objects with no measured magnitude are excluded when this is set."
+        ),
+    )
+    limit: int | None = Field(
+        None, ge=1, le=5000,
+        description="Cap on returned objects, taken from the TOP of the ranking.",
+    )
 
     model_config = {
         "json_schema_extra": {
@@ -39,6 +52,13 @@ class VisibleObject(BaseModel):
     name: str | None = None
     object_type: str | None = None
     constellation: str | None = None
+    # Display fields, so the client renders a target without a second catalog
+    # fetch (the catalog is too large to merge client-side).
+    magnitude: float | None = None
+    angular_size_arcmin: float | None = None
+    difficulty: str | None = None
+    short_description: str | None = None
+    thumbnail: str | None = None
     altitude_deg: float
     azimuth_deg: float
     hour_angle_hours: float

@@ -9,6 +9,9 @@ import ObserverCard from "../components/dashboard/ObserverCard";
 import TelescopeCard from "../components/dashboard/TelescopeCard";
 import SyncTelescopeCard from "../components/dashboard/SyncTelescopeCard";
 import WelcomeHeader from "../components/dashboard/WelcomeHeader";
+import BriefCard from "../components/dashboard/BriefCard";
+import RecommendedCard from "../components/dashboard/RecommendedCard";
+import SkyQualityCard from "../components/dashboard/SkyQualityCard";
 import TonightGlance from "../components/dashboard/TonightGlance";
 import PlannerCard from "../components/dashboard/PlannerCard";
 import MoonPanel from "../components/tonight/MoonPanel";
@@ -270,6 +273,10 @@ export default function Dashboard() {
             <SectionLabel hint="refreshed every 5 minutes">
               Tonight at a glance
             </SectionLabel>
+
+            {/* Tonight's Brief — the LLM's 5-sentence plan (Feature 8b). */}
+            <BriefCard />
+
             <div className="grid gap-4 xl:grid-cols-3">
               <motion.div custom={0} variants={cell} initial="hidden" animate="show" className="min-w-0 xl:col-span-2">
                 <TonightGlance
@@ -287,7 +294,14 @@ export default function Dashboard() {
                   <div className="h-full min-h-[200px] animate-pulse border border-line bg-surface-2" />
                 )}
               </motion.div>
+              {/* Recommended for you + Sky quality (Feature 8a + add-on). */}
               <motion.div custom={2} variants={cell} initial="hidden" animate="show" className="min-w-0 xl:col-span-2">
+                <RecommendedCard />
+              </motion.div>
+              <motion.div custom={3} variants={cell} initial="hidden" animate="show" className="min-w-0">
+                <SkyQualityCard />
+              </motion.div>
+              <motion.div custom={4} variants={cell} initial="hidden" animate="show" className="min-w-0 xl:col-span-2">
                 <SkyDome
                   compact
                   targets={tonight.targets}
@@ -295,7 +309,7 @@ export default function Dashboard() {
                   onSelect={(id) => navigate(`/tonight/${id}`)}
                 />
               </motion.div>
-              <motion.div custom={3} variants={cell} initial="hidden" animate="show" className="min-w-0">
+              <motion.div custom={5} variants={cell} initial="hidden" animate="show" className="min-w-0">
                 {tonight.conditions ? (
                   <ConditionsPanel
                     weather={tonight.weather}
@@ -306,7 +320,7 @@ export default function Dashboard() {
                 )}
               </motion.div>
               {/* 7 · The plan — every queued target links to its panel. */}
-              <motion.div custom={4} variants={cell} initial="hidden" animate="show" className="min-w-0 xl:col-span-3">
+              <motion.div custom={6} variants={cell} initial="hidden" animate="show" className="min-w-0 xl:col-span-3">
                 <PlannerCard
                   targets={tonight.targets}
                   catalogTotal={

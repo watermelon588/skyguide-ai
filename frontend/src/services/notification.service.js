@@ -47,7 +47,7 @@ export const fetchNotificationPrefs = async () => {
   return response.data.data;
 };
 
-/** @param {{digest?:boolean, digestHourLocal?:number, greatNight?:boolean, issAlerts?:boolean, email?:boolean}} changes */
+/** @param {{digest?:boolean, digestHourLocal?:number, greatNight?:boolean, issAlerts?:boolean, planUrgency?:boolean, moonEvents?:boolean, email?:boolean}} changes */
 export const updateNotificationPrefs = async (changes) => {
   const response = await axios.patch(
     `${API}/api/v1/notifications/preferences`,

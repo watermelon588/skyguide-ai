@@ -63,6 +63,23 @@ def local_hhmm(t: Time | None, tzinfo) -> str | None:
     return dt.strftime("%H:%M")
 
 
+def local_hhmm_batch(times: Time, tzinfo) -> list[str | None]:
+    """Vectorised ``local_hhmm`` for a whole ``Time`` array.
+
+    ``Time.to_datetime`` is an ERFA conversion; doing it per element (once per
+    object, three times over) dominated ``/visibility/observable`` once the
+    catalog grew — thousands of individually-slow calls. Converting the whole
+    array in ONE call and then doing the cheap pure-Python tz-shift per element
+    turns seconds back into milliseconds.
+    """
+    import numpy as np
+
+    if times is None:
+        return []
+    datetimes = np.atleast_1d(times.utc.to_datetime(timezone=_tz.utc))
+    return [dt.astimezone(tzinfo).strftime("%H:%M") for dt in datetimes]
+
+
 def iso_utc(t: Time | None) -> str | None:
     """Format an Astropy ``Time`` as an ISO-8601 UTC string with 'Z' suffix."""
     if t is None:

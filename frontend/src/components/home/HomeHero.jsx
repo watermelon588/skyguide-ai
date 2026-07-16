@@ -58,8 +58,8 @@ export default function HomeHero() {
   );
 
   const chips = [
-    "110+ deep-sky objects",
-    "Live visibility scoring",
+    "13,000+ deep-sky objects",
+    "Personalized to your sky",
     "Phone-guided alignment",
   ];
 

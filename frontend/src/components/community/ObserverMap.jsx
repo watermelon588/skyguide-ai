@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
-import { Users, Layers } from "lucide-react";
+import { Users, Layers, Moon } from "lucide-react";
 
-import { MAP_STYLE_DARK } from "./mapStyle";
+import { MAP_STYLE_DARK, LP_SOURCE } from "./mapStyle";
 
 /**
  * The community map — observers near you, plotted honestly.
@@ -99,6 +99,7 @@ export default function ObserverMap({ observers, center, radiusKm, onSelect }) {
   const [ready, setReady] = useState(false);
   const [failed, setFailed] = useState(false);
   const [supported] = useState(webglAvailable);
+  const [showLp, setShowLp] = useState(false);
 
   const groups = useMemo(() => groupByPoint(observers), [observers]);
 
@@ -137,6 +138,29 @@ export default function ObserverMap({ observers, center, radiusKm, onSelect }) {
     // map on a radius chip tap would flash the whole canvas.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [!!center, supported]);
+
+  // ---- light-pollution overlay (Lorenz atlas) -------------------------------
+  // Source added lazily on first toggle; afterwards only visibility flips, so
+  // toggling is instant and re-toggling never refetches tiles.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready) return;
+
+    if (!map.getSource("lp-overlay")) {
+      if (!showLp) return; // never pay for tiles the user hasn't asked for
+      map.addSource("lp-overlay", LP_SOURCE);
+      // Inserted beneath the first symbol-less spot — markers are DOM
+      // elements, so the overlay can simply sit on top of the basemap.
+      map.addLayer({
+        id: "lp-overlay",
+        type: "raster",
+        source: "lp-overlay",
+        paint: { "raster-opacity": 0.55 },
+      });
+      return;
+    }
+    map.setLayoutProperty("lp-overlay", "visibility", showLp ? "visible" : "none");
+  }, [ready, showLp]);
 
   // ---- the search-area circle ---------------------------------------------
   useEffect(() => {
@@ -211,6 +235,22 @@ export default function ObserverMap({ observers, center, radiusKm, onSelect }) {
   return (
     <div className="relative w-full overflow-hidden border border-line bg-surface-2">
       <div ref={containerRef} className="h-[420px] w-full" />
+
+      {/* Light-pollution layer toggle. */}
+      <button
+        type="button"
+        onClick={() => setShowLp((v) => !v)}
+        aria-pressed={showLp}
+        title="Light pollution overlay (Lorenz Atlas 2024)"
+        className={`absolute left-3 top-3 flex items-center gap-2 border px-3 py-2 text-xs font-medium transition-colors ${
+          showLp
+            ? "border-accent/50 bg-accent/15 text-accent-hi"
+            : "border-line bg-surface-2 text-ink-2 hover:bg-surface-3 hover:text-ink"
+        }`}
+      >
+        <Moon size={13} />
+        Light pollution
+      </button>
 
       {/* Legend — states the privacy model in the one place people will read it. */}
       <div className="pointer-events-none absolute bottom-3 left-3 flex flex-col gap-1.5 border border-line bg-surface-2/95 px-3 py-2.5 text-[11px]">

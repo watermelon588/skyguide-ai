@@ -16,6 +16,14 @@ class SatellitePassRequest(BaseModel):
         "ISS", min_length=2, max_length=40,
         description="Name (substring match) within the stations TLE group, e.g. 'ISS', 'CSS'",
     )
+    visible_only: bool = Field(
+        False,
+        description=(
+            "Return only passes that can actually be SEEN (station sunlit, sky "
+            "dark). Default false returns the full geometry, invisible daytime "
+            "passes included."
+        ),
+    )
 
     model_config = {
         "json_schema_extra": {
@@ -25,6 +33,7 @@ class SatellitePassRequest(BaseModel):
                 "timezone": "Asia/Kolkata",
                 "hours": 24,
                 "satellite": "ISS",
+                "visible_only": True,
             }
         }
     }
@@ -44,11 +53,21 @@ class SatellitePass(BaseModel):
     duration_minutes: float
     max_altitude_deg: float
 
+    # --- Seeability, judged at peak (see satellite_service) ---
+    sunlit: bool = Field(..., description="Station is out of the Earth's shadow")
+    observer_dark: bool = Field(
+        ..., description="Sun is at or below -6° (civil twilight) at the observer"
+    )
+    visible: bool = Field(
+        ..., description="Sunlit AND dark below — the pass can actually be seen"
+    )
+
 
 class SatellitePassData(BaseModel):
     satellite: str
     window_hours: int
     minimum_altitude_deg: float
+    visible_only: bool = False
     count: int
     passes: list[SatellitePass]
 

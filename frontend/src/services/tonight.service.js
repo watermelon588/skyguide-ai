@@ -13,16 +13,28 @@ import { getAstroBaseUrl } from "../config/network";
 const ASTRO_API = getAstroBaseUrl();
 
 /**
- * Every object currently above the horizon, ranked by visibility score.
- * Returns `{ observer, utc_time, count, objects }` where each object carries
- * `{ catalog_id, name, object_type, constellation, altitude_deg, azimuth_deg,
- *    hour_angle_hours, visibility_score }`.
+ * The night's top recommended objects, ranked by visibility score.
+ *
+ * The catalog is ~13k objects, so this deliberately does NOT ask for everything
+ * above the horizon (thousands of rows, multi-megabyte, and mostly anonymous
+ * faint galaxies near the zenith). `maxMagnitude` narrows to targets worth an
+ * observer's time and `limit` caps the list — the full catalog is browsable on
+ * the Explore page instead. Each object now carries its own display fields
+ * (magnitude, size, difficulty, description, thumbnail), so no separate catalog
+ * merge is needed.
+ *
+ * Returns `{ observer, utc_time, moon, count, objects }`.
  */
-export const fetchObservable = async ({ latitude, longitude, timezone }) => {
+export const fetchObservable = async (
+  { latitude, longitude, timezone },
+  { maxMagnitude = 13, limit = 100 } = {},
+) => {
   const response = await axios.post(`${ASTRO_API}/api/v1/visibility/observable`, {
     latitude,
     longitude,
     timezone,
+    max_magnitude: maxMagnitude,
+    limit,
   });
   return response.data.data;
 };
@@ -42,13 +54,29 @@ export const fetchMoon = async ({ latitude, longitude, timezone }) => {
 };
 
 /**
- * The seeded celestial catalog (static science content: magnitude, size,
- * distance, descriptions, observation tips, difficulty, season, media).
- * Fetched once and merged client-side with the live visibility geometry.
+ * A page of the seeded celestial catalog (static science content). With ~13k
+ * objects this is paginated, not fetched whole — the Explore page drives it.
  */
-export const fetchCatalog = async ({ limit = 100 } = {}) => {
+export const fetchCatalog = async ({ limit = 100, page = 1, ...filters } = {}) => {
   const response = await axios.get(`${ASTRO_API}/api/v1/catalog`, {
-    params: { page: 1, limit },
+    params: { page, limit, ...filters },
   });
   return response.data.data;
+};
+
+/**
+ * One catalog object by id (e.g. "M42", "NGC 253"). The Target Panel uses this
+ * to resolve any of the ~13k objects on a cold URL or when the object isn't in
+ * tonight's live top-100. Returns the full document, or null on 404.
+ */
+export const fetchCatalogObject = async (catalogId) => {
+  try {
+    const response = await axios.get(
+      `${ASTRO_API}/api/v1/catalog/${encodeURIComponent(catalogId)}`,
+    );
+    return response.data.data;
+  } catch (error) {
+    if (error?.response?.status === 404) return null;
+    throw error;
+  }
 };

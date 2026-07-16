@@ -22,6 +22,29 @@ const CARTO_DARK_TILES = [
   "https://d.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}@2x.png",
 ];
 
+/**
+ * Light-pollution overlay: David Lorenz's Light Pollution Atlas 2024
+ * (https://djlorenz.github.io/astronomy/lp/), free static tiles on GitHub
+ * Pages, no key. Native zoom tops out at 8 (~0.6 km/px at the equator) —
+ * MapLibre overzooms beyond that, which is exactly right for a regional
+ * overlay. Colors follow the atlas legend: black/gray dark -> blue -> green
+ * -> yellow -> orange -> red -> white bright.
+ */
+export const LP_TILE_URL =
+  "https://djlorenz.github.io/astronomy/image_tiles/tiles2024/tile_{z}_{x}_{y}.png";
+export const LP_MAX_NATIVE_ZOOM = 8;
+export const LP_ATTRIBUTION =
+  '© <a href="https://djlorenz.github.io/astronomy/lp/">Lorenz Light Pollution Atlas 2024</a>';
+
+/** The raster source + layer pair for the LP overlay, ready to addSource/addLayer. */
+export const LP_SOURCE = {
+  type: "raster",
+  tiles: [LP_TILE_URL],
+  tileSize: 256,
+  maxzoom: LP_MAX_NATIVE_ZOOM,
+  attribution: LP_ATTRIBUTION,
+};
+
 export const MAP_STYLE_DARK = {
   version: 8,
   sources: {
