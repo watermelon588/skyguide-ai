@@ -36,6 +36,16 @@ const TOGGLES = [
     label: "ISS pass alerts",
     hint: "Bright passes overhead.",
   },
+  {
+    key: "planUrgency",
+    label: "Plan reminders",
+    hint: "When a planned object is leaving your evening sky.",
+  },
+  {
+    key: "moonEvents",
+    label: "Moon milestones",
+    hint: "Dark-sky windows and supermoons.",
+  },
 ];
 
 export default function NotificationPrefs({ timezone }) {

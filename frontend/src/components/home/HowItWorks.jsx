@@ -22,7 +22,7 @@ const STEPS = [
 ];
 
 const PROOF = [
-  { value: 110, suffix: "+", label: "deep-sky objects scored" },
+  { value: 13000, suffix: "+", label: "deep-sky objects catalogued" },
   { value: 100, suffix: "", label: "point visibility scale" },
   { value: 60, suffix: "s", label: "from sign-in to a ranked sky" },
   { value: 0, suffix: "", label: "extra hardware needed" },

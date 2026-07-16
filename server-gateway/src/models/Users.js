@@ -209,6 +209,11 @@ const UserSchema = new mongoose.Schema(
       digestHourLocal: { type: Number, min: 0, max: 23, default: 17 },
       greatNight: { type: Boolean, default: false },
       issAlerts: { type: Boolean, default: false },
+      // These two default ON where greatNight/issAlerts default off: both are
+      // about the observer's own plan or a once-a-month sky event, so they fire
+      // rarely and only ever in-app.
+      planUrgency: { type: Boolean, default: true },
+      moonEvents: { type: Boolean, default: true },
       // Master switch for EMAIL delivery. In-app notifications are always
       // written — turning this off silences the inbox, not the app.
       email: { type: Boolean, default: true },

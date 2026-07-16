@@ -4,6 +4,7 @@ import {
   formatDegrees,
   formatHourAngle,
 } from "../tonight/vocabulary";
+import { useRecommendations } from "../../hooks/useRecommendations";
 
 /**
  * "Can I see it, and for how long?" — the live-geometry band of the Target
@@ -42,6 +43,36 @@ function windowLine(target) {
     return `Above your horizon for ${target.hours_until_set} more hours (sets ${target.set})${urgency}`;
   }
   return "Above your horizon right now.";
+}
+
+/**
+ * "Best time tonight" — the recommendation engine's darkness-aware window
+ * (up-time ∩ astronomical night, peaking at transit). React Query dedupes
+ * this against the dashboard's own recommendations fetch; a target outside
+ * the recommendation list (or the engine being down) just renders nothing.
+ */
+function BestTimeLine({ catalogId }) {
+  const recs = useRecommendations({ limit: 20 });
+  const match = recs.objects.find((o) => o.catalog_id === catalogId);
+  const w = match?.best_window;
+  if (!w) return null;
+
+  return (
+    <p className="mt-1 text-sm text-ink-2">
+      Best time tonight:{" "}
+      <span className="font-semibold tabular-nums text-ink">
+        {w.start}–{w.end}
+      </span>
+      {w.peak && (
+        <>
+          {" "}
+          — highest at <span className="font-semibold tabular-nums text-ink">{w.peak}</span>
+          {w.peak_altitude_deg != null && ` (${Math.round(w.peak_altitude_deg)}° up)`}
+        </>
+      )}
+      .
+    </p>
+  );
 }
 
 export default function VisibilityStrip({ target }) {
@@ -110,6 +141,7 @@ export default function VisibilityStrip({ target }) {
         Visibility · live for your coordinates
       </p>
       <p className="mt-2 font-medium text-ink">{windowLine(target)}</p>
+      <BestTimeLine catalogId={target.catalog_id} />
       <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
         {cells.map((cell) => (
           <Cell key={cell.label} {...cell} />

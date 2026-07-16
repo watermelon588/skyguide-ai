@@ -10,13 +10,21 @@ const STROKE = { fill: "none", stroke: "currentColor", strokeWidth: 1.5, strokeL
 
 const FEATURES = [
   {
-    title: "Tonight's sky, ranked",
-    body: "Every catalog object above your horizon is scored live — altitude, brightness, apparent size — and ranked into a personal observing list.",
+    title: "Recommended for you",
+    body: "Tonight's sky, ranked for YOU — your telescope's aperture and field of view, your light pollution, and what you've already seen. Each pick comes with a plain-English reason and its best observing window.",
     icon: (
       <svg viewBox="0 0 24 24" className="h-6 w-6" {...STROKE}>
-        <circle cx="12" cy="12" r="9" />
-        <path d="M12 3v3M21 12h-3M12 21v-3M3 12h3" />
-        <circle cx="12" cy="12" r="2.5" />
+        <path d="M12 3l2.5 5.6L20.5 9.4l-4.5 4.1L17 20l-5-3-5 3 1-6.5L3.5 9.4l6-0.8z" />
+      </svg>
+    ),
+  },
+  {
+    title: "13,000 objects, made legible",
+    body: "The whole NGC, IC and Messier deep-sky catalog — galaxies, clusters and nebulae — each with a real image, a description, magnitude and size. Browse it on an all-sky chart or search and filter the full table.",
+    icon: (
+      <svg viewBox="0 0 24 24" className="h-6 w-6" {...STROKE}>
+        <path d="M4 5.5A2.5 2.5 0 016.5 3H20v15.5a2.5 2.5 0 01-2.5 2.5H6.5A2.5 2.5 0 014 18.5z" />
+        <path d="M4 18.5A2.5 2.5 0 016.5 16H20" />
       </svg>
     ),
   },
@@ -30,11 +38,39 @@ const FEATURES = [
     ),
   },
   {
-    title: "Atmosphere intelligence",
-    body: "Cloud cover, humidity, wind, seeing and transparency are fused into one observing score, so you know before you set up.",
+    title: "Conditions & sky quality",
+    body: "Cloud, humidity, wind, seeing and transparency fused into one observing score — plus a light-pollution reading for your spot and the nearest darker sites worth the drive.",
     icon: (
       <svg viewBox="0 0 24 24" className="h-6 w-6" {...STROKE}>
         <path d="M4 15a4 4 0 014-4 5 5 0 019.6 1.5A3.5 3.5 0 0117 19H7a3 3 0 01-3-4z" />
+      </svg>
+    ),
+  },
+  {
+    title: "The sky calls you back",
+    body: "A nightly brief and timely alerts — a great clear night, a bright ISS pass overhead, a planned object leaving your evening sky, the dark-moon window opening. Delivered in-app and by email.",
+    icon: (
+      <svg viewBox="0 0 24 24" className="h-6 w-6" {...STROKE}>
+        <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 01-3.4 0" />
+      </svg>
+    ),
+  },
+  {
+    title: "Astro, your AI copilot",
+    body: "Ask anything in plain language — Astro knows your gear, your location and what's overhead right now, and can take you straight to a target, a plan, or the right page.",
+    icon: (
+      <svg viewBox="0 0 24 24" className="h-6 w-6" {...STROKE}>
+        <path d="M12 3l1.8 4.6L18.5 9l-4.7 1.4L12 15l-1.8-4.6L5.5 9l4.7-1.4z" />
+        <path d="M19 15l.9 2.1L22 18l-2.1.9L19 21l-.9-2.1L16 18l2.1-.9z" />
+      </svg>
+    ),
+  },
+  {
+    title: "Community & rooms",
+    body: "Find observers who share your sky on a privacy-safe map — approximate areas, never exact locations — and talk shop in regional chat rooms.",
+    icon: (
+      <svg viewBox="0 0 24 24" className="h-6 w-6" {...STROKE}>
+        <path d="M17 20v-2a4 4 0 00-4-4H7a4 4 0 00-4 4v2M10 10a3 3 0 100-6 3 3 0 000 6zM21 20v-2a4 4 0 00-3-3.9M16 4.1a4 4 0 010 7.8" />
       </svg>
     ),
   },
@@ -48,22 +84,20 @@ const FEATURES = [
     ),
   },
   {
-    title: "Deep-sky catalog",
-    body: "A curated Messier-and-beyond catalog with magnitudes, sizes, coordinates and observation tips — searchable and filterable.",
+    title: "Plan, observe, log",
+    body: "Queue targets for the night, then mark them observed or skipped. Your history builds a life-list and quietly teaches the recommendations what you like.",
     icon: (
       <svg viewBox="0 0 24 24" className="h-6 w-6" {...STROKE}>
-        <path d="M4 5.5A2.5 2.5 0 016.5 3H20v15.5a2.5 2.5 0 01-2.5 2.5H6.5A2.5 2.5 0 014 18.5z" />
-        <path d="M4 18.5A2.5 2.5 0 016.5 16H20" />
+        <path d="M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" />
       </svg>
     ),
   },
   {
-    title: "AI copilot",
-    body: "Ask anything about the night sky in plain language — the assistant knows your gear, your location and what's overhead right now.",
+    title: "Guided first light",
+    body: "New to a telescope? A step-by-step walkthrough takes you from sign-up to your first object in the eyepiece — and ticks itself off as you go.",
     icon: (
       <svg viewBox="0 0 24 24" className="h-6 w-6" {...STROKE}>
-        <path d="M12 3l1.8 4.6L18.5 9l-4.7 1.4L12 15l-1.8-4.6L5.5 9l4.7-1.4z" />
-        <path d="M19 15l.9 2.1L22 18l-2.1.9L19 21l-.9-2.1L16 18l2.1-.9z" />
+        <path d="M3 12h4l3-8 4 16 3-8h4" />
       </svg>
     ),
   },

@@ -1,6 +1,7 @@
 import { useCallback, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
+import { Navbar } from "../components/Navbar";
 import Starfield from "../components/tonight/Starfield";
 import TonightHero from "../components/tonight/TonightHero";
 import StatStrip from "../components/tonight/StatStrip";
@@ -97,7 +98,6 @@ export default function Tonight() {
     isLoading,
     isError,
     targets,
-    belowHorizon,
     moon,
     weather,
     conditions,
@@ -123,18 +123,11 @@ export default function Tonight() {
     <div ref={scope} className="relative min-h-screen bg-bg text-ink">
       <Starfield />
 
-      {/* Slim top bar — a quiet way back to the workspace. */}
-      <nav className="absolute inset-x-0 top-0 z-20 flex items-center justify-between px-6 py-5 sm:px-12">
-        <Link
-          to="/dashboard"
-          className="border border-line bg-surface-2 px-4 py-2 text-sm text-ink-2 transition-colors hover:bg-surface-3 hover:text-ink"
-        >
-          ← Dashboard
-        </Link>
-        <span className="text-sm font-black uppercase tracking-tight text-ink">
-          SkyGuide <span className="text-accent">AI</span>
-        </span>
-      </nav>
+      {/* Shared shell nav, so /tonight reads as part of the same product. It
+          sits above the starfield; the hero has its own top padding below. */}
+      <div className="relative z-20">
+        <Navbar />
+      </div>
 
       <TonightHero
         latitude={latitude}
@@ -160,11 +153,7 @@ export default function Tonight() {
           <ConditionsPanel weather={weather} conditions={conditions} />
         </section>
 
-        <CatalogTable
-          targets={targets}
-          belowHorizon={belowHorizon}
-          onSelect={openTarget}
-        />
+        <CatalogTable targets={targets} onSelect={openTarget} />
 
         <footer className="mx-auto w-full max-w-7xl px-6 text-center sm:px-12">
           <p className="text-xs leading-relaxed text-ink-3">

@@ -4,6 +4,7 @@ const User = require("../models/Users");
 const sendEmail = require("../utils/email");
 const digestService = require("../services/digestService");
 const notificationService = require("../services/notificationService");
+const { localHour, localDate } = require("../utils/localTime");
 
 /**
  * The daily digest job (Feature 7).
@@ -25,35 +26,6 @@ const notificationService = require("../services/notificationService");
  */
 
 const EVERY_15_MIN = "*/15 * * * *";
-
-/** The observer's local hour (0-23) right now, or null if the tz is unusable. */
-function localHour(timezone) {
-  try {
-    return Number(
-      new Intl.DateTimeFormat("en-US", {
-        timeZone: timezone || "UTC",
-        hour: "numeric",
-        hourCycle: "h23",
-      }).format(new Date()),
-    );
-  } catch {
-    return null; // bad IANA string on the user doc
-  }
-}
-
-/** The observer's local calendar date (YYYY-MM-DD) — the idempotency bucket. */
-function localDate(timezone) {
-  try {
-    return new Intl.DateTimeFormat("en-CA", {
-      timeZone: timezone || "UTC",
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-    }).format(new Date());
-  } catch {
-    return new Date().toISOString().slice(0, 10);
-  }
-}
 
 const hasRealLocation = (user) => {
   const c = user?.location?.coordinates;

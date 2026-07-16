@@ -17,36 +17,20 @@ const Observation = require("../models/Observation");
 const TOP_N = 3;
 
 /**
- * Object names, cached in-process.
+ * An id -> common-name map built from a visibility payload.
  *
- * The catalog is static science content, so re-fetching it per user per night
- * would be pure waste — one nightly batch would hammer the engine with the same
- * request hundreds of times. Cached for a day; a miss just means unnamed
- * targets, never a failed digest.
+ * The visibility endpoint already returns each object's `name` (the common name,
+ * or null when it has none), so the names for everything a digest or alert
+ * mentions are right there in the response. This replaces an earlier
+ * fetch-the-whole-catalog approach that, once the catalog grew to ~13k objects,
+ * meant paginating 130+ requests just to look up three names.
  */
-const CATALOG_TTL_MS = 24 * 60 * 60 * 1000;
-let catalogCache = { at: 0, byId: null };
-
-async function catalogNames() {
-  if (catalogCache.byId && Date.now() - catalogCache.at < CATALOG_TTL_MS) {
-    return catalogCache.byId;
-  }
-  try {
-    const objects = await astroEngine.fetchCatalog();
-    // Only ~30 of 110 objects have a common name ("Orion Nebula"); the rest are
-    // known by their id alone. Skip the empty ones so callers' `||` fallback to
-    // catalog_id does the right thing.
-    const byId = new Map(
-      objects.filter((o) => o.name).map((o) => [o.catalog_id, o.name]),
-    );
-    catalogCache = { at: Date.now(), byId };
-    return byId;
-  } catch (error) {
-    // Never fail a digest over names — but don't fail SILENTLY either: an empty
-    // map degrades every target to a bare id, which is worth knowing about.
-    console.error("Catalog fetch failed; digest targets fall back to ids:", error.message);
-    return catalogCache.byId ?? new Map();
-  }
+function namesFromObjects(objects) {
+  return new Map(
+    (Array.isArray(objects) ? objects : [])
+      .filter((o) => o?.name)
+      .map((o) => [o.catalog_id, o.name]),
+  );
 }
 
 /** Plain-language verdict for a 0-100 sky score. */
@@ -71,9 +55,12 @@ async function buildDigest(user) {
   };
 
   // Targets are the digest's reason to exist — if this fails, there's no digest.
+  // Magnitude-filtered so the catalog's faint tail (~13k objects) doesn't bloat
+  // the call; no result limit so a planned object can still be found in the
+  // "up tonight" check below however it ranks.
   let observable;
   try {
-    observable = await astroEngine.fetchObservable(observer);
+    observable = await astroEngine.fetchObservable(observer, { maxMagnitude: 13 });
   } catch {
     return null;
   }
@@ -81,17 +68,14 @@ async function buildDigest(user) {
   const objects = Array.isArray(observable?.objects) ? observable.objects : [];
   if (objects.length === 0) return null;
 
-  // The visibility payload's `name` is null for most objects — names live in
-  // the catalog, so merge by catalog_id exactly as /tonight does client-side.
-  const names = await catalogNames();
-
   const top = [...objects]
     .sort((a, b) => (b.visibility_score ?? 0) - (a.visibility_score ?? 0))
     .slice(0, TOP_N)
     .map((o) => ({
       catalog_id: o.catalog_id,
-      // Last resort is the id itself — "M13" reads fine; "null" does not.
-      name: o.name || names.get(o.catalog_id) || o.catalog_id,
+      // The engine already resolves the common name; the id is the last resort
+      // ("M13" reads fine; "null" does not).
+      name: o.name || o.catalog_id,
       object_type: o.object_type,
       score: Math.round(o.visibility_score ?? 0),
       // `set` already arrives as a LOCAL "HH:MM" string from the engine — it is
@@ -208,4 +192,4 @@ function renderEmailText(digest, user) {
   return lines.join("\n");
 }
 
-module.exports = { buildDigest, summarize, renderEmailText, verdictFor };
+module.exports = { buildDigest, summarize, renderEmailText, verdictFor, namesFromObjects };

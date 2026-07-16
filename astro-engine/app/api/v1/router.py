@@ -9,6 +9,7 @@ from app.api.v1 import (
     health,
     moon,
     observer,
+    recommendations,
     satellites,
     visibility,
     weather,
@@ -25,3 +26,9 @@ api_router.include_router(moon.router, prefix="/moon", tags=["Moon"])
 api_router.include_router(weather.router, prefix="/weather", tags=["Weather"])
 api_router.include_router(alignment.router, prefix="/alignment", tags=["Alignment"])
 api_router.include_router(satellites.router, prefix="/satellites", tags=["Satellites"])
+api_router.include_router(
+    recommendations.router, prefix="/recommendations", tags=["Recommendations"]
+)
+api_router.include_router(
+    recommendations.sky_router, prefix="/sky-quality", tags=["Sky Quality"]
+)

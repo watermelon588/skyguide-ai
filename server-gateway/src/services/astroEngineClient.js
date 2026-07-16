@@ -15,6 +15,14 @@ const ASTRO_ENGINE_URL = (
 
 const REQUEST_TIMEOUT_MS = 4000;
 
+/**
+ * Recommendations run the whole visibility pipeline plus catalog + sky
+ * sampling — measured ~6 s warm, more on a cold astropy cache. They get a
+ * budget matched to the work; the 4 s default remains right for the
+ * lightweight alignment/moon/weather calls.
+ */
+const HEAVY_TIMEOUT_MS = 30000;
+
 /** Error with a stable `code` the socket layer can map to client messages. */
 class AstroEngineClientError extends Error {
     constructor(code, message) {
@@ -24,9 +32,9 @@ class AstroEngineClientError extends Error {
     }
 }
 
-async function post(path, body) {
+async function post(path, body, { timeoutMs = REQUEST_TIMEOUT_MS } = {}) {
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
 
     let response;
     try {
@@ -155,15 +163,69 @@ async function fetchCatalog() {
  * Same endpoint the frontend uses for /tonight — the digest is a composition of
  * existing science, not new science.
  *
+ * `time` asks the engine what the sky looks like at some OTHER instant, which is
+ * how the plan-urgency alert compares tonight against the same hour a fortnight
+ * out. Omit it for "now".
+ *
+ * `maxMagnitude` / `limit` narrow the candidate pool and cap the result — the
+ * catalog is ~13k objects, so an unbounded call is multi-megabyte and slow
+ * enough to blow the default 4 s budget. Every caller here passes a magnitude
+ * filter; the heavier timeout keeps a cold engine from 503-ing a background job.
+ *
  * @param {{ latitude, longitude, timezone }} observer
+ * @param {{ time?: string, maxMagnitude?: number, limit?: number }} [options]
  * @returns {Promise<{observer, utc_time, count, objects: object[], moon?: object}>}
  */
-async function fetchObservable(observer) {
-    return post("/api/v1/visibility/observable", {
-        latitude: observer.latitude,
-        longitude: observer.longitude,
-        timezone: observer.timezone,
-    });
+async function fetchObservable(observer, { time, maxMagnitude, limit } = {}) {
+    return post(
+        "/api/v1/visibility/observable",
+        {
+            latitude: observer.latitude,
+            longitude: observer.longitude,
+            timezone: observer.timezone,
+            time: time ?? null,
+            max_magnitude: maxMagnitude ?? null,
+            limit: limit ?? null,
+        },
+        { timeoutMs: HEAVY_TIMEOUT_MS },
+    );
+}
+
+/**
+ * Upcoming passes of a station over the observer.
+ *
+ * Pass geometry is a Skyfield sweep over a TLE — heavier than an ephemeris
+ * point, so it takes the heavy budget rather than the 4 s default.
+ *
+ * `visibleOnly` drops passes nobody could see (station in the Earth's shadow, or
+ * the sky still bright). The engine defaults it OFF to preserve the raw
+ * geometry; callers telling a human to go outside want it ON.
+ *
+ * @param {{ latitude, longitude, elevation?, timezone?, hours?, satellite?, visibleOnly? }} params
+ * @returns {Promise<{satellite, window_hours, minimum_altitude_deg, visible_only, count, passes: object[]}>}
+ */
+async function fetchSatellitePasses({
+    latitude,
+    longitude,
+    elevation = 0,
+    timezone,
+    hours = 24,
+    satellite = "ISS",
+    visibleOnly = false,
+}) {
+    return post(
+        "/api/v1/satellites/passes",
+        {
+            latitude,
+            longitude,
+            elevation,
+            timezone: timezone ?? null,
+            hours,
+            satellite,
+            visible_only: visibleOnly,
+        },
+        { timeoutMs: HEAVY_TIMEOUT_MS },
+    );
 }
 
 /**
@@ -180,11 +242,70 @@ async function fetchMoon(observer) {
     });
 }
 
+/**
+ * Personalized recommendations (Feature 8, Phase A).
+ *
+ * The engine is stateless about users — the caller (recommendationController)
+ * assembles observer + telescope + history and this just forwards.
+ *
+ * @param {object} payload  RecommendationRequest body (see engine schema)
+ * @returns {Promise<object>} data from POST /api/v1/recommendations
+ */
+async function fetchRecommendations(payload) {
+    return post("/api/v1/recommendations", payload, {
+        timeoutMs: HEAVY_TIMEOUT_MS,
+    });
+}
+
+/**
+ * Light pollution at a coordinate (Lorenz atlas sample).
+ * @returns {Promise<object>} data from POST /api/v1/sky-quality
+ */
+async function fetchSkyQuality({ latitude, longitude }) {
+    // Warm this is instant; cold it fetches + decodes an atlas tile.
+    return post(
+        "/api/v1/sky-quality",
+        { latitude, longitude },
+        { timeoutMs: HEAVY_TIMEOUT_MS },
+    );
+}
+
+/**
+ * Nearest meaningfully darker observing sites.
+ * @returns {Promise<object>} data from POST /api/v1/sky-quality/dark-sites
+ */
+async function fetchDarkSites({ latitude, longitude, maxKm, minImprovement }) {
+    // A cold cache means fetching + decoding several atlas tiles.
+    return post(
+        "/api/v1/sky-quality/dark-sites",
+        {
+            latitude,
+            longitude,
+            max_km: maxKm ?? 150,
+            min_improvement: minImprovement ?? 2,
+        },
+        { timeoutMs: HEAVY_TIMEOUT_MS },
+    );
+}
+
+/**
+ * Current weather + observing conditions for a coordinate.
+ * @returns {Promise<object>} data from POST /api/v1/weather/current
+ */
+async function fetchWeather({ latitude, longitude }) {
+    return post("/api/v1/weather/current", { latitude, longitude });
+}
+
 module.exports = {
     fetchEphemeris,
     fetchObservable,
     fetchMoon,
     fetchCatalog,
+    fetchSatellitePasses,
+    fetchRecommendations,
+    fetchSkyQuality,
+    fetchDarkSites,
+    fetchWeather,
     AstroEngineClientError,
     ASTRO_ENGINE_URL,
 };

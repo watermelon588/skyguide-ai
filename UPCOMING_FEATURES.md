@@ -523,9 +523,80 @@ paginates; alignment sockets unaffected (regression: run a pairing session).
 
 # Feature 7 — Notifications & daily alert system
 
-**Status:** 🔄 **Phase 7a shipped (Session 26)** — notification engine, daily
-digest (in-app + email), and the in-app centre. Phase 7b (the other alert types)
-pending.
+**Status:** ✅ **Complete.** Phase 7a shipped (Session 26) — notification engine,
+daily digest (in-app + email), in-app centre. **Phase 7b shipped (Session 29)** —
+all four remaining alert types.
+
+**7b shipped:** `services/alertService.js` (the four triggers, pure evaluation —
+returns descriptors, writes nothing) + `jobs/alertsJob.js` (**node-cron
+`5,20,35,50 * * * *`**, offset from the digest's quarter-hours so the two jobs
+don't hit the engine together; selects on LOCAL hour **18:00**). Two new prefs
+`planUrgency` / `moonEvents` (**default ON**, unlike greatNight/issAlerts — they
+fire rarely and only in-app) + toggles on the profile page. No new dependencies.
+
+**The alert hour is 18:00 local and NOT a user preference.** The digest is a
+message you schedule; an alert's timing is dictated by the sky. 18:00 is chosen,
+not arbitrary: the engine's weather is a **nowcast with no forecast endpoint**,
+so a "great night" reading is only as honest as its distance from the night —
+18:00 is at/after sunset for most observers most of the year, a 12 h ISS window
+from it covers the whole usable night, and it lands *after* the default digest
+(digest plans the evening; the alert interrupts it).
+
+**Trigger definitions** (all thresholds are module constants in `alertService`):
+| Alert | Trigger | sentKey | Channel |
+|---|---|---|---|
+| **Great night** | `observing_score >= 75` | `great_night:<localDate>:<user>` | in-app + email |
+| **ISS pass** | soonest **visible** pass, peak >= 40°, in 12 h | `iss_pass:<localDate>:<user>` | in-app + email |
+| **Plan urgency** | planned object scores >= 35 at 22:00 local tonight but < 35 at 22:00 in 14 days | `plan_urgency:<id>:<YYYY-MM>:<user>` | in-app |
+| **Moon** | illumination <= 5% (new-moon window), or `reserved.supermoon` | `moon:new\|supermoon:<lunation>:<user>` | in-app |
+
+**Engine change (required, not scope creep): `/satellites/passes` now knows what
+"visible" means.** It was purely geometric, so it happily reported a 69°-altitude
+**midday** ISS pass — the alert would have sent observers outside to look at an
+invisible satellite. Passes now carry `sunlit` / `observer_dark` / `visible`
+(cylindrical Earth-shadow model + Sun altitude <= -6° at the observer, both judged
+**at peak**, using Astropy's builtin solar ephemeris — no new download), plus an
+additive `visible_only` request flag (**defaults false**, so the existing contract
+and the raw geometry are preserved; the alert opts in). Verified against physics:
+London 72 h → 5 visible, all 22:07–23:45 (post-dusk); Sydney → 1, at 06:12 (dawn);
+Kolkata → 0 in 72 h (plane not aligned). Never visible at noon or midnight.
+
+## TRAPS for future sessions
+- **Engine pass times JITTER between calls.** `peak.utc` is re-solved from each
+  call's window start and moves by milliseconds. **Four ticks fall inside the
+  alert hour**, so a sentKey built from `peak.utc` is four different keys and the
+  uniqueness guard never fires → four identical alerts. Keyed on the local DATE
+  instead. Any future "key it by the event's timestamp" idea has this bug.
+- **`*/15` inside a JS block comment terminates it** (`*/`). Cost a syntax error
+  while writing `alertsJob`; `digestJob` says "every 15 minutes" in prose for the
+  same reason.
+- **The id-as-name fallback duplicates**: only ~30 of 110 catalog objects have a
+  common name, so `${name} (${id})` renders "M4 (M4)". `alertService.nameOf()`
+  returns `{display, full}` and adds the id only when it says something new.
+  ⚠️ **`digestService.renderEmailText` still has this defect** (pre-existing, 7a).
+- `digestService.catalogNames()` is now exported and SHARED — don't warm a second
+  catalog cache.
+- Verification recipe: vite reported port ≠ actual port (**read the vite log** —
+  harness said 55564, vite used 5174) and the gateway's CORS needs the real one.
+  Screenshots still freeze in a hidden pane; text tools work fine.
+
+**Verified live (Session 29) — 55 assertions** against a real astro engine + Atlas,
+plus 33 pure-logic assertions (DST both directions at 5 zones with a no-DST
+control; the lunation key across a new moon). Covered: every pref gate; the moon
+trigger firing for real (the Moon was 4.8% lit that day); great-night and ISS
+staying silent *in agreement with the engine's own numbers*; **no alert for a
+bright-but-invisible pass**; the ISS firing path against a real captured London
+payload; **4 jittering ticks → 1 stored row**; plan-urgency fading-vs-stable
+driven by the engine's own two sky snapshots, and the 2-per-night cap;
+idempotency; no-location users skipped not crashed; off-hour users skipped.
+UI verified in-pane: both toggles render, persist to Atlas, don't disturb their
+neighbours — and toggling `moonEvents` off in the browser really does silence the
+trigger in the job (and back on restores it). All test data removed.
+
+> **Still open:** `plan_urgency` compares tonight vs +14 days at a fixed 22:00
+> local. It cannot see *why* an object fades (season vs. a transient), and it says
+> nothing about objects that are already gone. A proper "best window this year"
+> would need a multi-night engine sweep — deliberately not built.
 
 **7a shipped:** `models/Notification` (`sentKey` unique index = the idempotency
 guard), `notificationPrefs` on the user, `services/notificationService`
@@ -578,13 +649,13 @@ event alerts — the reason users return on nights they'd otherwise forget.
 | Alert | Trigger | Channel | Status |
 |---|---|---|---|
 | **Daily digest** | User-chosen local time (default 17:00) | Email + in-app | ✅ 7a |
-| **Great night** | observing_score ≥ 75 tonight | Email (opt-in) + in-app | ⏳ 7b (pref exists) |
-| **ISS pass** | Pass with peak ≥ 40° within next 12 h | in-app + email opt-in | ⏳ 7b (pref exists) |
-| **Plan urgency** | Planned object's last good window this month | in-app | ⏳ 7b |
-| **Moon milestones** | New moon window opens / full supermoon | in-app | ⏳ 7b |
+| **Great night** | observing_score ≥ 75 tonight | Email (opt-in) + in-app | ✅ 7b |
+| **ISS pass** | **Visible** pass with peak ≥ 40° within next 12 h | in-app + email opt-in | ✅ 7b |
+| **Plan urgency** | Planned object good at 22:00 tonight, gone in 14 days | in-app | ✅ 7b |
+| **Moon milestones** | New moon window opens / full supermoon | in-app | ✅ 7b |
 
-The `Notification.type` enum and the `greatNight` / `issAlerts` preferences are
-already in place for 7b — the remaining work is the triggers, not the plumbing.
+All five ship. The `Notification.type` enum needed no change — 7a's plumbing
+(`sentKey` idempotency, live push, prefs) carried 7b entirely, exactly as planned.
 
 Digest content: sky score + verdict, moon phase/illumination, top 3 targets
 with set times, planned-object statuses, next ISS pass. All computed from
@@ -624,9 +695,178 @@ suppress; duplicate-send blocked by sentKey; a user with no location gets a
 
 ---
 
+# Feature 7.5 — Full catalog (13k objects), Explore page & scale fix
+
+**Status:** ✅ **Shipped (Session 30).** The catalog went from **110 Messier to
+13,311 objects** (110 Messier + 7,993 NGC + 5,208 IC). Every object has a
+description and imagery; the UI shows tonight's top 100 and a new **/explore**
+page browses the whole dataset with visualizations. The visibility pipeline was
+re-scaled so the growth didn't break /tonight, the digest, or the alerts.
+
+## Data pipeline (astro-engine/scripts)
+- **`seed_ngc_catalog.py`** — OpenNGC CSV (CC-BY-SA-4.0) → normalize → bulk
+  upsert. Excludes the 107 Messier cross-refs (kept under their M ids), 651
+  `Dup`, 10 `NonEx`. Constellations via astropy `get_constellation` (vectorised).
+  Idempotent on `catalog_id`; `--dry-run` / `--limit` / `--refresh`.
+- **`catalog_content.py`** (shared, pure) — grounded descriptions built ONLY
+  from real fields (type, constellation, magnitude, size, Hubble morphology),
+  difficulty from magnitude, observation tips; and DSS2 sky-survey image URLs
+  via CDS **hips2fits** (a real cutout of each object's own patch of sky, framed
+  to its angular size — no storage, no key).
+- **`enrich_catalog.py`** — backfills the blank Messier + adds real **Wikipedia**
+  prose and **Wikimedia Commons** photos for all Messier + every named NGC/IC
+  (211/213 hits). Disk-cached, rate-limited, resumable, idempotent. Result:
+  **100% of the catalog has a description and a thumbnail.**
+
+## TRAPS (all cost real debugging)
+- **OpenNGC has ~135 physically-impossible magnitudes** (NGC 253 listed V=11.11
+  vs B=7.94 → a naked-eye galaxy looked telescope-only). B is OpenNGC's reliable
+  column; V is the sparse/patchy one. `select_magnitude` uses V only when B-V is
+  physical (−0.4..2.5), else B. SIMBAD is NOT a better arbiter — its integrated
+  photometry for extended galaxies is just as broken.
+- **Hubble morphology is CASE-SENSITIVE and order-sensitive.** `Sb` = unbarred
+  spiral, `SB` = barred. Upper-casing the code mislabels every one of the 3,663
+  unbarred spirals "barred" (Andromeda included). `_HUBBLE_PREFIXES` must not be
+  sorted or upper-cased.
+- **Wikimedia rejects arbitrary thumbnail widths** (large PNGs AND some JPGs 400
+  on non-standard widths). Only the summary API's own `thumbnail` (≈330px) and
+  `originalimage` URLs are reliable — never manufacture a width. Hero uses
+  `originalimage` (a few are heavy, e.g. M31 is an 11 MB PNG; accepted for
+  reliability). CC BY-SA text attribution + Commons image credit are stored and
+  surfaced on the target panel.
+
+## The scale fix — `/visibility/observable` (was the real danger)
+At 13k objects the endpoint returned **7,783 rows, 2.7 MB, 13–33 s** — it would
+503 the digest's 4 s timeout and choke the UI. Root causes and fixes:
+- **Fat-doc load** (5.8 s): a lean projection (scoring + display fields only)
+  in `catalog_service.load_visibility_candidates`. → ~1 s.
+- **No candidate filter**: new `max_magnitude` param filters the pool at the DB
+  level (needs the new `idx_magnitude` index); also makes "top 100" *bright,
+  relevant* objects, not anonymous zenith galaxies. Callers: /tonight passes
+  `max_magnitude=13, limit=100`; digest/alerts pass `max_magnitude=13`, no limit
+  (they look objects up by id).
+- **Per-object time formatting** (`local_hhmm` ×3×N ERFA conversions): vectorised
+  into `local_hhmm_batch` (one conversion per array). Warm now **~2.4 s at
+  mag≤13**, and the gateway backend calls use `HEAVY_TIMEOUT_MS`.
+- Visibility now returns each object's **display fields** (magnitude, size,
+  difficulty, description, thumbnail), so /tonight needs no client-side catalog
+  merge — the old `fetchCatalog({limit:100})` merge was already broken at 13k.
+- **`digestService.catalogNames()` REMOVED**: it paginated the whole 13k catalog
+  (130+ requests) just for names. Names now come from the visibility payload
+  (`namesFromObjects`) — every object a digest/alert mentions is already in it.
+
+## Explore page (`/explore`, shadcn/ui + recharts)
+- Engine `GET /catalog/stats` — one `$facet` aggregation (counts by
+  catalog/type/constellation/magnitude), 0.3 s. Declared BEFORE `/{catalog_id}`
+  so "stats" isn't captured as an id.
+- Frontend: `pages/Explore.jsx` + `components/explore/{StatTiles,CatalogCharts,
+  CatalogBrowser}`, `services/catalog.service.js`, `hooks/useCatalog.js`. Charts
+  are single-series (one electric-blue hue — the design system sidesteps the
+  categorical-palette problem), `isAnimationActive={false}` (recharts' rAF enter
+  animation freezes in a hidden verification pane). Table pages/filters
+  server-side (267 pages), rows → target panel. Entry points: navbar "Explore",
+  the /tonight ledger's "Explore all 13,000+ objects" button.
+- `useTargetDetail` now always fetches the full doc by id and overlays live
+  geometry — so **any of 13k objects** opens on a cold URL, `/tonight/:id`
+  handles space-containing ids (`NGC%20253`).
+
+## Verified live (Session 30)
+Seed → 13,311 objects, Messier untouched at 110, 0 id collisions. Magnitude fix
+(NGC 253 → 7.94 "Easy"). Morphology 30/30 real codes. Engine timings under
+budget. In-pane: Explore renders (4 tiles, 3 charts/30 bars correct colours/no
+overflow, 50-row table, pagination 1→2 of 267, filters+search); /tonight shows
+100 rows; target panel resolves M42 & NGC 253 by id with real Wikipedia
+description + Commons photo + CC BY-SA credit; no console errors; **7b alerts
+still 47/47 green**.
+
+**Still open:** a few Wikipedia heroes are heavy (M31 11 MB PNG); a CDN/resize
+proxy would fix it. The scoring model is still altitude-dominated (magnitude
+weight 0.20) — "top 100" leans on the `max_magnitude` filter for relevance
+rather than the score itself.
+
+---
+
+# Feature 7.6 — Performance & UX polish (Session 31) ✅
+
+**Status:** ✅ **Shipped.** Eight fixes after the 13k-catalog landing: the
+recommendation/brief slowness the scale exposed, a durable cache so the sky is
+never a blank panel, and six UI corrections.
+
+## The big one — recommendations & brief were 20–40 s
+The 13k scale-fix updated `/visibility/observable` but **`compute_recommendations`
+was never given the same treatment**, so it still (a) called `compute_observable`
+UNBOUNDED (every up-object — ~875 at mag≤12, tens of seconds) and (b) reloaded
+**all 13k full documents** (`get_all_objects(limit=100_000)`). Two fixes:
+- Pass a telescope-derived `max_magnitude` (`candidate_magnitude_cap`: aperture's
+  limiting mag + 1, else 12) to both the visibility call and a **lean**
+  `load_visibility_candidates` load — the same bounded, projected set /tonight uses.
+- **The real killer was a per-object astropy transform.** The "best window peak
+  altitude" ran `equatorial_to_horizontal_batch` once *per up-object* (~875 × a
+  slow AltAz conversion = ~9 s). It's display-only and doesn't affect ranking, so
+  it's now **deferred until after ranking+slicing** and computed for the ≤N
+  returned objects alone. → **20–40 s down to ~4–7 s cold.**
+
+## Durable cache — "5-min-old sky beats a blank page" (Feature 7's #2)
+- `models/ComputeCache` (Mongo, TTL index) + `services/computeCache.remember()` —
+  **stale-while-revalidate**: fresh → serve; stale → serve immediately + refresh
+  in the background (deduped by key); missing → compute (the only wait). Survives
+  restarts, shared across processes, spares the third-party call (Groq/atlas) per
+  request. Keyed by `userId + rounded-loc + scope-sig + history-size`.
+- Recommendations: fresh 10 min / stale 30 min. Brief: fresh 3 h / stale 12 h.
+  → **repeat load 6.6 s → 0.65 s; brief 9.4 s → 0.46 s** (measured).
+- **Brief fallback (the "local lightweight model" ask):** Groq is fast; the
+  slowness was the recommendation call it made. Still, `composeBriefFallback`
+  writes a grounded brief from the same facts with NO LLM — so a Groq
+  hiccup degrades to real prose, never a blank card. Same grounding contract.
+- Client poll **5 min → 10 min** (`useRecommendations`).
+
+## Six UI fixes
+1. **Duplicate hovering chatbot on /explore** — `/explore` uses `AppLayout` (which
+   mounts its own `ChatWidget`) but was missing from `App.jsx`'s `APP_PATHS`, so
+   the floating overlay chat mounted a SECOND one. Added it to `APP_PATHS`.
+2. **Navbar order** → Home · Dashboard · Tonight · Explore · Community · Guide
+   (data-driven list now).
+3. **Tonight heading** clamp `4.5→16vw→13rem` (208px) → `3→9vw→7rem` (112px).
+4. **Image expand** — `components/target/ImageLightbox` (portal, Esc/backdrop
+   close, scroll-lock) + an Expand button on `TargetHero`; the framed hero band
+   opens to the full DSS/Wikipedia image.
+5. **Target panel is now two panels** — main column (story + data sheet) + a
+   sticky rail: **Related objects** (`useSimilarObjects` — same constellation then
+   same type, brightest-first, hop-links to each object's panel) and the
+   "Coming to this panel" card (AI analysis · why-observe-tonight · history).
+6. **All-Sky Chart on /explore** (`components/explore/ExploreSkyChart`) — the live
+   dome (zenith centre, horizon rim) plotting objects as their **type glyph**
+   (◍❋◉∴✦◇) sized by brightness, with a type filter. Fixes "only blue dots": the
+   /tonight dome colours by score (all blue); glyphs vary by type while keeping
+   the single-hue rule (types are *shape*, not colour). New catalog API
+   `sort=magnitude` (brightest-first, nulls excluded) powers both this and the
+   similar-objects rail.
+
+## Verified live (Session 31)
+Engine recs 20–40 s → 4–7 s cold; through the gateway 6.6 s → 0.65 s cached, brief
+9.4 s → 0.46 s cached (source `llm`, grounded). Fallback brief renders from facts.
+In-pane: navbar order correct; /explore has ONE chatbot + the all-sky chart (100
+glyphs, 6 types, sizes 7–15px, type filter 100→41 galaxies); target panel
+two-panel (682+401px) with Sculptor neighbours brightest-first, lightbox
+opens/scroll-locks/closes, real Wikipedia hero; Tonight heading 112px; no console
+errors.
+
+## Still open
+- The recommendation cold path is still ~4–7 s (real astronomy); the cache hides
+  it after first compute. A precompute-on-login warmer would remove even that.
+- Similar-objects sort loads a magnitude-sorted page per constellation/type; huge
+  constellations (Virgo) get the globally-brightest via the new DB sort, fine.
+
+---
+
 # Feature 8 — AI Recommendation Engine
 
-**Status:** ⏳ Not started (heuristic scoring shipped; this is the layer above)
+**Status:** 🔄 **Phases A + B shipped (Session 28)** — personalized re-ranking
+(`POST /api/v1/recommendations`, engine), the LLM "Tonight's Brief" (gateway
+`groqService.generateBrief`), plus sky-quality/dark-sites and the chat action
+protocol. Response carries `model: "heuristic-v1"`, so **Phase C slots in behind
+the same endpoint**. Phase C (ML ranker) deliberately deferred: no observation
+history exists to train on yet.
 **Depends on:** Feature 1 (history = training/personalization signal),
 Feature 4 (gear context). Ship AFTER them — without history it has nothing
 to learn from.
@@ -730,10 +970,15 @@ inviting real users. Cloudflare tunnel scripts already exist for demos.
 | 22 | Feature 4 — Profiles (avatar, bio, privacy) |
 | 23 | Feature 5 — First Light Guide |
 | 24–25 | Feature 6 — Community (discovery, then chat) |
-| 26 | Feature 7a — Digest + notification center |
-| 27 | Feature 8a — Personalized recommendations |
-| 28 | Feature 7b + 8b — Alerts + Tonight's Brief |
-| 29+ | Feature 8c — ML ranker · Feature 10 — Deployment |
+| 26 | Feature 7a — Digest + notification center ✅ |
+| 27 | Feature 8a — Personalized recommendations ✅ (shipped w/ 8b in 28) |
+| 28 | Feature 8b — Tonight's Brief ✅ |
+| 29 | Feature 7b — Alerts ✅ (great night · ISS · plan urgency · moon) |
+| 30+ | Feature 9 — Polish backlog · Feature 8c — ML ranker · Feature 10 — Deployment |
+
+**Next up:** Feature 9's polish backlog is the only cheap work left (night-vision
+mode, alignment prefill, shared API client + interceptors, global toast). 8c stays
+blocked until real observation history accumulates, and 10 is the finale.
 
 *Rationale: complete the solo loop first (19–21), then identity (22–23),
 then community (24–25), then the systems that need all of the above as fuel

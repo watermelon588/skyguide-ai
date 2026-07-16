@@ -31,12 +31,18 @@ export function ChatProvider({ children }) {
     ]);
   };
 
-  const addAssistantMessage = (message) => {
+  /**
+   * Assistant turns may carry validated `actions` (buttons the user can
+   * click). Stored on the message so history renders them; stripped again
+   * before messages are sent back to the API (the model gets text only).
+   */
+  const addAssistantMessage = (message, actions = []) => {
     setMessages((prev) => [
       ...prev,
       {
         role: "assistant",
         content: message,
+        ...(actions.length > 0 ? { actions } : {}),
       },
     ]);
   };

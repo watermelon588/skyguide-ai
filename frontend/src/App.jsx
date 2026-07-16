@@ -16,13 +16,21 @@ import NetworkStatus from "./components/dev/NetworkStatus";
 // Authenticated app pages render inside AppLayout (which provides its own
 // integrated AI sidebar + launcher). Every other page keeps the legacy
 // floating overlay chat so the Landing page is unchanged.
+// Pages that use AppLayout — which already provides the docked AI sidebar and
+// its ChatWidget launcher. They must be listed here so App.jsx does NOT also
+// mount the floating overlay chat, or the page shows two chatbots (Explore hit
+// exactly that bug).
 const APP_PATHS = [
   "/dashboard",
   "/alignment",
   "/profile",
   "/community",
   "/community/chat",
+  "/explore",
 ];
+// Astro is available on the main product pages (including the immersive
+// /tonight and /guide, for a uniform shell) but not on auth screens, the mobile
+// alignment companion, or public profiles.
 const HIDE_CHAT_ON = [
   "/login",
   "/signup",
@@ -31,9 +39,7 @@ const HIDE_CHAT_ON = [
   "/verify-email",
   "/align",
   "/align-lab",
-  "/tonight",
   "/observers",
-  "/guide",
 ];
 
 // Dev-only Alignment Mode simulator. The dead branch is eliminated from
@@ -47,6 +53,7 @@ const AlignLab = import.meta.env.DEV
 // sky stack downloads only where used.
 const Tonight = lazy(() => import("./pages/Tonight"));
 const TargetPanel = lazy(() => import("./pages/TargetPanel"));
+const Explore = lazy(() => import("./pages/Explore"));
 const HomePage = lazy(() => import("./pages/HomePage"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const AlignmentWorkspace = lazy(() => import("./pages/AlignmentWorkspace"));
@@ -133,6 +140,17 @@ function App() {
               </Suspense>
             }
           />
+          {/* The full ~13k-object catalog: visualizations + a browsable table. */}
+          <Route
+            path="/explore"
+            element={
+              <AppLayout>
+                <Suspense fallback={null}>
+                  <Explore />
+                </Suspense>
+              </AppLayout>
+            }
+          />
           <Route
             path="/profile"
             element={
@@ -198,7 +216,11 @@ function App() {
       </Routes>
       {showOverlayChat && (
         <>
-          <ChatWidget />
+          {/* The floating astronaut is desktop-only; on phones Astro opens from
+              the navbar's "Ask Astro" (the ChatWindow overlay still mounts). */}
+          <div className="hidden lg:block">
+            <ChatWidget />
+          </div>
           <ChatWindow />
         </>
       )}
