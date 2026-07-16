@@ -9,7 +9,6 @@ import {
   useState,
 } from "react";
 import { useSocket } from "./SocketContext";
-import { createRoom } from "../services/alignment.service";
 import { useCountdown } from "../hooks/useCountdown";
 import { initialPairingState, pairingReducer } from "./pairingReducer";
 
@@ -167,6 +166,9 @@ export function PairingProvider({ children }) {
     setModalOpen(true);
     dispatch({ type: "CREATE_START" });
     try {
+      // Lazy: createRoom is dashboard-only, and its axios dependency must not
+      // ride along into the phone companion bundle (which shares this file).
+      const { createRoom } = await import("../services/alignment.service");
       const res = await createRoom();
       const { roomId, token, expiresAt } = res.data;
       dispatch({ type: "CREATE_SUCCESS", roomId, token, expiresAt });

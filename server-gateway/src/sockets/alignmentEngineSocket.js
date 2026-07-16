@@ -10,16 +10,17 @@
  *        alignment:clear_target
  *        orientation_update     (phone — same packets sensorSocket relays)
  *   out: alignment:target  { target, ephemeris }        reliable, to room
- *        alignment:update   { ...errors, state, ... }   volatile, ≤10Hz, to room
+ *        alignment:update   { ...errors, state, ... }   reliable, ≤10Hz, to room (incl. phone)
  *        alignment:state    { state, previous, at }     reliable, transitions only
  *        alignment:error    { code, message }           reliable, to requester
  *
- * Traffic discipline: the phone's uplink is untouched; enrichment flows
- * dashboard-ward only (socket.to excludes the phone sender) and is throttled
- * to ALIGNMENT_EMIT_MS. Deliberately NOT volatile: sensorSocket's relay of
- * the same inbound event has just written to the transport, so a volatile
- * packet in the same tick reliably finds the buffer busy and is dropped —
- * 100% loss, verified. At ≤10Hz × ~300B, guaranteed delivery is cheap.
+ * Traffic discipline: the phone's uplink is untouched; enrichment goes to the
+ * WHOLE room (io.to — the phone companion renders its own guidance view from
+ * the same packets the dashboard reads) and is throttled to ALIGNMENT_EMIT_MS.
+ * Deliberately NOT volatile: sensorSocket's relay of the same inbound event
+ * has just written to the transport, so a volatile packet in the same tick
+ * reliably finds the buffer busy and is dropped — 100% loss, verified. At
+ * ≤10Hz × ~300B per peer, guaranteed delivery is cheap.
  */
 
 const engine = require("../services/alignmentEngine");
@@ -151,7 +152,9 @@ module.exports = (io) => {
             const last = lastEmitAt.get(roomId) ?? 0;
             if (transition || now - last >= ALIGNMENT_EMIT_MS) {
                 lastEmitAt.set(roomId, now);
-                socket.to(roomId).emit("alignment:update", result);
+                // io.to (not socket.to): the phone sender gets the packet too —
+                // it drives the companion's on-phone guidance arrows.
+                io.to(roomId).emit("alignment:update", result);
             }
         });
 

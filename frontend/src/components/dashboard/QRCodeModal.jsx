@@ -18,10 +18,14 @@ import Button from "../ui/Button";
  * Builds the pairing URL encoded into the QR. Only room + token are exposed.
  * The base URL comes from the network config so the QR points at the LAN IP
  * or Cloudflare tunnel (never localhost) depending on NETWORK_MODE.
+ *
+ * /align.html is the companion's own lightweight entry (not the SPA route) —
+ * the phone downloads only pairing + sensors + guidance. The old /align SPA
+ * route still redirects here for stale QR codes.
  */
 function buildPairingUrl({ roomId, pairingToken }) {
   const params = new URLSearchParams({ room: roomId, token: pairingToken });
-  return `${getQrBaseUrl()}/align?${params.toString()}`;
+  return `${getQrBaseUrl()}/align.html?${params.toString()}`;
 }
 
 function formatTime(ts) {

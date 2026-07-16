@@ -25,9 +25,14 @@ import { useTonight } from "../hooks/useTonight";
 
 function CenteredShell({ children }) {
   return (
-    <div className="relative flex min-h-screen items-center justify-center bg-bg px-6 text-ink">
+    <div className="relative flex min-h-screen flex-col bg-bg text-ink">
       <Starfield />
-      <div className="max-w-md text-center">{children}</div>
+      <div className="relative z-20">
+        <Navbar />
+      </div>
+      <div className="relative z-10 flex flex-1 items-center justify-center px-6">
+        <div className="max-w-md text-center">{children}</div>
+      </div>
     </div>
   );
 }

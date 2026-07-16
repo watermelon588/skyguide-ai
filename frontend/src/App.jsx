@@ -12,6 +12,8 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import AppLayout from "./layouts/AppLayout";
 import PairedRoutes from "./layouts/PairedRoutes";
 import NetworkStatus from "./components/dev/NetworkStatus";
+import RouteMeta from "./components/RouteMeta";
+import NotFound from "./pages/NotFound";
 
 // Authenticated app pages render inside AppLayout (which provides its own
 // integrated AI sidebar + launcher). Every other page keeps the legacy
@@ -74,6 +76,7 @@ function App() {
 
   return (
     <>
+      <RouteMeta />
       <div>
         <img
           src={"./src/assets/bg/7.jpg"}
@@ -213,6 +216,8 @@ function App() {
         )}
         <Route path="/socket-test" element={<SocketTest />} />
         <Route path="/auth-test" element={<AuthTest />} />
+        {/* Anything else: a designed 404 rather than a blank screen. */}
+        <Route path="*" element={<NotFound />} />
       </Routes>
       {showOverlayChat && (
         <>
