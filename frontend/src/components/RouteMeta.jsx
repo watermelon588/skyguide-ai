@@ -27,6 +27,7 @@ const STATIC_TITLES = {
   "/community": `Community · ${SUFFIX}`,
   "/community/chat": `Community chat · ${SUFFIX}`,
   "/guide": `First Light Guide · ${SUFFIX}`,
+  "/privacy": `Privacy Policy · ${SUFFIX}`,
   "/forgot-password": `Reset password · ${SUFFIX}`,
   "/reset-password": `Reset password · ${SUFFIX}`,
   "/verify-email": `Verify email · ${SUFFIX}`,

@@ -42,6 +42,7 @@ const HIDE_CHAT_ON = [
   "/align",
   "/align-lab",
   "/observers",
+  "/privacy",
 ];
 
 // Dev-only Alignment Mode simulator. The dead branch is eliminated from
@@ -64,6 +65,7 @@ const Community = lazy(() => import("./pages/Community"));
 const CommunityChat = lazy(() => import("./pages/CommunityChat"));
 const PublicProfile = lazy(() => import("./pages/PublicProfile"));
 const Guide = lazy(() => import("./pages/Guide"));
+const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 
 function App() {
   const location = useLocation();
@@ -200,6 +202,15 @@ function App() {
           element={
             <Suspense fallback={null}>
               <Guide />
+            </Suspense>
+          }
+        />
+        {/* Privacy policy — public, linked from the auth consent checkbox. */}
+        <Route
+          path="/privacy"
+          element={
+            <Suspense fallback={null}>
+              <PrivacyPolicy />
             </Suspense>
           }
         />

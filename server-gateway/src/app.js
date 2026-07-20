@@ -22,6 +22,7 @@ const observerRoutes = require("./routes/observer.routes");
 const communityRoutes = require("./routes/community.routes");
 const notificationRoutes = require("./routes/notification.routes");
 const recommendationRoutes = require("./routes/recommendation.routes");
+const feedbackRoutes = require("./routes/feedback.routes");
 const digestJob = require("./jobs/digestJob");
 const alertsJob = require("./jobs/alertsJob");
 
@@ -80,6 +81,7 @@ app.use("/api/v1/observers", observerRoutes);
 app.use("/api/v1/community", communityRoutes);
 app.use("/api/v1/notifications", notificationRoutes);
 app.use("/api/v1/recommendations", recommendationRoutes);
+app.use("/api/v1/feedback", feedbackRoutes);
 
 
 app.get("/health", (req, res) => {

@@ -5,6 +5,8 @@ import { ArrowLeft } from "lucide-react";
 
 import { useAuth } from "../context/AuthContext";
 import VerifyEmailPanel from "../components/auth/VerifyEmailPanel";
+import Logo from "../components/brand/Logo";
+import { BRAND_FULL_NAME } from "../config/brand";
 import loginImage from "../assets/bg/9.jpg";
 
 /**
@@ -29,6 +31,9 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [showError, setShowError] = useState(false);
+  // Required consent — both modes. Survives the Login/Sign-up toggle on
+  // purpose: one acknowledgement per visit is enough friction.
+  const [privacyAccepted, setPrivacyAccepted] = useState(false);
 
   // After sign-up the observer is ALREADY signed in; this step is an optional
   // offer to verify now rather than a gate. `null` = show the normal form.
@@ -113,9 +118,9 @@ export default function LoginPage() {
         <div className="relative flex h-full flex-col justify-between p-12">
           <Link
             to="/"
-            className="text-lg font-black uppercase tracking-tight text-ink"
+            aria-label={`${BRAND_FULL_NAME} — home`}
           >
-            SkyGuide <span className="text-accent">AI</span>
+            <Logo size="md" decorative />
           </Link>
           <div>
             <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-accent">
@@ -126,7 +131,7 @@ export default function LoginPage() {
             </h2>
           </div>
           <p className="text-xs uppercase tracking-[0.15em] text-ink-3">
-            110+ deep-sky objects · live visibility scoring · phone-guided
+            13,000+ deep-sky objects · live visibility scoring · phone-guided
             alignment
           </p>
         </div>
@@ -151,9 +156,7 @@ export default function LoginPage() {
           </button>
 
           {/* Logo (mobile — the panel carries it on desktop) */}
-          <p className="text-2xl font-black uppercase tracking-tight text-ink lg:hidden">
-            SkyGuide <span className="text-accent">AI</span>
-          </p>
+          <Logo size="xl" className="lg:hidden" />
 
           {/* Post-sign-up: already authenticated, just offering verification. */}
           {verifyStep ? (
@@ -241,11 +244,35 @@ export default function LoginPage() {
               className={inputClass}
             />
 
+            {/* Privacy consent — required in both modes. The link opens in a
+                new tab so the form (and what's typed) survives the detour. */}
+            <label className="flex cursor-pointer items-start gap-3 text-xs leading-5 text-ink-2">
+              <input
+                type="checkbox"
+                required
+                checked={privacyAccepted}
+                onChange={(e) => setPrivacyAccepted(e.target.checked)}
+                className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer appearance-none border border-line bg-surface-2 transition-colors checked:border-accent checked:bg-accent"
+              />
+              <span>
+                I have read and agree to the{" "}
+                <a
+                  href="/privacy"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-semibold text-accent transition-colors duration-300 hover:text-accent-hi"
+                >
+                  Privacy Policy
+                </a>
+                , including how my observing location is used.
+              </span>
+            </label>
+
             <motion.button
               type="submit"
-              disabled={loading}
-              whileHover={{ scale: loading ? 1 : 1.01 }}
-              whileTap={{ scale: loading ? 1 : 0.99 }}
+              disabled={loading || !privacyAccepted}
+              whileHover={{ scale: loading || !privacyAccepted ? 1 : 1.01 }}
+              whileTap={{ scale: loading || !privacyAccepted ? 1 : 0.99 }}
               className="w-full bg-accent py-3.5 font-semibold text-ink transition-colors duration-300 hover:bg-accent-hi disabled:cursor-not-allowed disabled:opacity-60"
             >
               {loading

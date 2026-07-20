@@ -23,7 +23,17 @@ const NotificationSchema = new mongoose.Schema(
 
     type: {
       type: String,
-      enum: ["digest", "great_night", "iss_pass", "plan_urgency", "moon"],
+      enum: [
+        "digest",
+        "great_night",
+        "iss_pass",
+        "plan_urgency",
+        "moon",
+        // Community (Feature 6) — pings + direct messages.
+        "ping_request",
+        "ping_accepted",
+        "community_message",
+      ],
       required: true,
     },
 

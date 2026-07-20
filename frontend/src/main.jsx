@@ -8,6 +8,10 @@ import { ToastProvider } from "./context/ToastContext.jsx";
 import { BrowserRouter } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext.jsx";
 import { queryClient } from "./lib/queryClient";
+import { applyBrandFavicon } from "./config/brand";
+
+// The tab icon comes from the same single brand source as every in-app logo.
+applyBrandFavicon();
 
 createRoot(document.getElementById("root")).render(
   <QueryClientProvider client={queryClient}>

@@ -3,6 +3,7 @@ const Room = require("../models/Room");
 const User = require("../models/Users");
 const communityService = require("./communityService");
 const moderationService = require("./moderationService");
+const notificationService = require("./notificationService");
 
 /**
  * Ping requests — the consent gate in front of direct messages (Feature 6c).
@@ -80,6 +81,18 @@ async function sendPing(currentUser, username, note = "") {
       to: target._id,
       note: String(note || "").trim().slice(0, 140),
     });
+
+    // Persist a notification for the recipient (survives them being offline;
+    // shows in the bell). Best-effort — a ping must not fail on a notify error.
+    notificationService
+      .notifyPingRequest(target._id, {
+        pingId: ping._id,
+        fromUsername: currentUser.username,
+        fromDisplayName: currentUser.displayName,
+        note: ping.note,
+      })
+      .catch(() => {});
+
     return { ping: serialize(ping, target), room: null };
   } catch (error) {
     if (error?.code === 11000) {
@@ -172,6 +185,19 @@ async function respondToPing(currentUser, pingId, action) {
   ping.status = "accepted";
   ping.respondedAt = new Date();
   await ping.save();
+
+  // Tell the requester their request was accepted (bell + live push). The
+  // controller separately nudges the /community socket so their room list
+  // refreshes; this is the durable, catch-up-later record. Declines stay
+  // silent by design (no notification → no retaliation signal).
+  notificationService
+    .notifyPingAccepted(ping.from, {
+      pingId: ping._id,
+      byUsername: currentUser.username,
+      byDisplayName: currentUser.displayName,
+      room: key,
+    })
+    .catch(() => {});
 
   return { ping: serialize(ping, requester), room: key };
 }

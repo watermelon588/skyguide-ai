@@ -28,15 +28,29 @@ const {
 } = require("../utils/alignmentMath");
 
 // --- State machine thresholds (angular separation, degrees) ---------------
-// locked ≤ 1° ≈ a low-power eyepiece's field of view — the target is in view.
-const LOCK_DEG = 1.0;
+// locked ≤ 1.2° ≈ a low-power eyepiece's field of view — the target is in
+// view. Deliberately generous (was 1.0°): field testing showed the honest
+// threshold made lock nearly unholdable on a wobbly tripod. Experience wins
+// over the last fraction of a degree.
+const LOCK_DEG = 1.2;
 const NEARLY_DEG = 3.0;
 const CLOSE_DEG = 10.0;
-// Hysteresis: lock engages only after the error stays inside LOCK_DEG for
-// LOCK_HOLD_MS, and releases only beyond LOCK_DEG × UNLOCK_FACTOR — a hand
-// tremor at the boundary must not strobe locked/unlocked.
+// Hysteresis, both ways: lock engages only after the error stays inside
+// LOCK_DEG for LOCK_HOLD_MS, and releases only after it stays beyond
+// LOCK_DEG × UNLOCK_FACTOR for UNLOCK_HOLD_MS. A hand tremor, a gust, or the
+// bump of reaching for the mouse must not strobe locked/unlocked — losing
+// lock the instant the user goes to click "Mark observed" was the exact
+// field complaint this guards against.
 const LOCK_HOLD_MS = 600;
-const UNLOCK_FACTOR = 1.6;
+const UNLOCK_FACTOR = 2.0;
+const UNLOCK_HOLD_MS = 1500;
+
+// Error-stream damping: reported errors are an exponential moving average
+// with this time constant. Raw per-packet errors twitch with sensor noise
+// and tube vibration, and a twitchy reticle is un-aimable — the user chases
+// it. ~250ms of damping steadies the display and the state machine while
+// staying well under human aiming latency.
+const ERROR_SMOOTH_TAU_MS = 250;
 
 // Ephemeris care: refresh when the segment outlives its validity; if the
 // engine is unreachable, keep extrapolating (rates make this safe for
@@ -102,6 +116,8 @@ async function startSession({ roomId, userId, target }) {
         nextRefreshNotBefore: 0,
         state: "searching",
         lockCandidateSince: null,
+        unlockCandidateSince: null,
+        smoothed: null, // damped {horizontal, vertical, angular} errors
         lastPacketAt: existing?.lastPacketAt ?? null,
         stats: { packets: 0, execNsTotal: 0n },
     };
@@ -158,11 +174,22 @@ function maybeRefreshEphemeris(session, now) {
 function nextState(session, angularError, aboveHorizon, now) {
     if (!aboveHorizon) {
         session.lockCandidateSince = null;
+        session.unlockCandidateSince = null;
         return "below_horizon";
     }
     if (session.state === "locked") {
-        // Sticky until the error clearly leaves the lock zone.
-        if (angularError <= LOCK_DEG * UNLOCK_FACTOR) return "locked";
+        // Sticky until the error clearly AND persistently leaves the release
+        // band — a momentary excursion (tremor, bump, gust) keeps the lock.
+        if (angularError <= LOCK_DEG * UNLOCK_FACTOR) {
+            session.unlockCandidateSince = null;
+            return "locked";
+        }
+        if (session.unlockCandidateSince == null) {
+            session.unlockCandidateSince = now;
+        }
+        if (now - session.unlockCandidateSince < UNLOCK_HOLD_MS) return "locked";
+        session.unlockCandidateSince = null;
+        // falls through to re-classify below
     }
     if (angularError <= LOCK_DEG) {
         if (session.lockCandidateSince == null) session.lockCandidateSince = now;
@@ -173,6 +200,43 @@ function nextState(session, angularError, aboveHorizon, now) {
     if (angularError <= NEARLY_DEG) return "nearly_aligned";
     if (angularError <= CLOSE_DEG) return "close";
     return "searching";
+}
+
+/** Shortest signed distance between two headings/angles on a ±180° wrap. */
+function wrapDelta(next, prev) {
+    let d = next - prev;
+    if (d > 180) d -= 360;
+    else if (d < -180) d += 360;
+    return d;
+}
+
+/**
+ * Time-constant EMA of the error components. dt-aware so the damping feels
+ * identical at 5Hz keepalive and 20Hz motion; horizontal wraps at ±180°.
+ * Reset (session.smoothed = null) on every retarget.
+ */
+function smoothErrors(session, errors, now) {
+    const prev = session.smoothed;
+    if (!prev) {
+        session.smoothed = {
+            horizontal: errors.horizontalError,
+            vertical: errors.verticalError,
+            angular: errors.angularError,
+            at: now,
+        };
+        return session.smoothed;
+    }
+    const dt = Math.max(0, now - prev.at);
+    const alpha = 1 - Math.exp(-dt / ERROR_SMOOTH_TAU_MS);
+    session.smoothed = {
+        horizontal:
+            prev.horizontal +
+            wrapDelta(errors.horizontalError, prev.horizontal) * alpha,
+        vertical: prev.vertical + (errors.verticalError - prev.vertical) * alpha,
+        angular: prev.angular + (errors.angularError - prev.angular) * alpha,
+        at: now,
+    };
+    return session.smoothed;
 }
 
 function scoreConfidence(model, ephemerisAgeS, validForS) {
@@ -223,8 +287,12 @@ function ingest(roomId, packet, now = Date.now()) {
         targetAlt: altitude,
     });
 
+    // Damped errors drive BOTH the display and the state machine — the lock
+    // must judge the same steadied signal the user is aiming with.
+    const damped = smoothErrors(session, errors, now);
+
     const previous = session.state;
-    const state = nextState(session, errors.angularError, altitude > 0, now);
+    const state = nextState(session, damped.angular, altitude > 0, now);
     session.state = state;
     const transition = state !== previous ? { from: previous, to: state } : null;
 
@@ -262,9 +330,9 @@ function ingest(roomId, packet, now = Date.now()) {
             target_azimuth: round(azimuth, 3),
             above_horizon: altitude > 0,
             telescope: { heading: round(heading, 2), pitch: round(pitch, 2) },
-            horizontal_error: round(errors.horizontalError, 2),
-            vertical_error: round(errors.verticalError, 2),
-            angular_error: round(errors.angularError, 2),
+            horizontal_error: round(damped.horizontal, 2),
+            vertical_error: round(damped.vertical, 2),
+            angular_error: round(damped.angular, 2),
             state,
             aligned: state === "locked",
             confidence,
@@ -312,5 +380,6 @@ module.exports = {
     CLOSE_DEG,
     LOCK_HOLD_MS,
     UNLOCK_FACTOR,
-    __testing: { nextState, scoreConfidence, stampEphemeris, sessions },
+    UNLOCK_HOLD_MS,
+    __testing: { nextState, scoreConfidence, stampEphemeris, sessions, smoothErrors },
 };

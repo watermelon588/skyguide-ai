@@ -197,7 +197,7 @@ export default function QRCodeModal() {
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.3 }}
-                    className="mt-6 flex justify-center"
+                    className="mt-6 flex flex-col items-center gap-3"
                   >
                     <div className="relative rounded-2xl bg-white p-4 shadow-lg">
                       <QRCodeSVG
@@ -228,6 +228,11 @@ export default function QRCodeModal() {
                         )}
                       </AnimatePresence>
                     </div>
+                    <p className="max-w-[240px] text-center text-[11px] leading-4 text-ink-3">
+                      Tip: once open on your phone, tap{" "}
+                      <span className="text-ink-2">Install app</span> to keep
+                      the companion on your home screen.
+                    </p>
                   </motion.div>
                 ) : null}
               </AnimatePresence>

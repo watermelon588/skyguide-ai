@@ -15,6 +15,18 @@ const log = require("./logger");
 
 const TUNNEL_URL_RE = /https:\/\/[a-z0-9-]+\.trycloudflare\.com/i;
 
+/**
+ * Proof the tunnel can actually carry traffic.
+ *
+ * The URL is issued by api.cloudflare.com:443, but the data plane runs over
+ * port 7844 to the edge. On networks that allow 443 and block 7844 (campus /
+ * corporate firewalls) cloudflared prints a perfectly good URL that only ever
+ * serves Cloudflare error 1033 — so a URL alone must never be reported as
+ * success. Wait for a registered connection before promising the developer
+ * anything.
+ */
+const TUNNEL_CONNECTED_RE = /Registered tunnel connection|connection .* registered/i;
+
 /** Substrings in cloudflared output that indicate an unrecoverable failure. */
 const FATAL_PATTERNS = [
   /failed to request quick tunnel/i,
@@ -73,11 +85,26 @@ function startQuickTunnel({ name, targetUrl, timeoutMs = 60_000 }) {
 
     let settled = false;
     let captured = "";
+    let url = null;
 
     const timer = setTimeout(() => {
+      // Distinguish the two failures: no URL at all (Cloudflare never issued
+      // one) vs. a URL that never connected (the port-7844 firewall case).
       fail(
-        `Timed out after ${Math.round(timeoutMs / 1000)}s waiting for a ` +
-          `trycloudflare.com URL for "${name}".`
+        url
+          ? `The "${name}" tunnel got a URL (${url}) but never established a ` +
+              `connection to the Cloudflare edge within ` +
+              `${Math.round(timeoutMs / 1000)}s — the URL would only serve ` +
+              `error 1033.\n` +
+              "  cloudflared needs OUTBOUND port 7844 (TCP for --protocol http2,\n" +
+              "  UDP for QUIC). Many campus/corporate/hotel networks allow 443 but\n" +
+              "  block 7844, which is exactly this symptom. Verify with:\n" +
+              "    Test-NetConnection region1.v2.argotunnel.com -Port 7844\n" +
+              "  Workarounds: use a different network (a phone hotspot is the\n" +
+              "  quickest test), or use `npm run dev:lan` with the phone on the\n" +
+              "  same Wi-Fi — LAN mode needs no tunnel at all."
+          : `Timed out after ${Math.round(timeoutMs / 1000)}s waiting for a ` +
+              `trycloudflare.com URL for "${name}".`
       );
     }, timeoutMs);
 
@@ -107,8 +134,14 @@ function startQuickTunnel({ name, targetUrl, timeoutMs = 60_000 }) {
         }
       }
 
-      const match = captured.match(TUNNEL_URL_RE);
-      if (match) {
+      if (!url) {
+        const match = captured.match(TUNNEL_URL_RE);
+        if (match) url = match[0];
+      }
+
+      // Both halves required: the URL identifies the tunnel, the registered
+      // connection proves it can serve.
+      if (url && TUNNEL_CONNECTED_RE.test(captured)) {
         settled = true;
         clearTimeout(timer);
         // Stop buffering; keep only surfacing genuine errors after capture.
@@ -125,7 +158,7 @@ function startQuickTunnel({ name, targetUrl, timeoutMs = 60_000 }) {
         };
         proc.stdout.on("data", errorOnly);
         proc.stderr.on("data", errorOnly);
-        resolve({ name, url: match[0], proc });
+        resolve({ name, url, proc });
       }
     }
 
@@ -139,7 +172,7 @@ function startQuickTunnel({ name, targetUrl, timeoutMs = 60_000 }) {
     proc.on("exit", (code) => {
       if (!settled) {
         fail(
-          `cloudflared for "${name}" exited (code ${code}) before producing a URL.`
+          `cloudflared for "${name}" exited (code ${code}) before the tunnel was ready.`
         );
       }
     });

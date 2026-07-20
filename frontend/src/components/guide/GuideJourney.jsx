@@ -150,14 +150,16 @@ export default function GuideJourney({ steps, done }) {
         className="absolute bottom-0 left-5 top-0 w-px origin-top bg-gradient-to-b from-accent to-accent-hi lg:left-1/2 lg:-translate-x-1/2"
       />
 
-      {/* Start cap */}
-      <div data-trail-cap className="relative mb-10 flex items-center gap-3 pl-16 lg:justify-center lg:pl-0">
+      {/* Start cap — label sits BESIDE the node (fixed offset from the trail),
+          never centered over it: a centered label + margin overlapped the node
+          box on desktop. */}
+      <div data-trail-cap className="relative mb-10 flex h-11 items-center pl-16 lg:pl-[calc(50%+2.5rem)]">
         <span className="absolute left-5 top-1/2 -translate-x-1/2 -translate-y-1/2 lg:left-1/2">
           <span className="flex h-11 w-11 items-center justify-center border border-accent/40 bg-surface-1 text-accent shadow-[0_0_0_6px_var(--color-bg)]">
             <MapPin size={18} />
           </span>
         </span>
-        <span className="text-[11px] font-medium uppercase tracking-[0.3em] text-ink-3 lg:ml-14">
+        <span className="text-[11px] font-medium uppercase tracking-[0.3em] text-ink-3">
           Start here
         </span>
       </div>
@@ -174,14 +176,14 @@ export default function GuideJourney({ steps, done }) {
         ))}
       </div>
 
-      {/* Destination cap */}
-      <div data-trail-cap className="relative mt-10 flex items-center gap-3 pl-16 lg:justify-center lg:pl-0">
+      {/* Destination cap — same beside-the-node geometry as the start cap. */}
+      <div data-trail-cap className="relative mt-10 flex h-11 items-center pl-16 lg:pl-[calc(50%+2.5rem)]">
         <span className="absolute left-5 top-1/2 -translate-x-1/2 -translate-y-1/2 lg:left-1/2">
           <span className="flex h-11 w-11 items-center justify-center border border-accent/50 bg-accent/15 text-accent shadow-[0_0_0_6px_var(--color-bg)]">
             <Flag size={18} />
           </span>
         </span>
-        <span className="text-[11px] font-medium uppercase tracking-[0.3em] text-accent lg:ml-14">
+        <span className="text-[11px] font-medium uppercase tracking-[0.3em] text-accent">
           First light
         </span>
       </div>

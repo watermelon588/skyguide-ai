@@ -97,8 +97,17 @@ export default function TonightHero({
         aria-label={TITLE}
         className="select-none text-[clamp(3rem,9vw,7rem)] font-bold leading-[0.95] tracking-tight text-ink"
       >
+        {/* Each mask must out-size the glyph INK, not just the em box — with
+            the h1's 0.95 leading inherited, overflow-hidden cut the "g"
+            descender by ~18px at hero size (Satoshi's font box is a tall
+            1.25em). leading-[1.15] plus a margin-compensated bottom pad gives
+            the ink room inside the clip without changing the layout height
+            or the rise-from-mask animation. */}
         {TITLE.split("").map((char, i) => (
-          <span key={i} className="inline-block overflow-hidden align-bottom">
+          <span
+            key={i}
+            className="-mb-[0.12em] inline-block overflow-hidden pb-[0.12em] align-bottom leading-[1.15]"
+          >
             <span aria-hidden="true" className="hero-char inline-block">
               {char}
             </span>

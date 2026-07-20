@@ -73,29 +73,48 @@ function killTree(child) {
   }
 }
 
-/** Reject if any of the given ports already has a listener bound. */
+/**
+ * Reject if any of the given ports already has a listener bound.
+ *
+ * Both address families are probed. A port is free on 0.0.0.0 while another
+ * process holds it on [::] (Vite binds IPv6), so an IPv4-only probe reports a
+ * false all-clear — the tunnel then points at 5173 while the orchestrator's
+ * own Vite silently falls back to 5174, leaving the phone on a stale bundle
+ * that still targets localhost. Probing one family is worse than not probing:
+ * it fails as a mysterious CORS error instead of a clear port conflict.
+ */
 function assertPortsFree(ports) {
-  const check = (port) =>
+  const probeOne = (port, host) =>
     new Promise((resolve, reject) => {
       const probe = net
         .createServer()
         .once("error", (err) => {
           probe.close();
-          if (err.code === "EADDRINUSE") {
-            reject(
-              new Error(
-                `Port ${port} is already in use. The tunnel pipeline starts every ` +
-                  "service itself — stop the process using this port (an already-" +
-                  "running dev server?) and re-run."
-              )
-            );
-          } else {
-            reject(err);
+          // A host this machine cannot bind (no IPv6 stack) proves nothing
+          // about the port — only EADDRINUSE is evidence of a conflict.
+          if (err.code === "EADDRINUSE") return resolve(true);
+          if (err.code === "EAFNOSUPPORT" || err.code === "EADDRNOTAVAIL") {
+            return resolve(false);
           }
+          return reject(err);
         })
-        .once("listening", () => probe.close(resolve));
-      probe.listen(port, "0.0.0.0");
+        .once("listening", () => probe.close(() => resolve(false)));
+      probe.listen(port, host);
     });
+
+  const check = async (port) => {
+    const inUse = await Promise.all(
+      ["0.0.0.0", "::"].map((host) => probeOne(port, host))
+    );
+    if (inUse.some(Boolean)) {
+      throw new Error(
+        `Port ${port} is already in use. The tunnel pipeline starts every ` +
+          "service itself — stop the process using this port (an already-" +
+          "running dev server?) and re-run."
+      );
+    }
+  };
+
   return Promise.all(ports.map(check));
 }
 

@@ -67,6 +67,91 @@ async function create({ user, type, title, body, data = {}, sentKey }) {
   }
 }
 
+/* ----------------------------- community ----------------------------- *
+ * Feature 6 events (pings + direct messages) surfaced in the notification
+ * centre. Pings map to one notification per event (unique sentKey); direct
+ * messages COALESCE — a burst of DMs from one person while you're away is a
+ * single "N new messages" row, not N rows — so the bell reflects reality
+ * without becoming noise.
+ * --------------------------------------------------------------------- */
+
+/** Someone sent you a chat request. Recipient-facing. */
+async function notifyPingRequest(recipientId, { pingId, fromUsername, fromDisplayName, note }) {
+  const name = fromDisplayName || fromUsername || "An observer";
+  const body = note
+    ? `${name} wants to connect: “${String(note).slice(0, 100)}”`
+    : `${name} wants to connect with you.`;
+  return create({
+    user: recipientId,
+    type: "ping_request",
+    title: "New chat request",
+    body,
+    data: { href: "/community", username: fromUsername, kind: "ping_request" },
+    sentKey: `ping_req:${pingId}`,
+  });
+}
+
+/** Your chat request was accepted. Requester-facing. */
+async function notifyPingAccepted(requesterId, { pingId, byUsername, byDisplayName, room }) {
+  const name = byDisplayName || byUsername || "An observer";
+  return create({
+    user: requesterId,
+    type: "ping_accepted",
+    title: "Chat request accepted",
+    body: `${name} accepted your request — say hello.`,
+    data: {
+      href: room ? `/community/chat?room=${encodeURIComponent(room)}` : "/community/chat",
+      username: byUsername,
+      room: room || null,
+      kind: "ping_accepted",
+    },
+    sentKey: `ping_acc:${pingId}`,
+  });
+}
+
+/**
+ * A new direct message arrived for someone not currently reading the room.
+ *
+ * Coalesces onto an existing UNREAD row for the same conversation: the count
+ * climbs, the preview and timestamp refresh, and it re-pushes live. Once the
+ * recipient reads it, the next message opens a fresh row (a new unique
+ * sentKey), so "unread" always maps to a real, current occasion.
+ */
+async function notifyDirectMessage(recipientId, { room, messageId, fromUsername, fromDisplayName, preview }) {
+  const name = fromDisplayName || fromUsername || "An observer";
+  const href = `/community/chat?room=${encodeURIComponent(room)}`;
+  const snippet = String(preview || "").slice(0, 120);
+
+  const existing = await Notification.findOne({
+    user: recipientId,
+    type: "community_message",
+    "data.room": room,
+    readAt: null,
+  }).sort({ createdAt: -1 });
+
+  if (existing) {
+    const count = (existing.data?.count || 1) + 1;
+    existing.title = `${count} new messages from ${name}`;
+    existing.body = snippet;
+    existing.data = { ...existing.data, count, preview: snippet, messageId };
+    existing.markModified("data");
+    existing.createdAt = new Date(); // float it back to the top of the list
+    await existing.save();
+    const payload = existing.toJSON();
+    pushLive(recipientId, payload);
+    return payload;
+  }
+
+  return create({
+    user: recipientId,
+    type: "community_message",
+    title: `New message from ${name}`,
+    body: snippet,
+    data: { href, room, username: fromUsername, count: 1, kind: "community_message" },
+    sentKey: `dm:${messageId}`,
+  });
+}
+
 /** A page of the user's notifications, newest first, + the unread count. */
 async function list(userId, { before, limit = PAGE_SIZE } = {}) {
   const query = { user: userId };
@@ -114,6 +199,9 @@ async function markAllRead(userId) {
 module.exports = {
   bindIo,
   create,
+  notifyPingRequest,
+  notifyPingAccepted,
+  notifyDirectMessage,
   list,
   markRead,
   markAllRead,

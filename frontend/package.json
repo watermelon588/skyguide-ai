@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "sync:brand": "node scripts/sync-brand.mjs",
+    "prebuild": "node scripts/sync-brand.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",
