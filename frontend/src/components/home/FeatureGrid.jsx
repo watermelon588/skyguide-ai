@@ -101,6 +101,26 @@ const FEATURES = [
       </svg>
     ),
   },
+  {
+    title: "ISS & satellite passes",
+    body: "Predicted passes over your location — only the ones actually visible: after dark, sunlit, above your horizon. A bright station transit is an event; you'll know before it happens.",
+    icon: (
+      <svg viewBox="0 0 24 24" className="h-6 w-6" {...STROKE}>
+        <path d="M9 9l6 6M5 13l-2 2 6 6 2-2M13 5l2-2 6 6-2 2M12 12l7-7" />
+        <path d="M8 16a3 3 0 01-4 4c0-2 1-4 4-4z" />
+      </svg>
+    ),
+  },
+  {
+    title: "A companion in your pocket",
+    body: "The phone side installs straight to your home screen — a lightweight app that pairs in one scan, keeps the screen awake at the tripod, and shows the guidance arrows right where your hands are.",
+    icon: (
+      <svg viewBox="0 0 24 24" className="h-6 w-6" {...STROKE}>
+        <rect x="7" y="2" width="10" height="20" />
+        <path d="M12 9v6M9 12h6" />
+      </svg>
+    ),
+  },
 ];
 
 export default function FeatureGrid() {

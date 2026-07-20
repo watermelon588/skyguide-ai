@@ -5,6 +5,7 @@ import SpotlightCard from "../components/tonight/fx/SpotlightCard";
 import TargetHero from "../components/target/TargetHero";
 import VisibilityStrip from "../components/target/VisibilityStrip";
 import SimilarObjects from "../components/target/SimilarObjects";
+import TargetIntel from "../components/target/TargetIntel";
 import { useTargetDetail } from "../hooks/useTargetDetail";
 import {
   formatDec,
@@ -17,7 +18,8 @@ import {
  * /tonight/:id — the Detailed Target Panel. One page that owns everything
  * the platform knows about a single object, plus the two actions that
  * matter: plan it, observe it. Every click on an object anywhere in the app
- * lands here. Reserved for later phases: AI analysis, observation history.
+ * lands here. The intel rail (TargetIntel) reads the object against the
+ * user's telescope, tonight's recommendation reasons and their own log.
  */
 
 function Shell({ children }) {
@@ -204,25 +206,7 @@ export default function TargetPanel() {
             <SimilarObjects target={target} />
           </SpotlightCard>
 
-          <SpotlightCard className="p-5">
-            <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-ink-3">
-              Coming to this panel
-            </p>
-            <ul className="mt-3 space-y-2.5 text-sm text-ink-2">
-              <li className="flex items-start gap-2.5">
-                <span className="mt-1.5 h-1.5 w-1.5 shrink-0 bg-accent/50" />
-                AI analysis of this object for your setup
-              </li>
-              <li className="flex items-start gap-2.5">
-                <span className="mt-1.5 h-1.5 w-1.5 shrink-0 bg-accent/50" />
-                Why it's worth observing tonight
-              </li>
-              <li className="flex items-start gap-2.5">
-                <span className="mt-1.5 h-1.5 w-1.5 shrink-0 bg-accent/50" />
-                Your observation history with it
-              </li>
-            </ul>
-          </SpotlightCard>
+          <TargetIntel target={target} />
         </aside>
       </div>
     </Shell>

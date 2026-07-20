@@ -5,6 +5,7 @@ import { Crosshair, Expand } from "lucide-react";
 import ScoreRing from "../tonight/fx/ScoreRing";
 import AddToPlanButton from "../plan/AddToPlanButton";
 import ImageLightbox from "./ImageLightbox";
+import ProgressiveImage from "../common/ProgressiveImage";
 import { typeMeta } from "../tonight/vocabulary";
 import { usePairing } from "../../context/PairingContext";
 import { useObserveTarget } from "../../hooks/useObserveTarget";
@@ -42,11 +43,10 @@ export default function TargetHero({ target }) {
             aria-label="Expand image"
             className="group absolute inset-0 h-full w-full cursor-zoom-in"
           >
-            <img
+            <ProgressiveImage
               src={image}
+              placeholder={target.thumbnail}
               alt={target.name || target.catalog_id}
-              decoding="async"
-              className="absolute inset-0 h-full w-full object-cover"
             />
             {/* Expand affordance — appears on hover, always tappable on touch. */}
             <span className="absolute right-2 top-2 flex h-9 w-9 items-center justify-center border border-line bg-surface-2/80 text-ink-2 opacity-0 transition-opacity group-hover:opacity-100 sm:opacity-70">

@@ -1,0 +1,19 @@
+{
+  "name": "SkyGuide Companion",
+  "short_name": "SkyGuide",
+  "description": "Telescope alignment companion — pair with your SkyGuide dashboard and follow live guidance to your target.",
+  "start_url": "/align.html",
+  "scope": "/align",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "icons": [
+    {
+      "src": "/brand/logo.png",
+      "sizes": "600x600",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

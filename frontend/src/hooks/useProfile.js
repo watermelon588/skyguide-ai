@@ -7,6 +7,7 @@ import {
   uploadAvatar,
 } from "../services/profile.service";
 import { useAuth } from "../context/AuthContext";
+import { useToast } from "../context/ToastContext";
 
 const KEY = ["profile", "me"];
 
@@ -20,6 +21,7 @@ const KEY = ["profile", "me"];
 export function useProfile() {
   const queryClient = useQueryClient();
   const { checkAuth } = useAuth();
+  const toast = useToast();
 
   const query = useQuery({
     queryKey: KEY,
@@ -35,17 +37,29 @@ export function useProfile() {
 
   const update = useMutation({
     mutationFn: updateMyProfile,
-    onSuccess: settle,
+    onSuccess: (fresh) => {
+      settle(fresh);
+      toast.success("Profile saved");
+    },
+    onError: () => toast.error("Couldn't save your profile — try again"),
   });
 
   const setAvatar = useMutation({
     mutationFn: uploadAvatar,
-    onSuccess: settle,
+    onSuccess: (fresh) => {
+      settle(fresh);
+      toast.success("Photo updated");
+    },
+    onError: () => toast.error("Couldn't upload that photo — try again"),
   });
 
   const clearAvatar = useMutation({
     mutationFn: removeAvatar,
-    onSuccess: settle,
+    onSuccess: (fresh) => {
+      settle(fresh);
+      toast.info("Photo removed");
+    },
+    onError: () => toast.error("Couldn't remove your photo — try again"),
   });
 
   return {

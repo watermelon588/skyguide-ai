@@ -33,6 +33,7 @@ export default function GuideViewport({ feed, orientation, hasObserver, onClearT
     edge,
     modeRef,
     locked,
+    lockAchieved,
     unreferenced,
     copyLine,
     announced,
@@ -185,8 +186,10 @@ export default function GuideViewport({ feed, orientation, hasObserver, onClearT
               </motion.p>
             )}
           </AnimatePresence>
+          {/* Latched on lockAchieved (not the live lock): once you've centered
+              it, the log button must not flee when the scope wobbles. */}
           <AnimatePresence>
-            {locked && targetInfo?.catalog_id && (
+            {lockAchieved && targetInfo?.catalog_id && (
               <MarkObservedChip catalogId={targetInfo.catalog_id} />
             )}
           </AnimatePresence>

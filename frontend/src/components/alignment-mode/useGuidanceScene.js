@@ -124,13 +124,26 @@ export function useGuidanceScene({
     if (locked) fireLockMoment();
   }, [locked]);
 
-  // A new target forgets the previous one's below-horizon dismissal.
+  // A new target forgets the previous one's below-horizon dismissal and its
+  // lock latch.
   const targetKey = feed.target?.at ?? null;
   const [seenTargetKey, setSeenTargetKey] = useState(targetKey);
   const targetChanged = targetKey !== seenTargetKey;
   if (targetChanged) {
     setSeenTargetKey(targetKey);
     setKeepBelow(false);
+  }
+
+  // Lock latch: once THIS target has been locked, logging stays available for
+  // the rest of its session. Without the latch the "Mark observed" chip
+  // unmounted the instant a tremor broke the lock — usually right as the user
+  // reached for it (the field complaint that prompted this). Render-phase
+  // adjustment, same pattern as the announcements above.
+  const [lockAchieved, setLockAchieved] = useState(false);
+  if (targetChanged && lockAchieved) {
+    setLockAchieved(false);
+  } else if (locked && !lockAchieved) {
+    setLockAchieved(true);
   }
 
   const keepBelowHorizon = useCallback(() => setKeepBelow(true), []);
@@ -140,6 +153,8 @@ export function useGuidanceScene({
     edge,
     modeRef,
     locked,
+    /** This target has locked at least once — logging stays offered. */
+    lockAchieved,
     unreferenced,
     belowHorizonActive,
     frozen,

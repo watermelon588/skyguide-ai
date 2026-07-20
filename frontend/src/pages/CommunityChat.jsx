@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { MessageSquare, Users, AlertCircle, ArrowLeft } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -30,14 +30,20 @@ export default function CommunityChat() {
   const queryClient = useQueryClient();
   const [selectedKey, setSelectedKey] = useState(null);
   const [notice, setNotice] = useState(null);
+  const [searchParams] = useSearchParams();
+
+  // A `?room=` deep-link (from a message/ping-accepted notification) opens that
+  // conversation directly. It only seeds the initial room — once the observer
+  // clicks another, `selectedKey` overrides it.
+  const roomParam = searchParams.get("room");
 
   // Default to the observer's regional room when they have one — it's the more
-  // useful room ("is it clear over the river?") — else the global room. Derived
-  // rather than synced via an effect: the default falls out of `rooms`, and an
-  // explicit pick simply overrides it.
+  // useful room ("is it clear over the river?") — else the first available.
+  // Derived rather than synced via an effect: the default falls out of `rooms`,
+  // and an explicit pick simply overrides it.
   const defaultKey =
     rooms.find((r) => r.kind === "region")?.key ?? rooms[0]?.key ?? null;
-  const activeKey = selectedKey ?? defaultKey;
+  const activeKey = selectedKey ?? roomParam ?? defaultKey;
 
   const {
     messages,

@@ -84,7 +84,7 @@ test("extrapolateEphemeris advances linearly and wraps azimuth", () => {
 
 // --------------------------------------------------------------------------
 function freshSession(state = "searching") {
-    return { state, lockCandidateSince: null };
+    return { state, lockCandidateSince: null, unlockCandidateSince: null };
 }
 
 test("state machine: thresholds map to states", () => {
@@ -108,9 +108,27 @@ test("state machine: lock hysteresis prevents boundary strobing", () => {
     const s = freshSession("locked");
     // Slightly outside LOCK_DEG but inside the release band → stays locked.
     assert.equal(nextState(s, engine.LOCK_DEG * 1.3, true, 0), "locked");
-    // Clearly outside the release band → drops out.
-    const out = nextState(freshSession("locked"), engine.LOCK_DEG * 2, true, 0);
-    assert.equal(out, "nearly_aligned");
+    // Outside the release band, but only momentarily → still locked (the
+    // release needs UNLOCK_HOLD_MS of sustained excursion).
+    const s2 = freshSession("locked");
+    const beyond = engine.LOCK_DEG * engine.UNLOCK_FACTOR + 1;
+    assert.equal(nextState(s2, beyond, true, 0), "locked");
+    assert.equal(
+        nextState(s2, beyond, true, engine.UNLOCK_HOLD_MS - 1),
+        "locked",
+    );
+    // Sustained excursion past the hold → drops out (3.4° → "close").
+    assert.equal(nextState(s2, beyond, true, engine.UNLOCK_HOLD_MS), "close");
+});
+
+test("state machine: returning inside the band cancels a pending release", () => {
+    const s = freshSession("locked");
+    const beyond = engine.LOCK_DEG * engine.UNLOCK_FACTOR + 1;
+    nextState(s, beyond, true, 0); // excursion starts
+    nextState(s, 0.5, true, 500); // back inside → release cancelled
+    // A later excursion starts its own clock; the old one must not count.
+    assert.equal(nextState(s, beyond, true, 600), "locked");
+    assert.equal(nextState(s, beyond, true, 600 + engine.UNLOCK_HOLD_MS - 1), "locked");
 });
 
 test("state machine: a wobble outside the zone resets the hold timer", () => {
@@ -126,6 +144,44 @@ test("state machine: a wobble outside the zone resets the hold timer", () => {
 test("state machine: below horizon overrides everything", () => {
     assert.equal(nextState(freshSession("locked"), 0.1, false, 0), "below_horizon");
 });
+
+test("error damping: converges and wraps horizontal at ±180°", () => {
+    const { smoothErrors } = engine.__testing;
+    const s = { smoothed: null };
+    const first = smoothErrors(
+        s,
+        { horizontalError: 179, verticalError: 0, angularError: 179 },
+        0,
+    );
+    assert.equal(first.horizontal, 179); // first sample passes through
+
+    // A jump to -179 is a 2° move across the wrap, not a 358° swing — the
+    // damped value must head toward ±180, not toward zero.
+    const next = smoothErrors(
+        s,
+        { horizontalError: -179, verticalError: 0, angularError: 179 },
+        100,
+    );
+    assert.ok(Math.abs(next.horizontal) > 178, `wrapped: ${next.horizontal}`);
+
+    // With time, the estimate converges to the input.
+    let out = next;
+    for (let t = 200; t <= 3000; t += 100) {
+        out = smoothErrors(
+            s,
+            { horizontalError: -179, verticalError: 0, angularError: 179 },
+            t,
+        );
+    }
+    assert.ok(Math.abs(wrap180(out.horizontal - -179)) < 0.5);
+});
+
+function wrap180(d) {
+    let x = d;
+    if (x > 180) x -= 360;
+    else if (x < -180) x += 360;
+    return x;
+}
 
 test("confidence: no north reference caps the score", () => {
     const model = (conf, source, status) => ({

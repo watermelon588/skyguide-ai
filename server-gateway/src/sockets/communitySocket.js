@@ -1,5 +1,6 @@
 const communityService = require("../services/communityService");
 const moderationService = require("../services/moderationService");
+const notificationService = require("../services/notificationService");
 const socketSessionAuth = require("../middleware/socketSessionAuth");
 
 /**
@@ -135,6 +136,32 @@ module.exports = (io) => {
             if (!hidden.has(peer.data.userId)) {
               peer.emit("chat:message", message);
             }
+          }
+        }
+
+        // Direct-message notification: for a DM room, if the recipient isn't
+        // currently reading it (no socket joined), record a notification so it
+        // reaches their bell (and them, when they're offline). Regional rooms
+        // have no single "recipient", so they never notify. Coalesced by
+        // conversation in notificationService.
+        const recipientId = await communityService.directCounterpart(
+          roomKey,
+          user._id,
+        );
+        if (recipientId && !hidden.has(recipientId)) {
+          const present = new Set(
+            (await nsp.in(roomKey).fetchSockets()).map((s) => s.data.userId),
+          );
+          if (!present.has(recipientId)) {
+            notificationService
+              .notifyDirectMessage(recipientId, {
+                room: roomKey,
+                messageId: message.id,
+                fromUsername: user.username,
+                fromDisplayName: user.displayName,
+                preview: message.body,
+              })
+              .catch(() => {});
           }
         }
       } catch (error) {

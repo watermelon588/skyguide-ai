@@ -1,6 +1,7 @@
 const User = require("../models/Users");
 const jwt = require("jsonwebtoken");
 const sendEmail = require("../utils/email");
+const { welcomeEmail } = require("../utils/emailTemplates");
 const crypto = require("crypto");
 
 // Helper function to bundle JWT token creation and browser cookie options configuration
@@ -66,6 +67,18 @@ If you didn't create this account, you can ignore this email.`,
     }
 };
 
+/**
+ * Send the one-time welcome email. Best-effort and fire-and-forget: it must
+ * never delay the sign-up response or fail it — a missed welcome is cosmetic,
+ * unlike a missed verification code.
+ */
+const deliverWelcomeEmail = (user) => {
+    const { subject, html, text } = welcomeEmail(user);
+    sendEmail({ email: user.email, subject, message: text, html }).catch(
+        (error) => console.error("Welcome email failed to send:", error.message),
+    );
+};
+
 exports.register = async (req, res, next) => {
     try {
         const { username, email, password, location } = req.body;
@@ -95,6 +108,10 @@ exports.register = async (req, res, next) => {
         });
 
         const emailSent = await deliverVerificationCode(user, code);
+
+        // Warm welcome, sent once. Fire-and-forget so it can't slow or break
+        // sign-up (see deliverWelcomeEmail).
+        deliverWelcomeEmail(user);
 
         // Sign the new observer IN immediately. Verification is deferred: an
         // account you can't use until you've read an email is a dead end, and

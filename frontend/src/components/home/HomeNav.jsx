@@ -10,6 +10,8 @@ import { Menu, X } from "lucide-react";
 
 import { useAuth } from "../../context/AuthContext";
 import MagneticButton from "../fx/MagneticButton";
+import Logo from "../brand/Logo";
+import { BRAND_FULL_NAME } from "../../config/brand";
 
 /**
  * Landing-page navigation — a collapsible, interactive bar.
@@ -55,9 +57,9 @@ export default function HomeNav() {
         <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-5 sm:px-8">
           <Link
             to="/"
-            className="text-lg font-black uppercase tracking-tight text-ink"
+            aria-label={`${BRAND_FULL_NAME} — home`}
           >
-            SkyGuide <span className="text-accent">AI</span>
+            <Logo size="md" decorative />
           </Link>
 
           <div className="hidden items-center gap-9 text-sm font-medium text-ink-2 md:flex">
@@ -121,9 +123,7 @@ export default function HomeNav() {
             className="fixed inset-0 z-50 flex flex-col bg-black md:hidden"
           >
             <div className="flex h-16 items-center justify-between border-b border-line px-5">
-              <span className="text-lg font-black uppercase tracking-tight text-ink">
-                SkyGuide <span className="text-accent">AI</span>
-              </span>
+              <Logo size="md" />
               <button
                 type="button"
                 aria-label="Close menu"

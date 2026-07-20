@@ -456,6 +456,22 @@ async function pruneRoom(roomKey) {
   });
 }
 
+/**
+ * The OTHER participant of a direct room, as a userId string — or null when the
+ * room isn't a DM (regional rooms have derived, unbounded membership, so "the
+ * recipient" isn't a meaningful notion there). Used to decide who, if anyone,
+ * gets a message notification.
+ */
+async function directCounterpart(roomKey, senderId) {
+  if (!String(roomKey).startsWith("dm:")) return null;
+  const room = await Room.findOne({ key: roomKey, kind: "direct" })
+    .select("participants")
+    .lean();
+  if (!room) return null;
+  const other = room.participants.find((p) => String(p) !== String(senderId));
+  return other ? String(other) : null;
+}
+
 /** Validate + persist a message, returning its public shape. */
 async function postMessage(user, roomKey, rawBody) {
   await assertRoomAccess(user, roomKey);
@@ -486,6 +502,7 @@ module.exports = {
   listRooms,
   getMessages,
   postMessage,
+  directCounterpart,
   assertRoomAccess,
   ensureRoom,
   ensureGeohash,

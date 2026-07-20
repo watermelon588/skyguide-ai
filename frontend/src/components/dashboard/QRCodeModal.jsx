@@ -18,10 +18,14 @@ import Button from "../ui/Button";
  * Builds the pairing URL encoded into the QR. Only room + token are exposed.
  * The base URL comes from the network config so the QR points at the LAN IP
  * or Cloudflare tunnel (never localhost) depending on NETWORK_MODE.
+ *
+ * /align.html is the companion's own lightweight entry (not the SPA route) —
+ * the phone downloads only pairing + sensors + guidance. The old /align SPA
+ * route still redirects here for stale QR codes.
  */
 function buildPairingUrl({ roomId, pairingToken }) {
   const params = new URLSearchParams({ room: roomId, token: pairingToken });
-  return `${getQrBaseUrl()}/align?${params.toString()}`;
+  return `${getQrBaseUrl()}/align.html?${params.toString()}`;
 }
 
 function formatTime(ts) {
@@ -193,7 +197,7 @@ export default function QRCodeModal() {
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.3 }}
-                    className="mt-6 flex justify-center"
+                    className="mt-6 flex flex-col items-center gap-3"
                   >
                     <div className="relative rounded-2xl bg-white p-4 shadow-lg">
                       <QRCodeSVG
@@ -224,6 +228,11 @@ export default function QRCodeModal() {
                         )}
                       </AnimatePresence>
                     </div>
+                    <p className="max-w-[240px] text-center text-[11px] leading-4 text-ink-3">
+                      Tip: once open on your phone, tap{" "}
+                      <span className="text-ink-2">Install app</span> to keep
+                      the companion on your home screen.
+                    </p>
                   </motion.div>
                 ) : null}
               </AnimatePresence>

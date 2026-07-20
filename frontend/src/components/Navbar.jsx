@@ -5,7 +5,9 @@ import { Menu, X, Sparkles } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { useChat } from "../context/ChatContext";
 import Avatar from "./profile/Avatar";
+import Logo from "./brand/Logo";
 import NotificationBell from "./notifications/NotificationBell";
+import { BRAND_FULL_NAME } from "../config/brand";
 
 /**
  * The one navbar, shared by every page (app pages AND the immersive /tonight
@@ -64,9 +66,9 @@ export const Navbar = () => {
         <button
           type="button"
           onClick={() => navigate("/")}
-          className="text-xl font-black uppercase tracking-tight text-ink sm:text-2xl"
+          aria-label={`${BRAND_FULL_NAME} — home`}
         >
-          SkyGuide <span className="text-accent">AI</span>
+          <Logo size="lg" decorative />
         </button>
 
         {/* Desktop links */}

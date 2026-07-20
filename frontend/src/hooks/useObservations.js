@@ -7,6 +7,7 @@ import {
   removeObservation,
   updateObservation,
 } from "../services/observation.service";
+import { useToast } from "../context/ToastContext";
 
 const KEY = ["observations"];
 
@@ -22,6 +23,7 @@ const KEY = ["observations"];
  */
 export function useObservations({ enabled = true } = {}) {
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   const query = useQuery({
     queryKey: KEY,
@@ -67,6 +69,16 @@ export function useObservations({ enabled = true } = {}) {
     onSuccess: (created) => {
       // Insert immediately; the invalidate confirms against the server.
       patchCache((list) => [created, ...list]);
+      toast.success(`${created.catalog_id} added to your plan`);
+    },
+    onError: (err) => {
+      // 409 = already planned (see observation.service) — a gentle nudge, not
+      // an error the user did anything wrong to cause.
+      if (err?.response?.status === 409) {
+        toast.info("That object is already on your plan");
+      } else {
+        toast.error("Couldn't add to your plan — try again");
+      }
     },
     onSettled: invalidate,
   });
@@ -84,6 +96,7 @@ export function useObservations({ enabled = true } = {}) {
     },
     onError: (_err, _vars, context) => {
       if (context?.previous) queryClient.setQueryData(KEY, context.previous);
+      toast.error("Couldn't save that change — try again");
     },
     onSettled: invalidate,
   });
@@ -96,8 +109,10 @@ export function useObservations({ enabled = true } = {}) {
       patchCache((list) => list.filter((o) => o._id !== id));
       return { previous };
     },
+    onSuccess: () => toast.success("Removed from your plan"),
     onError: (_err, _vars, context) => {
       if (context?.previous) queryClient.setQueryData(KEY, context.previous);
+      toast.error("Couldn't remove that — try again");
     },
     onSettled: invalidate,
   });

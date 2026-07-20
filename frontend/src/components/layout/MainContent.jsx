@@ -6,7 +6,10 @@
  */
 export default function MainContent({ children }) {
   return (
-    <main className="flex h-screen min-w-0 flex-1 flex-col overflow-y-auto">
+    <main
+      data-scroll-root
+      className="flex h-screen min-w-0 flex-1 flex-col overflow-y-auto"
+    >
       {children}
     </main>
   );

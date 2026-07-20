@@ -61,6 +61,11 @@ function shutdown(code = 0) {
 
 process.on("SIGINT", () => shutdown(0));
 process.on("SIGTERM", () => shutdown(0));
+// Closing the terminal window on Windows delivers SIGHUP (not SIGINT).
+// Without this, every child — Vite, uvicorn, nodemon, cloudflared — is
+// orphaned, keeps its port, and the next run fails with "port in use"
+// while stale tunnels serve a dead bundle.
+process.on("SIGHUP", () => shutdown(0));
 process.on("uncaughtException", (err) => {
   log.error(`Unexpected error: ${err.stack || err.message}`);
   shutdown(1);

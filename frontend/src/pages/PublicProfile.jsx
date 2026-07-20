@@ -4,6 +4,7 @@ import { MapPin, Telescope } from "lucide-react";
 
 import Starfield from "../components/tonight/Starfield";
 import Avatar from "../components/profile/Avatar";
+import Logo from "../components/brand/Logo";
 import StatsBand from "../components/profile/StatsBand";
 import { fetchPublicProfile } from "../services/profile.service";
 
@@ -27,9 +28,7 @@ function Shell({ children }) {
         >
           ← Dashboard
         </Link>
-        <span className="text-sm font-black uppercase tracking-tight text-ink">
-          SkyGuide <span className="text-accent">AI</span>
-        </span>
+        <Logo size="sm" />
       </nav>
       <main className="relative z-10 mx-auto w-full max-w-3xl px-6 pb-24">
         {children}
