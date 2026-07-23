@@ -1,0 +1,52 @@
+# SkyGuide AI — files that must never enter a build context / image.
+# Mirrors .gitignore, but this one also guards against files that exist on a
+# developer machine and would otherwise be COPY'd in even though git ignores them.
+
+# --- Secrets (highest priority) ---
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+
+# --- Internal-only material (architecture, roadmap, presentation, dev journal) ---
+_local/
+.claude/
+CLAUDE.md
+
+# --- VCS / tooling ---
+.git
+.gitignore
+.mcp.json
+.runtime/
+.vscode/
+.idea/
+
+# --- Dependencies & build output (reinstalled/rebuilt inside the image) ---
+node_modules
+**/node_modules
+venv/
+.venv/
+**/__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+dist/
+build/
+coverage/
+.cache/
+
+# --- Runtime caches regenerated on demand ---
+astro-engine/data/*.tle
+astro-engine/data/openngc.csv
+astro-engine/data/wiki_cache/
+
+# --- Noise ---
+*.log
+logs/
+tmp/
+temp/
+*.tmp
+.DS_Store
+Thumbs.db

@@ -1,6 +1,6 @@
 import axios from "axios";
 
-import { getAstroBaseUrl } from "../config/network";
+import { getAstroApiBase } from "../config/network";
 
 /**
  * Catalog data layer for the Explore page.
@@ -11,7 +11,7 @@ import { getAstroBaseUrl } from "../config/network";
  * FastAPI Astro Engine directly (public science data, no auth cookie), matching
  * tonight.service.
  */
-const ASTRO_API = getAstroBaseUrl();
+const ASTRO_API = getAstroApiBase();
 
 /**
  * Aggregate catalog statistics for the visualizations.

@@ -1,6 +1,6 @@
 import axios from "axios";
 
-import { getAstroBaseUrl } from "../config/network";
+import { getAstroApiBase } from "../config/network";
 
 /**
  * "Tonight" experience data layer.
@@ -10,7 +10,7 @@ import { getAstroBaseUrl } from "../config/network";
  * directly for scientific data (same pattern as weather.service.js). No auth
  * cookie is required for these endpoints.
  */
-const ASTRO_API = getAstroBaseUrl();
+const ASTRO_API = getAstroApiBase();
 
 /**
  * The night's top recommended objects, ranked by visibility score.

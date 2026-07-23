@@ -7,7 +7,6 @@ import { ArrowRight } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import VideoBackground from "../fx/VideoBackground";
 import MagneticButton from "../fx/MagneticButton";
-import heroPoster from "../../assets/bg/2.jpg";
 
 /**
  * Landing hero — the cinematic first screen of SkyGuide AI (redesign v2.0).
@@ -68,11 +67,14 @@ export default function HomeHero() {
       ref={scope}
       className="relative isolate flex min-h-screen flex-col items-center justify-center overflow-hidden px-6 pt-24 text-center sm:px-12"
     >
-      {/* Full-bleed video backdrop with scroll-through parallax (poster shown
-          while the mp4 loads / if it fails). */}
+      {/* Full-bleed video backdrop with scroll-through parallax.
+          No `poster`: a still frame flashed on top of the black canvas for a
+          beat before the mp4 started, which read as a broken image rather than
+          a considered loading state. The video now fades up from the pure-black
+          canvas instead. VideoBackground still accepts a poster for callers
+          that want one. */}
       <VideoBackground
         src="/hero2.mp4"
-        poster={heroPoster}
         scrollScope={scope}
         size="h-[88vh] w-[92%] max-w-6xl"
       />

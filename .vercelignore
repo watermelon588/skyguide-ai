@@ -1,0 +1,27 @@
+# SkyGuide AI — excluded from any Vercel / Netlify style static deployment.
+# The frontend is the only thing that belongs in a static deploy; everything
+# below is either a secret, internal-only, or a backend service.
+
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+
+_local/
+.claude/
+CLAUDE.md
+
+.git
+.runtime/
+docs/
+
+server-gateway/
+astro-engine/
+scripts/
+
+**/__pycache__/
+*.py[cod]
+venv/
+.venv/
+*.log

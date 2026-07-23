@@ -1,0 +1,58 @@
+/* BounceCards — ported from the Multi-Modal-Search-Engine gallery.
+   Retuned for SkyGuide's design system: hard 90° corners (radius 0 is the
+   brand), flat solid surfaces with hairline borders, electric-blue accent on
+   hover. No blur, no glass, no rounded anything. */
+
+.bounceCardsContainer {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.bounceCardsContainer .bounce-card {
+  position: absolute;
+  /* Size is driven by the `cardSize` prop (see GALLERY.cardSize). */
+  width: var(--bounce-card-size, 240px);
+  aspect-ratio: 1;
+  border: 1px solid var(--color-line, #232427);
+  border-radius: 0;
+  overflow: hidden;
+  background: var(--color-surface-2, #111214);
+  transition:
+    border-color 0.3s ease,
+    outline-color 0.3s ease;
+  will-change: transform;
+  cursor: pointer;
+}
+
+.bounceCardsContainer .bounce-card:hover {
+  border-color: var(--color-accent, #0049cd);
+  outline: 1px solid var(--color-accent, #0049cd);
+}
+
+.bounceCardsContainer .bounce-card .bounce-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Rank badge — which position this photo holds in the top ten. */
+.bounceCardsContainer .bounce-rank {
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding: 4px 8px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #f6f6f6;
+  background: var(--color-accent, #0049cd);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bounceCardsContainer .bounce-card {
+    transition: none;
+  }
+}

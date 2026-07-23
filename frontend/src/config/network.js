@@ -75,6 +75,22 @@ export function getQrBaseUrl() {
   return getFrontendBaseUrl();
 }
 
+/**
+ * Base URL for science data the BROWSER fetches.
+ *
+ * Points at the gateway's proxy, not the engine. The engine is a private
+ * service: exposing it to browsers meant an unauthenticated compute API on the
+ * public internet, where CORS provided no protection (curl ignores it). The
+ * proxy forwards the same paths 1:1, so callers keep their existing URLs —
+ * `${getAstroApiBase()}/api/v1/catalog` reaches the engine's /api/v1/catalog.
+ *
+ * `getAstroBaseUrl()` below still returns the engine's own origin; it is for
+ * direct/diagnostic use only and should not be used for new browser calls.
+ */
+export function getAstroApiBase() {
+  return `${getApiBaseUrl()}/api/v1/astro`;
+}
+
 /** FastAPI Astro Engine base URL. */
 export function getAstroBaseUrl() {
   return pick(ASTRO.local, ASTRO.lan, ASTRO.tunnel);

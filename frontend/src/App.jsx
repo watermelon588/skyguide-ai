@@ -4,6 +4,8 @@ import { Route, Routes } from "react-router-dom";
 import SocketTest from "./pages/SocketTest";
 import AuthTest from "./pages/AuthTest";
 import LoginPage from "./pages/LoginPage";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import Align from "./pages/Align";
 import { useLocation } from "react-router-dom";
 import ChatWidget from "./components/chatbot/ChatWidget";
@@ -29,6 +31,7 @@ const APP_PATHS = [
   "/community",
   "/community/chat",
   "/explore",
+  "/gallery",
 ];
 // Astro is available on the main product pages (including the immersive
 // /tonight and /guide, for a uniform shell) but not on auth screens, the mobile
@@ -62,6 +65,9 @@ const Dashboard = lazy(() => import("./pages/Dashboard"));
 const AlignmentWorkspace = lazy(() => import("./pages/AlignmentWorkspace"));
 const Profile = lazy(() => import("./pages/Profile"));
 const Community = lazy(() => import("./pages/Community"));
+// The gallery pulls in GSAP-driven BounceCards and a grid of full-size photos —
+// lazy so it only downloads for people who open it.
+const Gallery = lazy(() => import("./pages/Gallery"));
 const CommunityChat = lazy(() => import("./pages/CommunityChat"));
 const PublicProfile = lazy(() => import("./pages/PublicProfile"));
 const Guide = lazy(() => import("./pages/Guide"));
@@ -79,13 +85,12 @@ function App() {
   return (
     <>
       <RouteMeta />
-      <div>
-        <img
-          src={"./src/assets/bg/7.jpg"}
-          alt="bgimage"
-          className="absolute inset-0 w-full h-screen -z-10"
-        />
-      </div>
+      {/* Removed: a full-screen <img src="./src/assets/bg/7.jpg"> sat here at
+          -z-10. The path was a raw STRING, not an import, so Vite never
+          fingerprinted or copied it — it resolved only under the dev server and
+          404'd in any production build. It was therefore already absent from
+          the deployed app; deleting it just makes dev match what ships. Every
+          route paints its own opaque `bg-bg` canvas over it regardless. */}
       <Routes>
         <Route
           path="/"
@@ -96,6 +101,10 @@ function App() {
           }
         />
         <Route path="/login" element={<LoginPage />} />
+        {/* Password recovery. The emailed link points at /reset-password/<token>,
+            so the token lives in the path — see forgotPassword() in the gateway. */}
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password/:token" element={<ResetPassword />} />
 
         {/* Every authenticated page shares ONE pairing session (PairedRoutes).
             That is what lets /alignment be a route: the phone stays paired
@@ -172,6 +181,16 @@ function App() {
               <AppLayout>
                 <Suspense fallback={null}>
                   <Community />
+                </Suspense>
+              </AppLayout>
+            }
+          />
+          <Route
+            path="/gallery"
+            element={
+              <AppLayout>
+                <Suspense fallback={null}>
+                  <Gallery />
                 </Suspense>
               </AppLayout>
             }

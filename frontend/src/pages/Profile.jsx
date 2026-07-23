@@ -5,6 +5,7 @@ import { Check, ExternalLink, LogOut, ShieldCheck } from "lucide-react";
 
 import AvatarUploader from "../components/profile/AvatarUploader";
 import StatsBand from "../components/profile/StatsBand";
+import PhotoUploader from "../components/gallery/PhotoUploader";
 import VerifyEmailPanel from "../components/auth/VerifyEmailPanel";
 import NotificationPrefs from "../components/notifications/NotificationPrefs";
 import { useProfile } from "../hooks/useProfile";
@@ -160,6 +161,9 @@ export default function Profile() {
             </p>
           )}
         </section>
+
+        {/* Community gallery — share a photo, and manage the ones you've shared */}
+        <PhotoUploader username={profile.username} />
 
         {/* Identity */}
         <section className="space-y-4 border border-line bg-surface-2 p-6">

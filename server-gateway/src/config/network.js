@@ -55,6 +55,62 @@ function getHost() {
     return process.env.HOST || "0.0.0.0";
 }
 
+/**
+ * Is the browser reaching us over HTTPS?
+ *
+ * Drives the session cookie's `secure` / `sameSite:"none"` pair. Getting this
+ * wrong is silent and total: `secure` on plain HTTP means the browser discards
+ * the cookie and nobody can stay signed in, while missing it over a tunnel
+ * means `sameSite:"none"` is rejected and cross-site pairing breaks.
+ *
+ * Both cloudflared modes terminate TLS at Cloudflare's edge and forward plain
+ * HTTP to this process, so the local socket is NEVER https — the mode is the
+ * only honest signal here, which is why this reads config rather than req.
+ */
+function isHttps() {
+    if (process.env.NODE_ENV === "production") return true;
+    if (MODE === "tunnel" || MODE === "production") return true;
+    // Explicit override for a reverse proxy that isn't described by MODE.
+    return process.env.FORCE_SECURE_COOKIES === "true";
+}
+
+/**
+ * Is a reverse proxy (Cloudflare Tunnel, CDN, load balancer) in front of us?
+ *
+ * Controls Express's `trust proxy`. This is deliberately NOT always-on:
+ *
+ *   behind a proxy, OFF -> every request appears to come from the tunnel
+ *                          connector (127.0.0.1), so the whole internet shares
+ *                          ONE rate-limit bucket and a single attacker can lock
+ *                          every user out.
+ *   NOT behind one, ON  -> `X-Forwarded-For` is client-controlled, so anyone
+ *                          can forge a fresh IP per request and rate limits
+ *                          become decorative.
+ *
+ * Neither failure is visible in normal use, so it must follow the deployment
+ * shape rather than defaulting either way.
+ */
+function isBehindProxy() {
+    if (process.env.TRUST_PROXY === "true") return true;
+    if (process.env.TRUST_PROXY === "false") return false;
+    return MODE === "tunnel" || MODE === "production";
+}
+
+/**
+ * Value for `app.set("trust proxy", ...)`.
+ *
+ * A hop COUNT, never `true`. `true` trusts the leftmost X-Forwarded-For entry,
+ * which is the one the client writes — express-rate-limit rejects it outright
+ * for that reason. cloudflared appends the real client IP as the last hop, so
+ * counting one hop back from the socket yields an address the client cannot
+ * forge. Override with TRUST_PROXY_HOPS when stacking another proxy in front.
+ */
+function getTrustProxy() {
+    if (!isBehindProxy()) return false;
+    const hops = Number.parseInt(process.env.TRUST_PROXY_HOPS ?? "", 10);
+    return Number.isInteger(hops) && hops > 0 ? hops : 1;
+}
+
 function getNetworkMode() {
     return MODE;
 }
@@ -67,6 +123,12 @@ function logNetworkConfig(port) {
     console.log(`   Client URL   : ${getClientUrl()}`);
     console.log(`   Bind Host    : ${getHost()}:${port}`);
     console.log(`   CORS Origins : ${origins.join(", ") || "(none configured)"}`);
+    console.log(
+        `   Secure Cookies: ${isHttps() ? "yes (secure + sameSite=none)" : "no (lax, plain HTTP)"}`
+    );
+    console.log(
+        `   Trust Proxy  : ${getTrustProxy() === false ? "off (direct)" : `${getTrustProxy()} hop(s)`}`
+    );
     console.log("──────────────────────────────────────────────");
 }
 
@@ -75,5 +137,8 @@ module.exports = {
     getClientUrl,
     getAllowedOrigins,
     getHost,
+    isHttps,
+    isBehindProxy,
+    getTrustProxy,
     logNetworkConfig,
 };

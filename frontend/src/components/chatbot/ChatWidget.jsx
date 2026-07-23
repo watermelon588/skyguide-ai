@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useChat } from "../../context/ChatContext";
-import { assets } from "../../assets/assets.js";
+import { astronaut } from "../../assets/assets.js";
 
 export default function ChatWidget() {
   const { isOpen, toggleChat } = useChat();
@@ -70,7 +70,7 @@ export default function ChatWidget() {
           }`}
       >
         <img
-          src={assets[16]} // astronaut image
+          src={astronaut}
           alt="Astro Assistant"
           className="w-34 animate-space"
         />

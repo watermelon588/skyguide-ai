@@ -3,6 +3,47 @@ const jwt = require("jsonwebtoken");
 const sendEmail = require("../utils/email");
 const { welcomeEmail } = require("../utils/emailTemplates");
 const crypto = require("crypto");
+const network = require("../config/network");
+
+/**
+ * Coerce a request field to a plain string for use in a database query.
+ *
+ * A JSON body can contain objects and arrays, and Mongo treats `{"$ne": null}`
+ * or `{"$gt": ""}` in a query position as an OPERATOR — so an unguarded
+ * `findOne({ email })` can be steered into matching an arbitrary account.
+ * bcrypt still blocks a full bypass, but this closes the enumeration and
+ * unexpected-match surface at the source.
+ *
+ * Non-strings become "" rather than "[object Object]" so they simply fail to
+ * match instead of silently querying for a nonsense literal.
+ */
+const asString = (value) => (typeof value === "string" ? value : "");
+
+/**
+ * The session cookie's security attributes.
+ *
+ * Extracted into ONE function because set and clear must agree exactly: a
+ * browser only replaces a cookie when secure/sameSite/path match what it
+ * stored. Logout used to pass a bare `{ httpOnly }`, so over a tunnel or in
+ * production — where the cookie is written with `secure` + `sameSite: "none"`
+ * — the clearing cookie was rejected and the session quietly survived logout.
+ *
+ * Derived from the network layer rather than NODE_ENV alone: `sameSite:"none"`
+ * REQUIRES `secure`, and secure cookies require HTTPS, which is precisely what
+ * tunnel/production mode provides and what local/LAN mode does not.
+ */
+const sessionCookieOptions = () => {
+    const isSecure = network.isHttps();
+
+    return {
+        httpOnly: true, // Prevents XSS scripts reading cookie token
+        secure: isSecure,
+        // "none" is only legal alongside secure; "lax" keeps plain-HTTP local
+        // and LAN development working exactly as before.
+        sameSite: isSecure ? "none" : "lax",
+        path: "/",
+    };
+};
 
 // Helper function to bundle JWT token creation and browser cookie options configuration
 const sendTokenCookie = (user, statusCode, res, extra = {}) => {
@@ -10,16 +51,9 @@ const sendTokenCookie = (user, statusCode, res, extra = {}) => {
         expiresIn: "7d",
     });
 
-    const isSecure =
-    process.env.NODE_ENV === "production" ||
-    process.env.NETWORK_MODE === "tunnel";
-
-
     const cookieOptions = {
+        ...sessionCookieOptions(),
         expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // Expires in 7 days matching token
-        httpOnly: true, // Prevents XSS scripts reading cookie token
-        secure: isSecure ,
-        sameSite: isSecure ? "none" : "lax",
     };
 
     res.status(statusCode).cookie("jwt", token, cookieOptions).json({
@@ -81,7 +115,15 @@ const deliverWelcomeEmail = (user) => {
 
 exports.register = async (req, res, next) => {
     try {
-        const { username, email, password, location } = req.body;
+        const { password, location } = req.body;
+
+        // Coerce the two credential lookups to strings BEFORE they reach the
+        // query. JSON bodies can carry objects, so `{"email": {"$ne": null}}`
+        // would otherwise arrive as a Mongo OPERATOR rather than a value and
+        // match an arbitrary account. Casting collapses any such object to a
+        // harmless string; see login() for the same guard.
+        const username = asString(req.body.username);
+        const email = asString(req.body.email);
 
         // Check if user already exists
         const existingUser = await User.findOne({ $or: [{ email }, { username }] });
@@ -125,7 +167,11 @@ exports.register = async (req, res, next) => {
 
 exports.login = async (req, res, next) => {
     try {
-        const { email, password } = req.body;
+        // Strings only — see asString(). `password` is coerced too: bcrypt
+        // throws on a non-string candidate, which would surface as a 500 and
+        // distinguish "malformed request" from "wrong password".
+        const email = asString(req.body.email);
+        const password = asString(req.body.password);
 
         if (!email || !password) {
             return res.status(400).json({
@@ -288,20 +334,41 @@ exports.sendVerificationCode = async (req, res, next) => {
     }
 };
 
+/**
+ * POST /api/v1/auth/forgot-password  { email }
+ *
+ * Two things here are security-load-bearing, both easy to undo by accident:
+ *
+ * 1. The reset URL is built from the CONFIGURED client URL, never from the
+ *    request. It previously used `req.get("host")`, which is attacker-supplied:
+ *    a forged Host header made the gateway mail the real account holder a link
+ *    pointing at the attacker's domain, handing over a valid reset token on
+ *    click. Never build an emailed link from request headers.
+ *
+ * 2. The response is IDENTICAL whether or not the address is registered. The
+ *    old 404 turned this endpoint into an account-existence oracle — which is
+ *    exactly the leak that was already closed on /login.
+ */
 exports.forgotPassword =
     async (req, res, next) => {
         try {
-            const user =
-                await User.findOne({
-                    email: req.body.email,
-                });
+            const email = asString(req.body.email).trim().toLowerCase();
+
+            // Same answer in every branch below — see (2) above.
+            const genericResponse = {
+                success: true,
+                message:
+                    "If that email is registered, a password reset link is on its way.",
+            };
+
+            if (!email) {
+                return res.status(200).json(genericResponse);
+            }
+
+            const user = await User.findOne({ email });
 
             if (!user) {
-                return res.status(404).json({
-                    success: false,
-                    message:
-                        "No user found with that email.",
-                });
+                return res.status(200).json(genericResponse);
             }
 
             const resetToken =
@@ -311,30 +378,34 @@ exports.forgotPassword =
                 validateBeforeSave: false,
             });
 
-            const resetURL =
-                `${req.protocol}://${req.get(
-                    "host"
-                )}/api/v1/auth/reset-password/${resetToken}`;
+            const resetURL = `${network
+                .getClientUrl()
+                .replace(/\/$/, "")}/reset-password/${resetToken}`;
 
-            await sendEmail({
-                email: user.email,
-                subject:
-                    "Password Reset Request",
-                message:
-                    `Forgot your password?
+            try {
+                await sendEmail({
+                    email: user.email,
+                    subject:
+                        "Password Reset Request",
+                    message:
+                        `Forgot your password?
 
 Reset it here:
 
 ${resetURL}
 
 This link expires in 10 minutes.`,
-            });
+                });
+            } catch (mailError) {
+                // A mail failure must not become an existence oracle either:
+                // log it, still answer generically.
+                console.error(
+                    "Password reset email failed to send:",
+                    mailError.message
+                );
+            }
 
-            res.status(200).json({
-                success: true,
-                message:
-                    "Password reset email sent.",
-            });
+            res.status(200).json(genericResponse);
         } catch (error) {
             next(error);
         }
@@ -366,8 +437,10 @@ exports.resetPassword =
                 });
             }
 
-            user.password =
-                req.body.password;
+            // asString so a non-string body can't reach the schema as a cast
+            // error (a 500 where a 400 belongs). The schema's minlength still
+            // rejects "" on save below.
+            user.password = asString(req.body.password);
 
             user.passwordResetToken =
                 undefined;
@@ -388,10 +461,13 @@ exports.resetPassword =
     };
 
 exports.logout = (req, res) => {
-    // Overwrite the cookie token instantly with an expired setting
+    // Overwrite the cookie token instantly with an expired setting.
+    // The attributes MUST match the ones used to set it (see
+    // sessionCookieOptions) or the browser keeps the original cookie and the
+    // session outlives "log out".
     res.cookie("jwt", "loggedout", {
+        ...sessionCookieOptions(),
         expires: new Date(Date.now() + 1000),
-        httpOnly: true,
     });
     res.status(200).json({ success: true, message: "Logged out successfully." });
 };

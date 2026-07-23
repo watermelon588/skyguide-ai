@@ -16,6 +16,19 @@ const ASTRO_ENGINE_URL = (
 const REQUEST_TIMEOUT_MS = 4000;
 
 /**
+ * Shared secret proving this request came from the gateway, not the internet.
+ * The engine rejects unkeyed /api/v1 calls whenever it has a key configured
+ * (and refuses to start without one in production), so this must be attached to
+ * every server-to-server call. Empty in development, where enforcement is off.
+ */
+const INTERNAL_KEY = process.env.INTERNAL_API_KEY || "";
+
+/** Request headers including the internal key when one is configured. */
+function withInternalKey(headers = {}) {
+    return INTERNAL_KEY ? { ...headers, "X-Internal-Key": INTERNAL_KEY } : headers;
+}
+
+/**
  * Recommendations run the whole visibility pipeline plus catalog + sky
  * sampling — measured ~6 s warm, more on a cold astropy cache. They get a
  * budget matched to the work; the 4 s default remains right for the
@@ -40,7 +53,7 @@ async function post(path, body, { timeoutMs = REQUEST_TIMEOUT_MS } = {}) {
     try {
         response = await fetch(`${ASTRO_ENGINE_URL}${path}`, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: withInternalKey({ "Content-Type": "application/json" }),
             body: JSON.stringify(body),
             signal: controller.signal,
         });
@@ -97,6 +110,7 @@ async function get(path) {
     let response;
     try {
         response = await fetch(`${ASTRO_ENGINE_URL}${path}`, {
+            headers: withInternalKey(),
             signal: controller.signal,
         });
     } catch (err) {
