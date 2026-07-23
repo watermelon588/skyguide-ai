@@ -1,11 +1,16 @@
 <div align="center">
 
-# 🌌 SkyGuide AI
+<img src="frontend/public/brand/logo.png" alt="SkyGuide AI" width="110" height="110" />
 
-**A real-time personalized celestial matchmaking & telescope alignment platform.**
+# SkyGuide AI
+
+### A real-time personalized celestial matchmaking & telescope alignment platform
 
 *Answers the question every amateur astronomer actually has:*
-> **"I have a telescope. What should I look at right now — and how do I point at it?"**
+
+> ### "I have a telescope. What should I look at right now — and how do I point at it?"
+
+**[Live demo](#) · [Features](#-what-it-does) · [Architecture](#-architecture) · [Getting started](#-getting-started)**
 
 [![React](https://img.shields.io/badge/React-19-0049CD?logo=react&logoColor=white)](https://react.dev)
 [![Node](https://img.shields.io/badge/Express-5-0049CD?logo=node.js&logoColor=white)](https://expressjs.com)
@@ -21,73 +26,69 @@
      Suggested: create a /docs/media folder and drop assets there.
      ═══════════════════════════════════════════════════════════ -->
 
-## 🎬 Demo
+## 🎬 A look around
 
-> _**[ PLACEHOLDER — 30–60s demo video or GIF ]**_
-> _Recommended flow: landing → Tonight's ranked sky → open a target → pair phone via QR → live alignment guidance._
->
-> ```markdown
-> ![SkyGuide AI demo](docs/media/demo.gif)
-> ```
+<div align="center">
+
+<img src="docs/media/landing.png" alt="SkyGuide AI landing page" width="900" />
+
+</div>
 
 <table>
 <tr>
-<td width="50%">
-
-**Dashboard** — the observatory workspace
-> _**[ PLACEHOLDER — screenshot ]**_
-> `docs/media/dashboard.png`
-
+<td width="50%" align="center">
+<img src="docs/media/dashboard.png" alt="Dashboard — the observatory workspace" width="100%" /><br/>
+<b>Dashboard</b><br/><sub>Location, telescope, conditions and Astro, the AI assistant</sub>
 </td>
-<td width="50%">
-
-**Tonight** — ranked sky, scored 0–100
-> _**[ PLACEHOLDER — screenshot ]**_
-> `docs/media/tonight.png`
-
+<td width="50%" align="center">
+<img src="docs/media/target-detail.png" alt="Target panel — Hercules Globular Cluster" width="100%" /><br/>
+<b>Target panel</b><br/><sub>Real imagery, a 0–100 score, and live visibility for your sky</sub>
 </td>
 </tr>
 <tr>
-<td width="50%">
-
-**Alignment** — phone-as-sensor guidance
-> _**[ PLACEHOLDER — screenshot / GIF ]**_
-> `docs/media/alignment.gif`
-
+<td width="50%" align="center">
+<img src="docs/media/alignment.png" alt="Alignment workspace with a paired phone" width="100%" /><br/>
+<b>Alignment</b><br/><sub>The phone streams orientation; the app talks you onto target</sub>
 </td>
-<td width="50%">
-
-**Explore** — 13,311 deep-sky objects
-> _**[ PLACEHOLDER — screenshot ]**_
-> `docs/media/explore.png`
-
+<td width="50%" align="center">
+<img src="docs/media/explore-catalog.png" alt="Explore — the full catalog" width="100%" /><br/>
+<b>Explore</b><br/><sub>All 13,311 objects — charted, filtered, searchable</sub>
+</td>
+</tr>
+<tr>
+<td width="50%" align="center">
+<img src="docs/media/gallery.png" alt="Community gallery" width="100%" /><br/>
+<b>Gallery</b><br/><sub>The ten most-loved nights, fanned out</sub>
+</td>
+<td width="50%" align="center">
+<img src="docs/media/observers-nearby.png" alt="Community — observers nearby" width="100%" /><br/>
+<b>Community</b><br/><sub>Nearby observers on a privacy-safe map (~40 km cells)</sub>
 </td>
 </tr>
 </table>
 
+### 📱 The phone becomes the instrument
+
 <table>
 <tr>
-<td width="50%">
-
-**Gallery** — the community's best nights
-> _**[ PLACEHOLDER — screenshot ]**_
-> _Capture the fanned top-ten strip with the grid below._
-> `docs/media/gallery.png`
-
+<td width="33%" align="center">
+<img src="docs/media/mobile/phone-qr-scan.jpg" alt="Scanning the pairing QR code" width="100%" /><br/>
+<sub><b>1. Scan</b> — the QR opens the installed companion</sub>
 </td>
-<td width="50%">
-
-**Community** — observers near you
-> _**[ PLACEHOLDER — screenshot ]**_
-> `docs/media/community.png`
-
+<td width="33%" align="center">
+<img src="docs/media/mobile/phone-guidance.jpg" alt="Live alignment guidance on the phone" width="100%" /><br/>
+<sub><b>2. Follow</b> — rotate and tilt until it reads 0° off target</sub>
+</td>
+<td width="33%" align="center">
+<img src="docs/media/mobile/responsive-6.png" alt="Community page on mobile" width="100%" /><br/>
+<sub><b>3. Everything else</b> — the full app is responsive too</sub>
 </td>
 </tr>
 </table>
 
-> _**[ PLACEHOLDER — mobile companion mockup ]**_
-> _A phone mounted on a telescope, showing the guidance screen. Device-frame mockup recommended._
-> `docs/media/mobile-companion.png`
+<div align="center">
+<b><a href="docs/SCREENSHOTS.md">→ See all 52 screenshots</a></b>
+</div>
 
 ---
 
