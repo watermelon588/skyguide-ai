@@ -1,6 +1,6 @@
 import { lazy, Suspense, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { Users, MapPin, Lock, Compass, MessageSquare } from "lucide-react";
+import { Users, MapPin, Lock, Compass, MessageSquare, Images } from "lucide-react";
 
 import RadiusSelector from "../components/community/RadiusSelector";
 import ObserverCard from "../components/community/ObserverCard";
@@ -86,6 +86,12 @@ export default function Community() {
           </p>
         </div>
         <div className="flex items-center gap-3">
+          <Link
+            to="/gallery"
+            className="flex items-center gap-2 border border-line bg-surface-2 px-4 py-2 text-sm text-ink-2 transition-colors hover:bg-surface-3 hover:text-ink"
+          >
+            <Images size={14} /> Explore gallery
+          </Link>
           <Link
             to="/community/chat"
             className="flex items-center gap-2 border border-line bg-surface-2 px-4 py-2 text-sm text-ink-2 transition-colors hover:bg-surface-3 hover:text-ink"

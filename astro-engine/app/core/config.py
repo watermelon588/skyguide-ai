@@ -27,6 +27,15 @@ class Settings(BaseSettings):
     # ``.env`` value without needing JSON. Use ``cors_origins`` to consume it.
     CORS_ORIGINS: str = "http://localhost:5173,http://localhost:3000,http://192.168.92.253:5173"
 
+    # --- Internal service authentication ---
+    # The engine is a PRIVATE service: only the Express gateway should reach it.
+    # When set, every /api/v1 request must carry this value in `X-Internal-Key`.
+    # It is deliberately NOT a browser-visible credential — the frontend now
+    # talks to the engine through the gateway's proxy, so this secret never
+    # ships in a bundle. Empty in development = enforcement off; production
+    # refuses to start without it (see main.py).
+    INTERNAL_API_KEY: str = ""
+
     # --- Weather (OpenWeather) ---
     # The key is supplied via ``.env`` and MUST never be hardcoded. It defaults
     # to an empty string so the service boots without it; ``weather_service``

@@ -23,10 +23,20 @@ const communityRoutes = require("./routes/community.routes");
 const notificationRoutes = require("./routes/notification.routes");
 const recommendationRoutes = require("./routes/recommendation.routes");
 const feedbackRoutes = require("./routes/feedback.routes");
+const astroRoutes = require("./routes/astro.routes");
+const galleryRoutes = require("./routes/gallery.routes");
+const galleryService = require("./services/galleryService");
 const digestJob = require("./jobs/digestJob");
 const alertsJob = require("./jobs/alertsJob");
 
 const app = express();
+
+// Trust the reverse proxy ONLY when one is actually in front of us (Cloudflare
+// Tunnel / production). Express then reads the real client IP and protocol from
+// X-Forwarded-*, which is what express-rate-limit keys on. See
+// network.getTrustProxy() for why this is a hop count and never `true`, and why
+// enabling it unconditionally would make rate limiting forgeable.
+app.set("trust proxy", network.getTrustProxy());
 
 // Allowed browser origins come from the network config layer (config/network.js),
 // which resolves them from NETWORK_MODE + the per-mode *_CLIENT_URL vars. Switching
@@ -64,7 +74,9 @@ app.set("io", io);
 
 app.use(helmet());
 app.use(compression());
-app.use(morgan("dev"));
+// "dev" is colourized and logs full paths — fine locally, noisy and
+// needlessly detailed in production. "combined" is the standard access log.
+app.use(morgan(process.env.NODE_ENV === "production" ? "combined" : "dev"));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -82,6 +94,37 @@ app.use("/api/v1/community", communityRoutes);
 app.use("/api/v1/notifications", notificationRoutes);
 app.use("/api/v1/recommendations", recommendationRoutes);
 app.use("/api/v1/feedback", feedbackRoutes);
+// Public science data, proxied so the engine itself stays private.
+app.use("/api/v1/astro", astroRoutes);
+app.use("/api/v1/gallery", galleryRoutes);
+
+/**
+ * Serve shared gallery photos as static files.
+ *
+ * `crossOriginResourcePolicy: "cross-origin"` is required: helmet defaults it to
+ * "same-origin", and the frontend is a DIFFERENT origin from the gateway in
+ * every mode this app runs in (localhost:5173 -> :5000, and separate hosts in
+ * production), so without it the browser blocks every image.
+ *
+ * The directory holds only server-named files (see gallery.routes.js), and
+ * `index: false` keeps it from ever listing its contents.
+ */
+app.use(
+    galleryService.PUBLIC_PREFIX,
+    express.static(galleryService.UPLOAD_DIR, {
+        index: false,
+        maxAge: "7d",
+        setHeaders: (res) => {
+            // Set HERE rather than by reconfiguring helmet globally, so the
+            // relaxation applies to images only and the API keeps its default.
+            res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+            // Uploaded content is never executed: don't let a crafted file be
+            // sniffed into markup, and neutralize it if it somehow is.
+            res.setHeader("X-Content-Type-Options", "nosniff");
+            res.setHeader("Content-Security-Policy", "default-src 'none'");
+        },
+    }),
+);
 
 
 app.get("/health", (req, res) => {
@@ -92,12 +135,32 @@ app.get("/health", (req, res) => {
     });
 });
 
+/**
+ * Global error handler.
+ *
+ * The full error always goes to the SERVER log. What reaches the client
+ * depends on whether the message was written for them:
+ *
+ *   4xx -> deliberate, human-readable messages thrown by services
+ *          (httpError(400, "Bio must be 280 characters or fewer.")). Safe and
+ *          necessary to forward, or every validation failure reads "error".
+ *   5xx -> unexpected. In production the message is replaced, because raw
+ *          exception text leaks schema names, file paths, driver internals and
+ *          connection strings straight to the caller.
+ */
 app.use((err, req, res, next) => {
-    console.error(err.stack);
+    const status = err.status || 500;
 
-    res.status(err.status || 500).json({
+    console.error(`[${req.method} ${req.originalUrl}]`, err.stack || err);
+
+    const isClientError = status >= 400 && status < 500;
+    const exposeMessage =
+        isClientError || process.env.NODE_ENV !== "production";
+
+    res.status(status).json({
         success: false,
-        message: err.message || "Internal Server Error",
+        message:
+            (exposeMessage && err.message) || "Internal Server Error",
     });
 });
 

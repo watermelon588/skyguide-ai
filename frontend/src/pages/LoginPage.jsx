@@ -244,6 +244,19 @@ export default function LoginPage() {
               className={inputClass}
             />
 
+            {/* Sign-in only — offering "forgot password" while creating an
+                account is noise. */}
+            {!isSignup && (
+              <div className="flex justify-end">
+                <Link
+                  to="/forgot-password"
+                  className="text-xs font-semibold text-ink-3 transition-colors duration-300 hover:text-accent"
+                >
+                  Forgot password?
+                </Link>
+              </div>
+            )}
+
             {/* Privacy consent — required in both modes. The link opens in a
                 new tab so the form (and what's typed) survives the detour. */}
             <label className="flex cursor-pointer items-start gap-3 text-xs leading-5 text-ink-2">

@@ -3,7 +3,7 @@ import { useChat } from "../../context/ChatContext";
 import { sendMessage } from "../../services/chat.service";
 import { useAppSnapshot } from "../../hooks/useAppSnapshot";
 import ActionButton from "./ActionButton";
-import { assets } from "../../assets/assets.js";
+import { astronaut } from "../../assets/assets.js";
 import Button from "../ui/Button";
 import "../../styles/chatwindow.css";
 
@@ -87,7 +87,7 @@ export default function ChatWindow({ variant = "overlay" }) {
           className={`flex items-center gap-3 ${isOpen ? "animate-dock" : ""}`}
         >
           <img
-            src={assets[16]}
+            src={astronaut}
             alt="Astro"
             className={`
         w-14

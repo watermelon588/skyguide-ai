@@ -75,8 +75,14 @@ coverage/
 # Project Documentation (Local Only)
 # ======================================
 
+# Everything internal now lives in _local/ — never committed, never deployed.
+# (See .dockerignore / .vercelignore for the deployment side.)
+_local/
+
 .claude/
 CLAUDE.md
+
+# Legacy root-level paths, kept so an old checkout can't re-commit them.
 PROJECT_ROADMAP.md
 ARCHITECTURE.md
 DESIGN_SYSTEM.md
@@ -84,3 +90,7 @@ API_SPEC.md
 DATABASE.md
 WEBSOCKET_PROTOCOL.md
 ASTRO_ENGINE.md
+# User-uploaded gallery photos — runtime data, not source.
+# The folder itself is kept (.gitkeep) so a fresh clone has somewhere to write.
+server-gateway/uploads/gallery/*
+!server-gateway/uploads/gallery/.gitkeep

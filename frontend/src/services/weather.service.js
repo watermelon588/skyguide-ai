@@ -1,6 +1,6 @@
 import axios from "axios";
 
-import { getAstroBaseUrl } from "../config/network";
+import { getAstroApiBase } from "../config/network";
 
 /**
  * The weather engine lives on the FastAPI Astro Engine, not the Express
@@ -8,7 +8,7 @@ import { getAstroBaseUrl } from "../config/network";
  * directly for scientific data. No auth cookie is required for this endpoint.
  * The base URL is resolved from the network config (mode-aware).
  */
-const ASTRO_API = getAstroBaseUrl();
+const ASTRO_API = getAstroApiBase();
 
 /**
  * Fetch current weather + observing conditions for a coordinate.

@@ -304,12 +304,25 @@ UserSchema.methods.createPasswordResetToken =
     return resetToken;
   };
 
-// hide password and v from response
+/**
+ * Strip server-only fields from every serialized user.
+ *
+ * This runs on `/auth/me`, on login/register responses — anywhere a user
+ * document is sent. The credential-recovery fields matter as much as the
+ * password hash: they are the secrets that can MINT a session. Leaking the
+ * stored hash of a live reset token or OTP hands an attacker an offline target
+ * (a 6-digit code is only a million guesses against a known SHA-256), so they
+ * must never cross the wire even to the account's own owner.
+ */
 UserSchema.methods.toJSON = function () {
   const user = this.toObject();
 
   delete user.password;
   delete user.__v;
+  delete user.passwordResetToken;
+  delete user.passwordResetExpires;
+  delete user.verificationToken;
+  delete user.verificationTokenExpires;
 
   return user;
 };

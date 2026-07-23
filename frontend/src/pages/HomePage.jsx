@@ -5,6 +5,7 @@ import HomeNav from "../components/home/HomeNav";
 import HomeHero from "../components/home/HomeHero";
 import LiveSkyTeaser from "../components/home/LiveSkyTeaser";
 import FeatureGrid from "../components/home/FeatureGrid";
+import HomeGallery from "../components/home/HomeGallery";
 import HowItWorks from "../components/home/HowItWorks";
 import CtaFooter from "../components/home/CtaFooter";
 import Footer from "../components/Footer";
@@ -55,6 +56,10 @@ export default function HomePage() {
       <main className="relative z-10 flex flex-col gap-28 pt-24">
         <LiveSkyTeaser onReady={() => setReady(true)} />
         <FeatureGrid />
+        {/* Real community photos, straight after the capability pitch — proof
+            that people actually observe with this. Renders nothing when the
+            gallery is empty or the gateway is unreachable. */}
+        <HomeGallery />
         <HowItWorks />
         <CtaFooter />
       </main>
