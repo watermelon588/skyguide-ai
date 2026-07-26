@@ -1,11 +1,8 @@
-const path = require("path");
-const crypto = require("crypto");
-
 const express = require("express");
 const multer = require("multer");
 
 const galleryController = require("../controllers/galleryController");
-const galleryService = require("../services/galleryService");
+const imageStorage = require("../services/imageStorage");
 const { protect, optionalAuth } = require("../middleware/authMiddleware");
 const { galleryUploadLimiter } = require("../middleware/rateLimiter");
 
@@ -13,38 +10,17 @@ const router = express.Router();
 
 const MAX_UPLOAD_BYTES = 8 * 1024 * 1024; // 8 MB — astrophotography is big.
 
-// Only real image types, checked by MIME. The extension is taken from this
-// allowlist rather than from the client's filename, so a "photo.jpg.html"
-// cannot be written to disk and later served as markup.
-const ALLOWED_TYPES = new Map([
-  ["image/jpeg", ".jpg"],
-  ["image/png", ".png"],
-  ["image/webp", ".webp"],
-]);
-
-const storage = multer.diskStorage({
-  destination: async (_req, _file, cb) => {
-    try {
-      cb(null, await galleryService.ensureUploadDir());
-    } catch (err) {
-      cb(err);
-    }
-  },
-  filename: (req, file, cb) => {
-    // Random name, server-chosen extension. NEVER file.originalname: it is
-    // attacker-controlled and can contain path separators ("../../app.js"),
-    // which is the classic path-traversal write.
-    const ext = ALLOWED_TYPES.get(file.mimetype) || ".jpg";
-    const name = `${Date.now()}-${crypto.randomBytes(8).toString("hex")}${ext}`;
-    cb(null, name);
-  },
-});
-
+// In-memory storage: the buffer is handed to imageStorage, which persists it to
+// Cloudinary (when configured) or local disk. Keeping it in memory means one
+// upload path regardless of backend — and no temp file to clean up if the
+// Cloudinary call fails. Bounded by the 8 MB `fileSize` limit below.
 const upload = multer({
-  storage,
+  storage: multer.memoryStorage(),
   limits: { fileSize: MAX_UPLOAD_BYTES, files: 1 },
   fileFilter: (_req, file, cb) => {
-    if (!ALLOWED_TYPES.has(file.mimetype)) {
+    // Only real image types, by MIME. The stored extension is server-chosen
+    // from this allowlist, never the client's filename.
+    if (!imageStorage.ALLOWED_TYPES.has(file.mimetype)) {
       const err = new Error("Only JPEG, PNG and WEBP images can be shared.");
       err.status = 400;
       return cb(err);

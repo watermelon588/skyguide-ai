@@ -19,12 +19,20 @@ const GalleryPostSchema = new mongoose.Schema(
       index: true,
     },
 
-    // Filename only — NOT a full URL. The public path is built at read time
-    // from the current mount point, so moving storage (to S3, a CDN, anywhere)
-    // is a change in one service function rather than a data migration.
+    // Delete handle — a disk filename OR a Cloudinary public_id. Never a full
+    // URL. The public path is resolved at read time (see imageStorage.resolveUrl),
+    // so the storage backend is a one-module change, not a data migration.
     filename: {
       type: String,
       required: true,
+    },
+
+    // Absolute CDN URL, set only when the image lives on Cloudinary. Absent for
+    // legacy/local-disk records, whose URL is derived from `filename` instead.
+    // Its presence is also how deletes know which backend to call.
+    url: {
+      type: String,
+      default: "",
     },
 
     caption: {

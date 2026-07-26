@@ -1,25 +1,16 @@
-const fs = require("fs/promises");
-const path = require("path");
-
 const GalleryPost = require("../models/GalleryPost");
+const imageStorage = require("./imageStorage");
 
 /**
  * Community gallery business logic.
  *
- * STORAGE (deliberately swappable): files live on the gateway's own disk under
- * `uploads/gallery/` and are served as static files. The database stores only a
- * FILENAME, and `publicUrl()` below is the single place that turns one into a
- * URL — so moving to S3/Cloudinary later means rewriting that one function and
- * the multer destination, with no data migration and no frontend change.
- *
- * Note this is the gateway's disk, NOT the frontend's `src/`: uploads arrive at
- * runtime, and anything written into a Vite `src/` tree after build is invisible
- * to the served bundle (and impossible on a static host).
+ * STORAGE (deliberately swappable): the actual bytes live wherever
+ * `imageStorage` decides — Cloudinary's CDN in production (survives a redeploy),
+ * or the gateway's local disk in development. The database stores a delete
+ * handle (`filename`) and, for Cloudinary, the absolute `url`. This service
+ * never touches the filesystem or the CDN directly; it goes through
+ * imageStorage, so the backend is a one-module concern.
  */
-
-// Resolved from this file so it doesn't depend on the process working directory.
-const UPLOAD_DIR = path.join(__dirname, "..", "..", "uploads", "gallery");
-const PUBLIC_PREFIX = "/uploads/gallery";
 
 /** The number of posts the gallery's featured strip shows. */
 const TOP_COUNT = 10;
@@ -28,17 +19,6 @@ function httpError(status, message) {
   const err = new Error(message);
   err.status = status;
   return err;
-}
-
-/** Ensure the upload directory exists (first run, or after a wiped disk). */
-async function ensureUploadDir() {
-  await fs.mkdir(UPLOAD_DIR, { recursive: true });
-  return UPLOAD_DIR;
-}
-
-/** Browser-facing URL for a stored file. The ONLY place this mapping lives. */
-function publicUrl(filename) {
-  return `${PUBLIC_PREFIX}/${filename}`;
 }
 
 /**
@@ -52,7 +32,7 @@ function serialize(post, viewerId) {
 
   return {
     id: String(post._id),
-    url: publicUrl(post.filename),
+    url: imageStorage.resolveUrl(post),
     caption: post.caption || "",
     likeCount: post.likeCount ?? 0,
     likedByMe: viewerId
@@ -98,11 +78,16 @@ async function listTopPosts(viewerId = null) {
   return listPosts({ viewerId, sort: "top", limit: TOP_COUNT });
 }
 
-/** Record an upload that multer has already written to disk. */
-async function createPost({ userId, filename, caption }) {
+/** Persist an uploaded image buffer, then record the post. */
+async function createPost({ userId, file, caption }) {
+  // Store the bytes first (Cloudinary or disk); we only write a DB record once
+  // the image is safely persisted, so a failed upload leaves no orphan row.
+  const { filename, url } = await imageStorage.save(file);
+
   const post = await GalleryPost.create({
     user: userId,
     filename,
+    url: url || "",
     caption: typeof caption === "string" ? caption.trim().slice(0, 140) : "",
   });
 
@@ -145,15 +130,10 @@ async function deletePost(postId, userId) {
 
   await GalleryPost.findByIdAndDelete(postId);
 
-  // Best-effort: a missing file must not fail the delete, or a half-cleaned
-  // state becomes permanently undeletable.
-  try {
-    await fs.unlink(path.join(UPLOAD_DIR, post.filename));
-  } catch (err) {
-    if (err.code !== "ENOENT") {
-      console.error("Gallery file cleanup failed:", err.message);
-    }
-  }
+  // Best-effort cleanup of the stored bytes (CDN or disk). imageStorage
+  // swallows a missing-file error internally, so a half-cleaned state can never
+  // make the record permanently undeletable.
+  await imageStorage.remove({ filename: post.filename, url: post.url });
 
   return { id: postId };
 }
@@ -173,11 +153,7 @@ async function listByUser(username, viewerId = null) {
 }
 
 module.exports = {
-  UPLOAD_DIR,
-  PUBLIC_PREFIX,
   TOP_COUNT,
-  ensureUploadDir,
-  publicUrl,
   listPosts,
   listTopPosts,
   createPost,
