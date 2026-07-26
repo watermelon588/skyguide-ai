@@ -70,9 +70,18 @@ export function getSocketBaseUrl() {
   return getApiBaseUrl();
 }
 
-/** Base URL encoded into pairing QR codes (the web app origin). */
+/**
+ * Base URL encoded into pairing QR codes.
+ *
+ * `align.html` is a build entry of THIS SAME app — it is always served from the
+ * exact origin the dashboard is loaded from. So the QR must point at the live
+ * browser origin, never a configured URL: that makes pairing correct on every
+ * host automatically (localhost, LAN IP, Cloudflare tunnel, and each Vercel
+ * deployment/alias) with no env var to drift out of date. Falls back to the
+ * configured frontend URL only when there is no window (SSR/build-time).
+ */
 export function getQrBaseUrl() {
-  return getFrontendBaseUrl();
+  return origin || getFrontendBaseUrl();
 }
 
 /**
