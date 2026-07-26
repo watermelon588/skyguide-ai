@@ -25,7 +25,7 @@ const recommendationRoutes = require("./routes/recommendation.routes");
 const feedbackRoutes = require("./routes/feedback.routes");
 const astroRoutes = require("./routes/astro.routes");
 const galleryRoutes = require("./routes/gallery.routes");
-const galleryService = require("./services/galleryService");
+const imageStorage = require("./services/imageStorage");
 const digestJob = require("./jobs/digestJob");
 const alertsJob = require("./jobs/alertsJob");
 
@@ -108,10 +108,13 @@ app.use("/api/v1/gallery", galleryRoutes);
  *
  * The directory holds only server-named files (see gallery.routes.js), and
  * `index: false` keeps it from ever listing its contents.
+ *
+ * With Cloudinary configured, new uploads are served from the CDN and never
+ * touch this path; the mount stays only to serve any legacy on-disk photos.
  */
 app.use(
-    galleryService.PUBLIC_PREFIX,
-    express.static(galleryService.UPLOAD_DIR, {
+    imageStorage.DISK_PUBLIC_PREFIX,
+    express.static(imageStorage.UPLOAD_DIR, {
         index: false,
         maxAge: "7d",
         setHeaders: (res) => {

@@ -56,7 +56,7 @@ exports.upload = async (req, res, next) => {
 
     const post = await galleryService.createPost({
       userId: req.user._id,
-      filename: req.file.filename,
+      file: { buffer: req.file.buffer, mimetype: req.file.mimetype },
       caption: req.body.caption,
     });
 
