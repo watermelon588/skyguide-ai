@@ -40,9 +40,13 @@ const ALLOWED_PREFIXES = [
 
 const ALLOWED_METHODS = new Set(["GET", "POST"]);
 
-// Visibility over ~13k objects is the slow one; matches astroEngineClient's
-// heavy budget rather than its 4s default, which would time out mid-page.
-const PROXY_TIMEOUT_MS = 30000;
+// Visibility over ~13k objects is the slow one (~15s of compute even warm).
+// On Render's free tier the engine also SPINS DOWN after ~15 min idle and takes
+// ~50s to wake, so the first request after a lull is ~50s wake + ~15s compute.
+// 30s aborted that mid-flight and the page showed "can't reach" while the engine
+// was still (successfully) computing. 120s covers a cold start plus the calc.
+// The browser's own fetch has no timeout, so it waits for this to resolve.
+const PROXY_TIMEOUT_MS = 120000;
 
 function isAllowed(path) {
     return ALLOWED_PREFIXES.some(
