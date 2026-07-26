@@ -18,7 +18,9 @@ docs/
 
 server-gateway/
 astro-engine/
-scripts/
+# Anchored to repo root (leading slash) so the frontend's own scripts/ —
+# which holds the prebuild sync-brand.mjs — is NOT stripped from the deploy.
+/scripts/
 
 **/__pycache__/
 *.py[cod]
