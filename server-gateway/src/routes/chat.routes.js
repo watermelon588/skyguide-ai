@@ -1,5 +1,5 @@
 const express = require("express");
-const { chat } = require("../controllers/chatcontroller");
+const { chat } = require("../controllers/chatController");
 const { optionalAuth } = require("../middleware/authMiddleware");
 const { chatLimiter } = require("../middleware/rateLimiter");
 
