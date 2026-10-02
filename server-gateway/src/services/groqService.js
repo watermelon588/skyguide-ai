@@ -10,7 +10,16 @@ const groq = require("../config/groq");
  * through existing authenticated services only when the user clicks.
  */
 
-const CHAT_MODEL = "llama-3.3-70b-versatile";
+// Groq retires models without much notice (llama-3.3-70b-versatile went in
+// Oct 2026), so the model is overridable from the environment — swapping it is
+// a Render setting, not a redeploy of code.
+const CHAT_MODEL = process.env.GROQ_MODEL || "openai/gpt-oss-20b";
+
+// gpt-oss is a reasoning model: at default effort it sometimes loops in its
+// reasoning on the strict brief prompt and hits the token cap with an EMPTY
+// answer (~40% of runs measured). "low" measured 0/10 empty. Only sent to
+// gpt-oss — non-reasoning models reject the parameter.
+const MODEL_OPTS = /gpt-oss/.test(CHAT_MODEL) ? { reasoning_effort: "low" } : {};
 
 /**
  * What each surface of the product actually does — so Astro answers app
@@ -148,6 +157,7 @@ exports.askGroq = async function askGroq(messages, context = null) {
 
     const completion = await groq.chat.completions.create({
         model: CHAT_MODEL,
+        ...MODEL_OPTS,
         temperature: 0.5,
         response_format: { type: "json_object" },
         messages: [{ role: "system", content: system }, ...messages],
@@ -198,6 +208,7 @@ Hard rules:
 
     const completion = await groq.chat.completions.create({
         model: CHAT_MODEL,
+        ...MODEL_OPTS,
         temperature: 0.3,
         messages: [
             { role: "system", content: system },
